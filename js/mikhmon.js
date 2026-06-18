@@ -70,7 +70,7 @@ function notify(e) {
   setInterval(function() {
     $(".message").append("●");
     if (++l == 4) {
-      $(".message").html(n);
+      $(".message").text(n);
       l = 0;
     }
   }, 500);
