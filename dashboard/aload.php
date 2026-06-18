@@ -229,7 +229,7 @@ include('../lang/'.$langid.'.php');
                   <h3><a href="./?hotspot=log&session=<?= $session; ?>" title="Open Hotspot Log" ><i class="fa fa-align-justify"></i> <?= $_hotspot_log ?></a></h3></div>
                     <div class="card-body">
                       <div style="padding: 5px; height: <?= $logh; ?> ;" class="mr-t-10 overflow">
-                        <table class="table table-sm table-bordered table-hover" style="font-size: 12px; td.padding:2px;">
+                        <table class="table table-sm table-hover card-table-modern" style="font-size: 12px; td.padding:2px;">
                           <thead>
                             <tr>
                             <th><?= $_time .$THotspotLog; ?></th>

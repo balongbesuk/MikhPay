@@ -120,20 +120,78 @@ if (!isset($_SESSION["mikhmon"])) {
 			     <div class="col-6">
             <div class="col-12">
               <div class="card">
+                <style>
+                .form-group-floating {
+                    position: relative;
+                    margin-bottom: 16px;
+                    width: 100%;
+                }
+                .form-group-floating .form-control {
+                    width: 100% !important;
+                    height: 48px !important;
+                    padding: 18px 16px 6px 16px !important;
+                    font-size: 14px !important;
+                    border: 1px solid var(--border-color, #c1c1c1) !important;
+                    border-radius: 8px !important;
+                    background: var(--card-bg, #fff) !important;
+                    color: var(--text-main, #3E3E3E) !important;
+                    outline: none !important;
+                    transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+                    box-sizing: border-box !important;
+                }
+                .form-group-floating .form-control::placeholder {
+                    color: transparent !important;
+                    opacity: 0 !important;
+                }
+                .form-group-floating label {
+                    position: absolute;
+                    left: 16px;
+                    top: 14px;
+                    font-size: 14px;
+                    color: var(--text-muted, #73818f);
+                    pointer-events: none;
+                    transition: all 0.2s ease;
+                    margin: 0;
+                }
+                .form-group-floating .form-control:focus ~ label,
+                .form-group-floating .form-control:not(:placeholder-shown) ~ label {
+                    top: 4px;
+                    left: 16px;
+                    font-size: 11px;
+                    color: var(--primary, #008BC9);
+                    font-weight: 600;
+                }
+                .form-group-floating .form-control:focus {
+                    border-color: var(--primary, #008BC9) !important;
+                    box-shadow: 0 0 0 3px rgba(0, 139, 201, 0.15) !important;
+                }
+                .btn-modern-save {
+                    height: 40px;
+                    border-radius: 8px !important;
+                    padding: 0 20px !important;
+                    font-weight: 600 !important;
+                    background: var(--primary, #008BC9) !important;
+                    color: #fff !important;
+                    border: none !important;
+                    cursor: pointer;
+                    transition: background-color 0.2s ease;
+                }
+                .btn-modern-save:hover {
+                    background: var(--primary-hover, #007bb0) !important;
+                }
+                </style>
                 <div class="card-header">
                   <h3 class="card-title"><?= $_session ?></h3>
                 </div>
                 <div class="card-body">
-                  <table class="table">
-                    <tr>
-                      <td><?= $_session_name ?></td>
-                      <td><input class="form-control" id="sessname" type="text" name="sessname" title="Session Name" value="<?php if (explode("-",$session)[0] == "new") {
-                                                                                                                              echo "";
-                                                                                                                            } else {
-                                                                                                                              echo $session;
-                                                                                                                            } ?>" required="1"/></td>
-                    </tr>
-                  </table>
+                  <div class="form-group-floating">
+                    <input class="form-control" id="sessname" type="text" name="sessname" placeholder=" " value="<?php if (explode("-",$session)[0] == "new") {
+                                                                                                                          echo "";
+                                                                                                                        } else {
+                                                                                                                          echo $session;
+                                                                                                                        } ?>" required="1"/>
+                    <label for="sessname"><?= $_session_name ?></label>
+                  </div>
                 </div>
               </div>
             </div>
@@ -143,45 +201,38 @@ if (!isset($_SESSION["mikhmon"])) {
             	   <h3 class="card-title">MikroTik <?= $_SESSION["connect"]; ?></h3>
         	     </div>
         	     <div class="card-body">
-				<table class="table table-sm">
-					<tr>
-	  					<td class="align-middle">IP MikroTik </td><td><input class="form-control" type="text" size="15" name="ipmik" title="IP MikroTik / IP Cloud MikroTik" value="<?= $iphost; ?>" required="1"/></td>
-					</tr>
-					<tr>
-						<td class="align-middle">Username  </td><td><input class="form-control" id="usermk" type="text" size="10" name="usermik" title="User MikroTik" value="<?= $userhost; ?>" required="1"/></td>
-					</tr>
-					<tr>
-						<td class="align-middle">Password  </td><td>
-							<div class="input-group">
-								<div class="input-group-11 col-box-10">
-        						<input class="group-item group-item-l" id="passmk" type="password" name="passmik" title="Password MikroTik" value="<?= decrypt($passwdhost); ?>" required="1"/>
-        						</div>
-            					<div class="input-group-1 col-box-2">
-            						<div class="group-item group-item-r pd-2p5 text-center align-middle">
-                						<input title="Show/Hide Password" type="checkbox" onclick="PassMk()">
-            						</div>
-            					</div>
-    						</div>
-						</td>
-					</tr>
-					<tr>
-						<td colspan="2">
-								<div class="input-group-4">
-									<input class="group-item group-item-md" type="submit" style="cursor: pointer;" name="save" value="Save"/>
-								</div>
-								<div class="input-group-4">	
-                  <span class="connect pointer group-item group-item-md pd-2p5 text-center align-middle" id="<?= $session; ?>&c=settings">Connect</span>
-								</div>
-								<div class="input-group-3">	
-                  <span class="pointer group-item group-item-md pd-2p5 text-center align-middle" id="ping_test">Ping</span>
-              	</div>
-              	<div class="input-group-1">	
-									<div style="cursor: pointer;" class="group-item group-item-r pd-2p5 text-center" onclick="location.reload();" title="Reload Data"><i class="fa fa-refresh"></i></div>
-								</div>
-            		</div>	
-    					</td>
-    				</tr>
-				</table>
+                 <div style="padding: 10px 0;">
+                   <div class="form-group-floating">
+                     <input class="form-control" id="ipmik" type="text" name="ipmik" placeholder=" " value="<?= $iphost; ?>" required="1"/>
+                     <label for="ipmik">IP MikroTik / IP Cloud</label>
+                   </div>
+                   
+                   <div class="form-group-floating">
+                     <input class="form-control" id="usermk" type="text" name="usermik" placeholder=" " value="<?= $userhost; ?>" required="1"/>
+                     <label for="usermk">Username</label>
+                   </div>
+
+                   <div class="form-group-floating">
+                     <div class="input-group" style="display: flex; width: 100%;">
+                       <div class="input-group-11 col-box-10" style="flex: 1; position: relative; float: none;">
+                         <input class="group-item form-control" id="passmk" type="password" name="passmik" placeholder=" " value="<?= decrypt($passwdhost); ?>" required="1" style="border-radius: 8px 0 0 8px !important; width: 100% !important; height: 48px !important; border: 1px solid var(--border-color, #c1c1c1) !important; border-right: none !important; padding: 18px 16px 6px 16px !important;"/>
+                         <label for="passmk">Password</label>
+                       </div>
+                       <div class="input-group-1 col-box-2" style="width: 48px; float: none;">
+                         <div class="group-item group-item-r pd-2p5 text-center align-middle" style="border-radius: 0 8px 8px 0 !important; height: 48px; border: 1px solid var(--border-color, #c1c1c1); background: var(--background-alt, #F5F6F7); display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
+                           <input title="Show/Hide Password" type="checkbox" onclick="PassMk()">
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+
+                   <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px;">
+                     <button type="submit" name="save" class="btn-modern-save">Save</button>
+                     <span class="connect pointer btn-modern-save" id="<?= $session; ?>&c=settings" style="display: flex; align-items: center; justify-content: center;">Connect</span>
+                     <span class="pointer btn-modern-save" id="ping_test" style="display: flex; align-items: center; justify-content: center; background: var(--accent, #4dbd74) !important;">Ping</span>
+                     <div style="cursor: pointer; height: 40px; width: 40px; border-radius: 8px; border: 1px solid var(--border-color, #c1c1c1); display: flex; align-items: center; justify-content: center; background: var(--card-bg, #fff);" onclick="location.reload();" title="Reload Data"><i class="fa fa-refresh"></i></div>
+                   </div>
+                 </div>
 			</div>
     </div>  	
     <div id="ping">
@@ -195,67 +246,70 @@ if (!isset($_SESSION["mikhmon"])) {
             <h3 class="card-title">Mikhmon Data</h3>
         </div>
     <div class="card-body">    
-	<table class="table table-sm">
-	<tr>
-	<td class="align-middle"><?= $_hotspot_name ?>  </td><td><input class="form-control" type="text" size="15" maxlength="50" name="hotspotname" title="Hotspot Name" value="<?= $hotspotname; ?>" required="1"/></td>
-	</tr>
-	<tr>
-	<td class="align-middle"><?= $_dns_name ?>  </td><td><input class="form-control" type="text" size="15" maxlength="500" name="dnsname" title="DNS Name [IP->Hotspot->Server Profiles->DNS Name]" value="<?= $dnsname; ?>" required="1"/></td>
-	</tr>
-	<tr>
-	<td class="align-middle"><?= $_currency ?>  </td><td><input class="form-control" type="text" size="3" maxlength="4" name="currency" title="currency" value="<?= $currency; ?>" required="1"/></td>
-	</tr>
-	<tr> 
-	<td class="align-middle"><?= $_auto_reload ?></td><td>
-	<div class="input-group">
-		<div class="input-group-10">
-        	<input class="group-item group-item-l" type="number" min="10" max="3600" name="areload" title="Auto Reload in sec [min 10]" value="<?= $areload; ?>" required="1"/>
-    	</div>
-            <div class="input-group-2">
-                <span class="group-item group-item-r pd-2p5 text-center align-middle"><?= $_sec ?></span>
-            </div>
+      <div style="padding: 10px 0;">
+        <div class="form-group-floating">
+          <input class="form-control" type="text" name="hotspotname" placeholder=" " value="<?= $hotspotname; ?>" required="1" id="hotspotname"/>
+          <label for="hotspotname"><?= $_hotspot_name ?></label>
         </div>
-	</td>
-  </tr>
-  <tr>
-  <td class="align-middle"><?= $_idle_timeout ?></td>
-  <td>
-  <div class="input-group">
-  <div class="input-group-9">
-      <select class="group-item group-item-l" name="idleto" required="1">
-          <option value="<?= $idleto; ?>"><?= $idleto; ?></option>
-				  <option value="5">5</option>
-          <option value="10">10</option>
-          <option value="30">30</option>
-          <option value="60">60</option>
-          <option value="disable">disable</option>
-      </select>
-  </div>
-  <div class="input-group-3">
-                <span class="group-item group-item-r pd-3p5 text-center align-middle"><?= $_min ?></span>
-            </div>
+
+        <div class="form-group-floating">
+          <input class="form-control" type="text" name="dnsname" placeholder=" " value="<?= $dnsname; ?>" required="1" id="dnsname"/>
+          <label for="dnsname"><?= $_dns_name ?></label>
         </div>
-    </td>
-	</tr>
-	<tr>
-	<td class="align-middle"><?= $_traffic_interface ?></td><td><input class="form-control" type="number" min="1" max="99" name="iface" title="Traffic Interface" value="<?= $iface; ?>" required="1"/></td>
-	</tr>
-  <?php if (empty($livereport)) {
-  } else { ?>
-  <tr>
-    <td><?= $_live_report ?></td>
-    <td>
-      <select class="form-control" name="livereport" >
-          <option value="<?= $livereport; ?>"><?= ucfirst($livereport); ?></option>
-				  <option value="enable">Enable</option>
-				  <option value="disable">Disable</option>
-		  </select>
-    </td>
-  </tr>
-  <?php 
-} ?>
-</table>
-</div>
+
+        <div class="form-group-floating">
+          <input class="form-control" type="text" name="currency" placeholder=" " value="<?= $currency; ?>" required="1" id="currency"/>
+          <label for="currency"><?= $_currency ?></label>
+        </div>
+
+        <div class="form-group-floating">
+          <div class="input-group" style="display: flex; width: 100%;">
+            <div class="input-group-10" style="flex: 1; position: relative; float: none;">
+              <input class="group-item form-control" type="number" min="10" max="3600" name="areload" placeholder=" " value="<?= $areload; ?>" required="1" id="areload" style="border-radius: 8px 0 0 8px !important; width: 100% !important; height: 48px !important; border: 1px solid var(--border-color, #c1c1c1) !important; border-right: none !important; padding: 18px 16px 6px 16px !important;"/>
+              <label for="areload"><?= $_auto_reload ?></label>
+            </div>
+            <div class="input-group-2" style="width: 60px; float: none;">
+              <span class="group-item group-item-r pd-2p5 text-center align-middle" style="border-radius: 0 8px 8px 0 !important; height: 48px; border: 1px solid var(--border-color, #c1c1c1); background: var(--background-alt, #F5F6F7); display: flex; align-items: center; justify-content: center; box-sizing: border-box; font-size: 13px; font-weight: 600; color: var(--text-muted, #73818f);"><?= $_sec ?></span>
+            </div>
+          </div>
+        </div>
+
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 12px; color: var(--text-muted, #73818f); display: block; margin-bottom: 6px; font-weight: 600; text-align: left;"><?= $_idle_timeout ?></label>
+          <div class="input-group" style="display: flex; width: 100%;">
+            <div class="input-group-9" style="flex: 1; float: none;">
+              <select class="group-item form-control" name="idleto" required="1" style="height: 48px !important; border-radius: 8px 0 0 8px !important; border: 1px solid var(--border-color, #c1c1c1) !important; border-right: none !important; background: var(--card-bg, #fff) !important; color: var(--text-main, #3E3E3E) !important; padding: 0 16px !important; width: 100% !important;">
+                <option value="<?= $idleto; ?>"><?= $idleto; ?></option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+                <option value="30">30</option>
+                <option value="60">60</option>
+                <option value="disable">disable</option>
+              </select>
+            </div>
+            <div class="input-group-3" style="width: 60px; float: none;">
+              <span class="group-item group-item-r pd-3p5 text-center align-middle" style="border-radius: 0 8px 8px 0 !important; height: 48px; border: 1px solid var(--border-color, #c1c1c1); background: var(--background-alt, #F5F6F7); display: flex; align-items: center; justify-content: center; box-sizing: border-box; font-size: 13px; font-weight: 600; color: var(--text-muted, #73818f);"><?= $_min ?></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-group-floating">
+          <input class="form-control" type="number" min="1" max="99" name="iface" placeholder=" " value="<?= $iface; ?>" required="1" id="iface"/>
+          <label for="iface"><?= $_traffic_interface ?></label>
+        </div>
+
+        <?php if (!empty($livereport)): ?>
+        <div style="margin-bottom: 16px;">
+          <label style="font-size: 12px; color: var(--text-muted, #73818f); display: block; margin-bottom: 6px; font-weight: 600; text-align: left;"><?= $_live_report ?></label>
+          <select class="form-control" name="livereport" style="height: 48px !important; border-radius: 8px !important; border: 1px solid var(--border-color, #c1c1c1) !important; background: var(--card-bg, #fff) !important; color: var(--text-main, #3E3E3E) !important; padding: 0 16px !important; width: 100% !important;">
+            <option value="<?= $livereport; ?>"><?= ucfirst($livereport); ?></option>
+            <option value="enable">Enable</option>
+            <option value="disable">Disable</option>
+          </select>
+        </div>
+        <?php endif; ?>
+      </div>
+    </div>
 </div>
 </div>
 </div>

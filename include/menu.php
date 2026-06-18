@@ -181,13 +181,9 @@ if($idleto != "disable"){
 </div>
  <div class="navbar-right">
   <a id="logout" href="./admin.php?id=logout" ><i class="fa fa-sign-out mr-1"></i> <?= $_logout ?></a>
-  <select class="stheme ses text-right mr-t-10 pd-5">
-    <option> <?= $_theme?></option>
-    <?php for ($i = 0; $i < count($mtheme); $i++) {
-      echo '<option value="'.$url.'&set-theme='.$mtheme[$i],'">'.ucfirst($mtheme[$i]),'</option>';
-    }
-    ?>
-  </select>
+  <a href="javascript:void(0)" title="Toggle Theme" class="theme-toggle-btn navbar-hover" style="float: right; padding: 14px 16px; color: #f2f2f2; display: inline-block; text-align: center; transition: 0.3s;">
+    <i class="fa <?= ($theme === 'dark') ? 'fa-sun-o' : 'fa-moon-o' ?>" style="font-size: 16px;"></i>
+  </a>
   <select class="slang ses text-right mr-t-10 pd-5">
     <option> <?= $language ?></option>
     <?php 
@@ -230,9 +226,11 @@ $(document).ready(function(){
     notify("<?= $_connecting ?>");
     connect(this.id)
   });
-  $(".stheme").change(function(){
+  $(".theme-toggle-btn").click(function(){
+    var targetTheme = "<?= ($theme === 'dark') ? 'light' : 'dark' ?>";
+    var targetUrl = "<?= $url ?>&set-theme=" + targetTheme;
     notify("<?= $_loading_theme ?>");
-    stheme(this.value)
+    stheme(targetUrl);
   });
   $(".slang").change(function(){
     notify("<?= $_loading ?>");
@@ -256,13 +254,9 @@ include('./info.php');
 </div>
  <div class="navbar-right">
   <a id="logout" href="./?hotspot=logout&session=<?= $session; ?>" ><i class="fa fa-sign-out mr-1"></i> <?= $_logout ?></a>
-  <select class="stheme ses text-right mr-t-10 pd-5">
-    <option> <?= $_theme ?></option>
-    <?php for ($i = 0; $i < count($mtheme); $i++) {
-      echo '<option value="'.$url.'&set-theme='.$mtheme[$i],'">'.ucfirst($mtheme[$i]),'</option>';
-    }
-    ?>
-  </select>
+  <a href="javascript:void(0)" title="Toggle Theme" class="theme-toggle-btn navbar-hover" style="float: right; padding: 14px 16px; color: #f2f2f2; display: inline-block; text-align: center; transition: 0.3s;">
+    <i class="fa <?= ($theme === 'dark') ? 'fa-sun-o' : 'fa-moon-o' ?>" style="font-size: 16px;"></i>
+  </a>
   <select class="connect optfa ses text-right mr-t-10 pd-5">
     <option id="MikhmonSession" value="<?= $session; ?>"><?= $hotspotname; ?></option>
       <?php
@@ -366,9 +360,11 @@ $(document).ready(function(){
     notify("<?= $_connecting ?>");
     connect(this.value)
   });
-  $(".stheme").change(function(){
+  $(".theme-toggle-btn").click(function(){
+    var targetTheme = "<?= ($theme === 'dark') ? 'light' : 'dark' ?>";
+    var targetUrl = "<?= $url ?>&set-theme=" + targetTheme;
     notify("<?= $_loading_theme ?>");
-    stheme(this.value)
+    stheme(targetUrl);
   });
 });
 </script>

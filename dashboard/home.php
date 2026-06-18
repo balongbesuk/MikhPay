@@ -325,12 +325,28 @@ if (!isset($_SESSION["mikhmon"])) {
                         series: [{
                           name: 'Tx',
                           data: [],
+                          color: '#4f46e5',
+                          fillColor: {
+                            linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                            stops: [
+                              [0, 'rgba(79, 70, 229, 0.3)'],
+                              [1, 'rgba(79, 70, 229, 0)']
+                            ]
+                          },
                           marker: {
                             symbol: 'circle'
                           }
                         }, {
                           name: 'Rx',
                           data: [],
+                          color: '#10b981',
+                          fillColor: {
+                            linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                            stops: [
+                              [0, 'rgba(16, 185, 129, 0.3)'],
+                              [1, 'rgba(16, 185, 129, 0)']
+                            ]
+                          },
                           marker: {
                             symbol: 'circle'
                           }
@@ -384,12 +400,78 @@ if (!isset($_SESSION["mikhmon"])) {
             </div>
             </div>
             <div id="r_3" class="row">
+            <style>
+            /* Modern Dashboard Styling Overrides */
+            .card {
+                border-radius: 16px !important;
+                border: 1px solid var(--border-color, rgba(0,0,0,0.08)) !important;
+                box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03) !important;
+                background: var(--card-bg, #fff) !important;
+                margin-bottom: 20px !important;
+            }
+            .card-header {
+                background: transparent !important;
+                border-bottom: 1px solid var(--border-color, rgba(0,0,0,0.08)) !important;
+                padding: 16px 20px !important;
+            }
+            .card-header h3 a {
+                color: var(--primary, #008BC9) !important;
+                font-weight: 700 !important;
+                font-size: 16px !important;
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            .card-body {
+                padding: 16px 20px !important;
+            }
+            .card-table-modern {
+                border-collapse: separate !important;
+                border-spacing: 0 10px !important;
+                background: transparent !important;
+                width: 100% !important;
+            }
+            .card-table-modern thead {
+                display: none !important;
+            }
+            .card-table-modern tr {
+                background: var(--card-bg, #fff) !important;
+                border-radius: 12px !important;
+                box-shadow: 0 4px 12px rgba(0,0,0,0.03) !important;
+                border: 1px solid var(--border-color, rgba(0,0,0,0.06)) !important;
+                transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+            }
+            .card-table-modern tr:hover {
+                transform: translateY(-2px) !important;
+                box-shadow: 0 6px 16px rgba(0,0,0,0.06) !important;
+            }
+            .card-table-modern td {
+                border: none !important;
+                padding: 12px 16px !important;
+            }
+            .card-table-modern td:first-child {
+                border-top-left-radius: 12px !important;
+                border-bottom-left-radius: 12px !important;
+                font-weight: 600;
+                color: var(--text-muted, #64748b) !important;
+                width: 90px;
+            }
+            .card-table-modern td:nth-child(2) {
+                font-weight: 600;
+                color: var(--primary, #008BC9) !important;
+            }
+            .card-table-modern td:last-child {
+                border-top-right-radius: 12px !important;
+                border-bottom-right-radius: 12px !important;
+                color: var(--text-main, #1e293b) !important;
+            }
+            </style>
             <div class="card">
               <div class="card-header">
                 <h3><a onclick="cancelPage()" href="./?hotspot=log&session=<?= $session; ?>" title="Open Hotspot Log" ><i class="fa fa-align-justify"></i> <?= $_hotspot_log ?></a></h3></div>
                   <div class="card-body">
                     <div style="padding: 5px; height: <?= $logh; ?> ;" class="mr-t-10 overflow">
-                      <table class="table table-sm table-bordered table-hover" style="font-size: 12px; td.padding:2px;">
+                      <table class="table table-sm table-hover card-table-modern" style="font-size: 12px; td.padding:2px;">
                         <thead>
                           <tr>
                             <th><?= $_time ?></th>

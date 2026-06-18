@@ -153,12 +153,28 @@ if (!isset($_SESSION["mikhmon"])) {
                         series: [{
                           name: 'Tx',
                           data: [],
+                          color: '#4f46e5',
+                          fillColor: {
+                            linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                            stops: [
+                              [0, 'rgba(79, 70, 229, 0.3)'],
+                              [1, 'rgba(79, 70, 229, 0)']
+                            ]
+                          },
                           marker: {
                             symbol: 'circle'
                           }
                         }, {
                           name: 'Rx',
                           data: [],
+                          color: '#10b981',
+                          fillColor: {
+                            linearGradient: { x1: 0, y1: 0, x2: 0, y2: 1 },
+                            stops: [
+                              [0, 'rgba(16, 185, 129, 0.3)'],
+                              [1, 'rgba(16, 185, 129, 0)']
+                            ]
+                          },
                           marker: {
                             symbol: 'circle'
                           }

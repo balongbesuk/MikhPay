@@ -489,13 +489,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                     }
                     ?>
                     <?php if (!empty($login_url)): ?>
-                        <a href="<?= htmlspecialchars($login_url) ?>" class="btn-connect">Hubungkan Sekarang</a>
+                        <a href="<?= htmlspecialchars($login_url) ?>" class="btn-connect btn-connect-pulse">Hubungkan Sekarang</a>
                     <?php endif; ?>
                     <div style="display: flex; gap: 12px; width: 100%;">
                         <button class="btn-copy" onclick="copyVoucherCode()">Salin Kode</button>
                         <a href="index.php?session=<?= urlencode($selected_session) ?>" class="btn-done">Selesai</a>
                     </div>
                 </div>
+            </div>
+
+            <!-- Toast Copy Notification -->
+            <div id="copyToast" class="toast-copy">
+                <i class="fa fa-circle-check" style="color: #10b981; font-size: 16px;"></i>
+                <span>Kode voucher berhasil disalin!</span>
             </div>
 
             <script>
@@ -506,9 +512,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                 function copyVoucherCode() {
                     var codeText = document.getElementById("voucherCode").innerText;
                     navigator.clipboard.writeText(codeText).then(function() {
-                        alert("Kode voucher berhasil disalin!");
+                        var toast = document.getElementById("copyToast");
+                        if (toast) {
+                            toast.classList.add("show");
+                            setTimeout(function() {
+                                toast.classList.remove("show");
+                            }, 3000);
+                        }
                     }, function(err) {
-                        alert("Gagal menyalin kode. Silakan salin secara manual.");
+                        alert("Gagal menyalin kode: " + codeText);
                     });
                 }
             </script>
@@ -755,7 +767,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
     <!-- Midtrans Snap Transaction Overlay -->
     <?php if (!empty($snap_token)): ?>
         <div class="loading-overlay" id="loadingPayment">
-            <div class="spinner"></div>
+            <div class="skeleton-card" style="width: 100%; max-width: 440px; margin: 0 auto 24px auto; text-align: left; background: var(--card-bg); backdrop-filter: blur(var(--glass-blur)); border: 1px solid var(--border-color); box-shadow: var(--shadow-primary);">
+                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
+                    <div class="skeleton" style="width: 48px; height: 48px; border-radius: 50%;"></div>
+                    <div style="flex: 1;">
+                        <div class="skeleton skeleton-title" style="width: 60%; height: 20px; margin-bottom: 8px;"></div>
+                        <div class="skeleton skeleton-text" style="width: 40%; height: 12px; margin-bottom: 0;"></div>
+                    </div>
+                </div>
+                
+                <div style="border-top: 1px dashed var(--border-color); border-bottom: 1px dashed var(--border-color); padding: 16px 0; margin: 8px 0;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <div class="skeleton skeleton-text" style="width: 30%; height: 14px; margin-bottom: 0;"></div>
+                        <div class="skeleton skeleton-text" style="width: 40%; height: 14px; margin-bottom: 0;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                        <div class="skeleton skeleton-text" style="width: 25%; height: 14px; margin-bottom: 0;"></div>
+                        <div class="skeleton skeleton-text" style="width: 35%; height: 14px; margin-bottom: 0;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0;">
+                        <div class="skeleton skeleton-text" style="width: 35%; height: 14px; margin-bottom: 0;"></div>
+                        <div class="skeleton skeleton-text" style="width: 20%; height: 14px; margin-bottom: 0;"></div>
+                    </div>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
+                    <div class="skeleton skeleton-text" style="width: 40%; height: 24px; margin-bottom: 0;"></div>
+                    <div class="skeleton skeleton-text" style="width: 30%; height: 36px; border-radius: 8px; margin-bottom: 0;"></div>
+                </div>
+            </div>
             <h2>Menunggu Pembayaran QRIS / E-Wallet</h2>
             <p>Silakan selesaikan transaksi Anda pada pop-up pembayaran Midtrans di layar.</p>
             <p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">Order ID: <?= htmlspecialchars($snap_order_id) ?></p>

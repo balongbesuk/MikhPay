@@ -116,51 +116,105 @@ if (!isset($_SESSION["mikhmon"])) {
                 <h3 class="card-title"><i class="fa fa-user-circle"></i> <?= $_admin ?></h3>
               </div>
             <div class="card-body">
-      <table class="table table-sm">
-        <tr>
-          <td class="align-middle"><?= $_user_name ?> </td><td><input class="form-control" id="useradm" type="text" size="10" name="useradm" title="User Admin" value="<?= $useradm; ?>" required="1"/></td>
-        </tr>
-        <tr>
-          <td class="align-middle"><?= $_password ?> </td>
-          <td>
-          <div class="input-group">
-          <div class="input-group-11 col-box-10">
-                <input class="group-item group-item-l" id="passadm" type="password" size="10" name="passadm" title="Password Admin" value="<?= decrypt($passadm); ?>" required="1"/>
+            <style>
+            .form-group-floating {
+                position: relative;
+                margin-bottom: 16px;
+                width: 100%;
+            }
+            .form-group-floating .form-control {
+                width: 100% !important;
+                height: 48px !important;
+                padding: 18px 16px 6px 16px !important;
+                font-size: 14px !important;
+                border: 1px solid var(--border-color, #c1c1c1) !important;
+                border-radius: 8px !important;
+                background: var(--card-bg, #fff) !important;
+                color: var(--text-main, #3E3E3E) !important;
+                outline: none !important;
+                transition: border-color 0.2s ease, box-shadow 0.2s ease !important;
+                box-sizing: border-box !important;
+            }
+            .form-group-floating .form-control::placeholder {
+                color: transparent !important;
+                opacity: 0 !important;
+            }
+            .form-group-floating label {
+                position: absolute;
+                left: 16px;
+                top: 14px;
+                font-size: 14px;
+                color: var(--text-muted, #73818f);
+                pointer-events: none;
+                transition: all 0.2s ease;
+                margin: 0;
+            }
+            .form-group-floating .form-control:focus ~ label,
+            .form-group-floating .form-control:not(:placeholder-shown) ~ label {
+                top: 4px;
+                left: 16px;
+                font-size: 11px;
+                color: var(--primary, #008BC9);
+                font-weight: 600;
+            }
+            .form-group-floating .form-control:focus {
+                border-color: var(--primary, #008BC9) !important;
+                box-shadow: 0 0 0 3px rgba(0, 139, 201, 0.15) !important;
+            }
+            .btn-modern-save {
+                height: 40px;
+                border-radius: 8px !important;
+                padding: 0 20px !important;
+                font-weight: 600 !important;
+                background: var(--primary, #008BC9) !important;
+                color: #fff !important;
+                border: none !important;
+                cursor: pointer;
+                transition: background-color 0.2s ease;
+            }
+            .btn-modern-save:hover {
+                background: var(--primary-hover, #007bb0) !important;
+            }
+            </style>
+            <div style="padding: 10px 0;">
+              <div class="form-group-floating">
+                <input class="form-control" id="useradm" type="text" name="useradm" placeholder=" " value="<?= $useradm; ?>" required="1"/>
+                <label for="useradm"><?= $_user_name ?></label>
               </div>
-                <div class="input-group-1 col-box-2">
-                  <div class="group-item group-item-r pd-2p5 text-center align-middle">
+              
+              <div class="form-group-floating">
+                <div class="input-group" style="display: flex; width: 100%;">
+                  <div class="input-group-11 col-box-10" style="flex: 1; position: relative; float: none;">
+                    <input class="group-item form-control" id="passadm" type="password" name="passadm" placeholder=" " value="<?= decrypt($passadm); ?>" required="1" style="border-radius: 8px 0 0 8px !important; width: 100% !important; height: 48px !important; border: 1px solid var(--border-color, #c1c1c1) !important; border-right: none !important; padding: 18px 16px 6px 16px !important;"/>
+                    <label for="passadm"><?= $_password ?></label>
+                  </div>
+                  <div class="input-group-1 col-box-2" style="width: 48px; float: none;">
+                    <div class="group-item group-item-r pd-2p5 text-center align-middle" style="border-radius: 0 8px 8px 0 !important; height: 48px; border: 1px solid var(--border-color, #c1c1c1); background: var(--background-alt, #F5F6F7); display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
                       <input title="Show/Hide Password" type="checkbox" onclick="Pass('passadm')">
+                    </div>
                   </div>
                 </div>
+              </div>
+
+              <div style="margin-bottom: 20px;">
+                <label style="font-size: 12px; color: var(--text-muted, #73818f); display: block; margin-bottom: 6px; font-weight: 600; text-align: left;"><?= $_quick_print ?> QR</label>
+                <select class="form-control" name="qrbt" style="height: 48px !important; border-radius: 8px !important; border: 1px solid var(--border-color, #c1c1c1) !important; background: var(--card-bg, #fff) !important; color: var(--text-main, #3E3E3E) !important; padding: 0 16px !important; width: 100% !important;">
+                  <option value="<?= $qrbt ?>"><?= $qrbt ?></option>
+                  <option value="enable">enable</option>
+                  <option value="disable">disable</option>
+                </select>
+              </div>
+
+              <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px;">
+                <div id="loadV" style="font-size: 12px; color: var(--text-muted, #73818f);">v<?= $_SESSION['v']; ?> </div>
+                <div style="display: flex; gap: 8px;">
+                  <button type="submit" name="save" class="btn-modern-save"><?= $_save ?></button>
+                  <div style="cursor: pointer; height: 40px; width: 40px; border-radius: 8px; border: 1px solid var(--border-color, #c1c1c1); display: flex; align-items: center; justify-content: center; background: var(--card-bg, #fff);" onclick="location.reload();" title="Reload Data"><i class="fa fa-refresh"></i></div>
+                </div>
+              </div>
+              <div><b id="newVer" class="text-green"></b></div>
             </div>
-          </td>
-        </tr>
-        <tr>
-          <td class="align-middle"><?= $_quick_print ?> QR</td>
-          <td>
-            <select class="form-control" name="qrbt">
-            <option><?= $qrbt ?></option>
-              <option>enable</option>
-              <option>disable</option>
-            </select>
-          </td>
-        </tr>
-        <tr>
-          <td></td><td class="text-right">
-              <div class="input-group-4">
-                  <input class="group-item group-item-l" type="submit" style="cursor: pointer;" name="save" value="<?= $_save ?>"/>
-                </div>
-                <div class="input-group-2">
-                  <div style="cursor: pointer;" class="group-item group-item-r pd-2p5 text-center" onclick="location.reload();" title="Reload Data"><i class="fa fa-refresh"></i></div>
-                </div>
-                </div>
-          </td>
-        </tr>
-        
-      </table>
-      <div id="loadV">v<?= $_SESSION['v']; ?> </div>
-      <div><b id="newVer" class="text-green"></b></div>
-    </div>
+          </div>
     </div>
     </form>
   </div>
