@@ -1,0 +1,20 @@
+{
+    "name": "balongbesuk/mikhtrans",
+    "description": "Mikrotik Hotspot Monitor & Transaction System",
+    "type": "project",
+    "license": "GPL-3.0-or-later",
+    "authors": [
+        {
+            "name": "balongbesuk",
+            "email": "desa.balongbesuk@gmail.com"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "src/"
+        }
+    }
+}

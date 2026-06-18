@@ -277,7 +277,11 @@ include('./voucher/printbt.php');
     } else {
     x.type = 'password';
     }}
-    var _0x7baa=["\x63\x6C\x69\x63\x6B","\x2E\x70\x72\x69\x6E\x74\x42\x54","\x72\x65\x61\x64\x79"];$(document)[_0x7baa[2]](function(){$(_0x7baa[1])[_0x7baa[0]](function(){printBT()})})
+    $(document).ready(function() {
+      $(".printBT").click(function() {
+        printBT();
+      });
+    });
 </script>
 <div class="row">
 <div class="col-12"></div>
