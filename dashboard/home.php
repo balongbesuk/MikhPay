@@ -150,13 +150,22 @@ if (!isset($_SESSION["mikhmon"])) {
       <div class="box bmh-75 box-bordered">
         <div class="box-group">
           <div class="box-group-icon"><i class="fa fa-server"></i></div>
-              <div class="box-group-area">
-                <span >
-                    <?php
-                    echo $_cpu_load." : " . $resource['cpu-load'] . "%<br/>
-                    ".$_free_memory." : " . formatBytes($resource['free-memory'], 2) . "<br/>
-                    ".$_free_hdd." : " . formatBytes($resource['free-hdd-space'], 2)
-                    ?>
+              <div class="box-group-area" style="width: 100%;">
+                <span style="display: block; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span><?= $_cpu_load ?>: <strong id="cpuVal" data-val="<?= $resource['cpu-load'] ?>"><?= $resource['cpu-load'] ?>%</strong></span>
+                        <canvas id="cpuSparkline" width="80" height="18" style="vertical-align: middle;"></canvas>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <?php 
+                        $total_mem = isset($resource['total-memory']) ? $resource['total-memory'] : 1;
+                        if ($total_mem <= 0) $total_mem = 1;
+                        $mem_pct = round((($total_mem - $resource['free-memory']) / $total_mem) * 100);
+                        ?>
+                        <span><?= $_free_memory ?>: <strong id="memVal" data-val="<?= $mem_pct ?>"><?= formatBytes($resource['free-memory'], 1) ?></strong></span>
+                        <canvas id="memorySparkline" width="80" height="18" style="vertical-align: middle;"></canvas>
+                    </div>
+                    <div><?= $_free_hdd ?>: <?= formatBytes($resource['free-hdd-space'], 1) ?></div>
                 </span>
                 </div>
               </div>
@@ -465,6 +474,24 @@ if (!isset($_SESSION["mikhmon"])) {
                 border-bottom-right-radius: 12px !important;
                 color: var(--text-main, #1e293b) !important;
             }
+            /* Log Badges Styling */
+            .log-badge {
+                display: inline-flex !important;
+                align-items: center !important;
+                gap: 6px !important;
+                padding: 4px 10px !important;
+                border-radius: 20px !important;
+                font-size: 11px !important;
+                font-weight: 700 !important;
+                text-transform: uppercase !important;
+                letter-spacing: 0.5px !important;
+            }
+            .badge-success { background: rgba(16, 185, 129, 0.1) !important; color: #10b981 !important; }
+            .badge-danger { background: rgba(239, 68, 68, 0.1) !important; color: #ef4444 !important; }
+            .badge-info { background: rgba(59, 130, 246, 0.1) !important; color: #3b82f6 !important; }
+            .badge-warning { background: rgba(245, 158, 11, 0.1) !important; color: #f59e0b !important; }
+            .badge-dark { background: rgba(100, 116, 139, 0.1) !important; color: #64748b !important; }
+            .badge-default { background: rgba(100, 116, 139, 0.05) !important; color: var(--text-muted, #73818f) !important; }
             </style>
             <div class="card">
               <div class="card-header">

@@ -10,6 +10,8 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 - **Skeleton Loading & Sukses Payment (Portal Pelanggan)**: Skeleton loading `.skeleton-card` glassmorphic shimmer animation saat menunggu status transaksi, notifikasi copy toast `#copyToast` dengan CSS transition, dan pulse animation pada CTA button.
 - **Areaspline Bandwidth Charts**: Modifikasi grafik Highcharts dashboard (`home.php` & `trafficmonitor.php`) menjadi smooth spline curve dengan fill gradient warna (indigo/emerald ke transparan).
 - **Dark/Light Mode Toggle Switch**: Menambahkan tombol switch (sun & moon icon) di navbar kanan yang terintegrasi ke switch theme otomatis.
+- **Status Dot, Checkout Stepper, & Layout Switcher (Portal Pelanggan)**: Menambahkan indikator status online/offline berdenyut pada logo header, progress bar checkout stepper wizard (Pilih -> Bayar -> Hubungkan), dan tombol view switcher (Grid vs Carousel) dengan CSS Scroll Snap dan penyimpanan state di `localStorage`.
+- **Sparkline Canvas & Badge Log Berwarna (Admin Dashboard)**: Grafik sparkline real-time berbasis HTML5 Canvas untuk melacak penggunaan CPU & Memory secara visual saat polling data, serta pewarnaan badge otomatis (`getLogBadge()`) untuk memetakan level log hotspot (Info, Warning, Error, System, User, Login/Logout) dengan badge tag berwarna.
 
 ### Diubah
 - **De-obfuscation Total Kode JavaScript**: Refaktor dan konversi seluruh script inline yang sebelumnya disamarkan (obfuscated) dengan array hex menjadi kode JavaScript/jQuery modern yang bersih, efisien, dan mudah dipelihara.

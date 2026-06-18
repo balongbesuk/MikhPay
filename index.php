@@ -511,11 +511,64 @@ elseif ($ppp == "edit-profile") {
 <?php
 if ($hotspot == "dashboard" || substr(end(explode("/", $url)), 0, 8) == "?session") {
   echo '<script>
-    $("#r_3").load("./dashboard/aload.php?session=' . $session . '&load=logs #r_3");  
+    window.cpuHistory = window.cpuHistory || [];
+    window.memHistory = window.memHistory || [];
+    
+    function drawSparkline(canvasId, data, color) {
+        var canvas = document.getElementById(canvasId);
+        if (!canvas) return;
+        var ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        if (data.length < 2) return;
+        
+        var max = Math.max.apply(Math, data);
+        var min = Math.min.apply(Math, data);
+        if (max === min) { max += 1; min -= 1; }
+        var range = max - min;
+        
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 1.5;
+        ctx.lineJoin = "round";
+        
+        for (var i = 0; i < data.length; i++) {
+            var x = (i / (data.length - 1)) * canvas.width;
+            var y = canvas.height - ((data[i] - min) / range) * (canvas.height - 4) - 2;
+            if (i === 0) {
+                ctx.moveTo(x, y);
+            } else {
+                ctx.lineTo(x, y);
+            }
+        }
+        ctx.stroke();
+    }
+    
+    function updateSparklines() {
+        var cpuEl = document.getElementById("cpuVal");
+        var memEl = document.getElementById("memVal");
+        if (cpuEl) {
+            var cpuVal = parseFloat(cpuEl.getAttribute("data-val") || 0);
+            window.cpuHistory.push(cpuVal);
+            if (window.cpuHistory.length > 15) window.cpuHistory.shift();
+            drawSparkline("cpuSparkline", window.cpuHistory, "#008BC9");
+        }
+        if (memEl) {
+            var memVal = parseFloat(memEl.getAttribute("data-val") || 0);
+            window.memHistory.push(memVal);
+            if (window.memHistory.length > 15) window.memHistory.shift();
+            drawSparkline("memorySparkline", window.memHistory, "#4dbd74");
+        }
+    }
+
+    $("#r_3").load("./dashboard/aload.php?session=' . $session . '&load=logs #r_3");
+    setTimeout(updateSparklines, 500);
+
     var interval1 = "' . ($areload * 1000) . '";
     var dashboard = setInterval(function() {
       
-    $("#r_1").load("./dashboard/aload.php?session=' . $session . '&load=sysresource #r_1"); 
+    $("#r_1").load("./dashboard/aload.php?session=' . $session . '&load=sysresource #r_1", function() {
+        updateSparklines();
+    }); 
     $("#r_2").load("./dashboard/aload.php?session=' . $session . '&load=hotspot #r_2"); 
     $("#r_3").load("./dashboard/aload.php?session=' . $session . '&load=logs #r_3"); 
     

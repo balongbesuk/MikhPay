@@ -371,9 +371,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
     <!-- Translucent Navigation Bar -->
     <header class="nav-header">
         <div class="wrapper">
-            <a href="#" class="logo">
-                <i class="fa fa-wifi"></i> GalaxyNet
-            </a>
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="#" class="logo">
+                    <i class="fa fa-wifi"></i> GalaxyNet
+                </a>
+                <span class="status-indicator-dot <?= $router_online ? 'online' : 'offline' ?>" title="<?= $router_online ? 'GalaxyNet Server: Online' : 'GalaxyNet Server: Offline' ?>"></span>
+            </div>
             <nav class="menu-links">
                 <a href="#home">Home</a>
                 <a href="#paket">Paket Internet</a>
@@ -422,9 +425,35 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
 
     <!-- Products Catalog Section -->
     <section class="products wrapper" id="paket">
+        <?php
+        $checkout_step = 1;
+        if ($success_voucher) {
+            $checkout_step = 3;
+        } elseif (!empty($snap_token)) {
+            $checkout_step = 2;
+        }
+        ?>
         <div class="section-header">
             <h2>Pilihan Paket Voucher</h2>
             <p>Pilih paket internet terbaik untuk menemani aktivitas harian Anda</p>
+        </div>
+
+        <!-- Checkout Stepper Tracker -->
+        <div class="checkout-stepper">
+            <div class="step <?= ($checkout_step === 1) ? 'active' : (($checkout_step > 1) ? 'completed' : '') ?>">
+                <div class="step-num"><?= ($checkout_step > 1) ? '<i class="fa fa-check"></i>' : '1' ?></div>
+                <span class="step-label">Pilih Paket</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step <?= ($checkout_step === 2) ? 'active' : (($checkout_step > 2) ? 'completed' : '') ?>">
+                <div class="step-num"><?= ($checkout_step > 2) ? '<i class="fa fa-check"></i>' : '2' ?></div>
+                <span class="step-label">Pembayaran</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step <?= ($checkout_step === 3) ? 'active' : '' ?>">
+                <div class="step-num">3</div>
+                <span class="step-label">Hubungkan</span>
+            </div>
         </div>
 
         <?php if (!empty($error_msg)): ?>
@@ -525,8 +554,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                 }
             </script>
         <?php else: ?>
-            <!-- Grid Produk -->
-            <div class="products-grid">
+            <!-- Layout Switcher Buttons -->
+            <div class="layout-toggle-container">
+                <button type="button" id="btnGridView" class="layout-toggle">
+                    <i class="fa fa-th"></i> Grid View
+                </button>
+                <button type="button" id="btnCarouselView" class="layout-toggle">
+                    <i class="fa fa-columns"></i> Carousel View
+                </button>
+            </div>
+            <!-- Grid / Carousel Produk -->
+            <div class="products-wrapper products-grid">
                 <?php if ($router_online && !empty($profiles)): ?>
                     <!-- List paket dinamis dari router yang sedang online -->
                     <?php foreach ($profiles as $prof): ?>
@@ -861,5 +899,45 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
     <?php endif; ?>
 
     <script src="js/frontpage.js"></script>
+    <!-- View Switcher Controller -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var btnGrid = document.getElementById("btnGridView");
+            var btnCarousel = document.getElementById("btnCarouselView");
+            var wrapper = document.querySelector(".products-wrapper");
+
+            if (btnGrid && btnCarousel && wrapper) {
+                function setGrid() {
+                    wrapper.className = "products-wrapper products-grid";
+                    btnGrid.classList.add("active");
+                    btnCarousel.classList.remove("active");
+                    localStorage.setItem("mikhmon_vcr_layout", "grid");
+                }
+                function setCarousel() {
+                    wrapper.className = "products-wrapper products-carousel";
+                    btnCarousel.classList.add("active");
+                    btnGrid.classList.remove("active");
+                    localStorage.setItem("mikhmon_vcr_layout", "carousel");
+                }
+
+                btnGrid.addEventListener("click", setGrid);
+                btnCarousel.addEventListener("click", setCarousel);
+
+                // Initialize layout (default carousel on mobile, grid on desktop)
+                var stored = localStorage.getItem("mikhmon_vcr_layout");
+                if (stored === "grid") {
+                    setGrid();
+                } else if (stored === "carousel") {
+                    setCarousel();
+                } else {
+                    if (window.innerWidth <= 768) {
+                        setCarousel();
+                    } else {
+                        setGrid();
+                    }
+                }
+            }
+        });
+    </script>
 </body>
 </html>

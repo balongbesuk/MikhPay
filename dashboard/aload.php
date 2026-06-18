@@ -96,13 +96,22 @@ include('../lang/'.$langid.'.php');
       <div class="box bmh-75 box-bordered">
         <div class="box-group">
           <div class="box-group-icon"><i class="fa fa-server"></i></div>
-              <div class="box-group-area">
-                <span >
-                    <?php
-                    echo $_cpu_load." : " . $resource['cpu-load'] . "%<br/>
-                    ".$_free_memory." : " . formatBytes($resource['free-memory'], 2) . "<br/>
-                    ".$_free_hdd." : " . formatBytes($resource['free-hdd-space'], 2)
-                    ?>
+              <div class="box-group-area" style="width: 100%;">
+                <span style="display: block; width: 100%;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <span><?= $_cpu_load ?>: <strong id="cpuVal" data-val="<?= $resource['cpu-load'] ?>"><?= $resource['cpu-load'] ?>%</strong></span>
+                        <canvas id="cpuSparkline" width="80" height="18" style="vertical-align: middle;"></canvas>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                        <?php 
+                        $total_mem = isset($resource['total-memory']) ? $resource['total-memory'] : 1;
+                        if ($total_mem <= 0) $total_mem = 1;
+                        $mem_pct = round((($total_mem - $resource['free-memory']) / $total_mem) * 100);
+                        ?>
+                        <span><?= $_free_memory ?>: <strong id="memVal" data-val="<?= $mem_pct ?>"><?= formatBytes($resource['free-memory'], 1) ?></strong></span>
+                        <canvas id="memorySparkline" width="80" height="18" style="vertical-align: middle;"></canvas>
+                    </div>
+                    <div><?= $_free_hdd ?>: <?= formatBytes($resource['free-hdd-space'], 1) ?></div>
                 </span>
                 </div>
               </div>
@@ -258,10 +267,29 @@ include('../lang/'.$langid.'.php');
       echo "</td>";
       echo "<td>";
       if (count($mess) > 6) {
-        echo str_replace("trying to", "", $mess[7] . " " . $mess[8] . " " . $mess[9] . " " . $mess[10]);
+        $action_msg = $mess[7] . " " . $mess[8] . " " . $mess[9] . " " . $mess[10];
       } else {
-        echo str_replace("trying to", "", $mess[2] . " " . $mess[3] . " " . $mess[4] . " " . $mess[5]);
+        $action_msg = $mess[2] . " " . $mess[3] . " " . $mess[4] . " " . $mess[5];
       }
+      $action_msg = trim(str_replace("trying to", "", $action_msg));
+      $msg_lower = strtolower($action_msg);
+      $badge = '';
+      if (strpos($msg_lower, 'logged in') !== false) {
+          $badge = '<span class="log-badge badge-success"><i class="fa fa-sign-in"></i> Logged In</span>';
+      } elseif (strpos($msg_lower, 'logged out') !== false) {
+          $badge = '<span class="log-badge badge-danger"><i class="fa fa-sign-out"></i> Logged Out</span>';
+      } elseif (strpos($msg_lower, 'trying') !== false || strpos($msg_lower, 'login') !== false) {
+          if (strpos($msg_lower, 'failed') !== false) {
+              $badge = '<span class="log-badge badge-warning"><i class="fa fa-warning"></i> Failed</span>';
+          } else {
+              $badge = '<span class="log-badge badge-info"><i class="fa fa-spinner fa-spin"></i> Trying...</span>';
+          }
+      } elseif (strpos($msg_lower, 'timeout') !== false) {
+          $badge = '<span class="log-badge badge-dark"><i class="fa fa-clock-o"></i> Timeout</span>';
+      } else {
+          $badge = '<span class="log-badge badge-default">' . htmlspecialchars($action_msg) . '</span>';
+      }
+      echo $badge;
       echo "</td>";
     } else {
     }
