@@ -1,6 +1,6 @@
-# Mikhmon v3 - Modernized with REST API & Midtrans QRIS
+# MikhTrans v1.1 - Modernized with REST API & Midtrans QRIS
 
-Mikhmon v3 (Mikrotik Hotspot Monitor) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal dan **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Midtrans Payment Gateway**.
+MikhTrans v1.1 (Mikrotik Hotspot Monitor & Transaction System) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal dan **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Midtrans Payment Gateway**.
 
 Aplikasi ini dikembangkan dan dimodifikasi dari kode sumber asli [Mikhmon v3 oleh Laksamadi Guko](https://github.com/laksa19/mikhmonv3).
 
@@ -25,23 +25,37 @@ Aplikasi ini dikembangkan dan dimodifikasi dari kode sumber asli [Mikhmon v3 ole
 
 ---
 
-## 🛠️ Panduan Konfigurasi
+## 🛠️ Panduan Konfigurasi & Instalasi
 
-### 1. Pengaturan Kredensial & API Key
-Buka file `include/config.php` dan sesuaikan parameter berikut:
-```php
-// API Key untuk mengamankan endpoint REST API (api.php)
-$mikhmon_api_key = "mikhmon_api_key_12345";
+### 1. Salin Berkas Lingkungan (.env)
+Buat file baru bernama `.env` di root direktori Mikhmon (sejajar dengan `index.php`). Salin dan sesuaikan parameter berikut:
+```env
+# API Key untuk mengamankan REST API (api.php)
+MIKHMON_API_KEY=mikhmon_api_key_12345
 
-// Kredensial Midtrans (Dapatkan dari Dashboard Midtrans Anda)
-$midtrans_server_key = "SB-Mid-server-YOUR_SANDBOX_SERVER_KEY";
-$midtrans_client_key = "SB-Mid-client-YOUR_SANDBOX_CLIENT_KEY";
-$midtrans_is_production = false; // Ubah ke true jika sudah live/produksi
+# Kredensial Midtrans (Dapatkan dari Dashboard Midtrans Anda)
+MIDTRANS_SERVER_KEY=SB-Mid-server-YOUR_SANDBOX_SERVER_KEY
+MIDTRANS_CLIENT_KEY=SB-Mid-client-YOUR_SANDBOX_CLIENT_KEY
+MIDTRANS_IS_PRODUCTION=false # Ubah ke true jika sudah live/produksi
+
+# WebSocket (Pusher / Soketi) - Opsional untuk status lunas real-time instan
+WS_APP_ID=YOUR_PUSHER_APP_ID
+WS_APP_KEY=YOUR_PUSHER_KEY
+WS_APP_SECRET=YOUR_PUSHER_SECRET
+WS_CLUSTER=ap1
+
+# Konfigurasi Tambahan Soketi (Hanya jika menggunakan server WebSocket sendiri)
+# WS_HOST=your-soketi-host.com
+# WS_PORT=6001
+# WS_SCHEME=https
 ```
 
-### 2. URL Halaman Utama
+### 2. Pengaturan Sesi & MikroTik
+Kredensial MikroTik, nama sesi, IP, user, password, dan dnsname diatur secara normal melalui **Web Admin Panel** Mikhmon pada menu **Admin Settings > Add Router / Edit Settings**. Perubahan tersimpan otomatis di berkas `include/config.php` tanpa mempengaruhi variabel environment Anda.
+
+### 3. URL Halaman Utama
 *   **Web Admin Panel**: `http://172.16.11.91/admin.php`
-*   **Portal Mandiri Pelanggan**: `http://172.16.11.91/buy.php`
+*   **Portal Mandiri Pelanggan**: `http://172.16.11.91/` (Mengarah ke `frontpage.php`)
 *   **REST API**: `http://172.16.11.91/api.php`
 *   **Notification Webhook**: `http://172.16.11.91/notification.php`
 
@@ -105,3 +119,9 @@ Gunakan header `X-API-Key` atau parameter query `api_key` untuk otentikasi.
 *   **Whitelisting URL Parameter**: Proteksi tampering parameter `?session=` agar hanya memuat session MikroTik yang valid.
 *   **.htaccess Folder Lock**: Pembuatan otomatis file `.htaccess` berisi `Deny from all` di dalam direktori `voucher/` untuk mencegah download ilegal file log transaksi.
 *   **Auto Garbage Collector**: Penghapusan otomatis file log JSON transaksi yang berumur lebih dari 2 hari (berjalan acak dengan probabilitas 5% saat halaman dimuat).
+
+### 📡 Notifikasi WebSocket & Isolasi Konfigurasi (Real-time & Stability)
+*   **Integrasi Pusher & Soketi**: Menyediakan dukungan WebSocket real-time terintegrasi untuk mendeteksi status transaksi sukses secara instan tanpa delay.
+*   **Hybrid Fallback Mechanism**: Kecepatan mendeteksi pembayaran lunas ditingkatkan dengan mode socket, dan otomatis beralih ke HTTP Polling (5 detik) jika sambungan websocket gagal atau terputus.
+*   **Pemisahan Berkas Konfigurasi (`env_config.php`)**: Memindahkan variabel environment dan helper audit log dari `include/config.php` ke file terpisah [env_config.php](file:///d:/mikhmonv3ws/Mikhmon%20Server/mikhmon/include/env_config.php). Ini mencegah kesalahan parsing daftar sesi router di halaman admin akibat parameter eksternal.
+

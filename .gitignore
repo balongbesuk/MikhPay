@@ -1,5 +1,6 @@
 # Ignore local server configurations containing MikroTik and Midtrans credentials
 /include/config.php
+.env
 
 # Ignore customer transaction log files
 /voucher/trans-*.json
