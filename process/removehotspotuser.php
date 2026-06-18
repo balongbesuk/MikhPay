@@ -35,21 +35,25 @@ if ($removehotspotusers != "") {
 			"?name" => "$name",
 		));
 
-		$scr = $getscr[0]['.id'];
+		$scr = isset($getscr[0]['.id']) ? $getscr[0]['.id'] : '';
 
 		$getsch = $API->comm("/system/scheduler/print", array(
 			"?name" => "$name",
 		));
 
-		$sch = $getsch[0]['.id'];
+		$sch = isset($getsch[0]['.id']) ? $getsch[0]['.id'] : '';
 
-		$API->comm("/system/script/remove", array(
-			".id" => "$scr",
-		));
+		if (!empty($scr)) {
+			$API->comm("/system/script/remove", array(
+				".id" => "$scr",
+			));
+		}
 
-		$API->comm("/system/scheduler/remove", array(
-			".id" => "$sch",
-		));
+		if (!empty($sch)) {
+			$API->comm("/system/scheduler/remove", array(
+				".id" => "$sch",
+			));
+		}
 
 		$API->comm("/ip/hotspot/user/remove", array(
 			".id" => "$uids[$i]",
@@ -77,21 +81,25 @@ if ($removehotspotusers != "") {
 		"?name" => "$name",
 	));
 
-	$scr = $getscr[0]['.id'];
+	$scr = isset($getscr[0]['.id']) ? $getscr[0]['.id'] : '';
 
 	$getsch = $API->comm("/system/scheduler/print", array(
 		"?name" => "$name",
 	));
 
-	$sch = $getsch[0]['.id'];
+	$sch = isset($getsch[0]['.id']) ? $getsch[0]['.id'] : '';
 
-	$API->comm("/system/script/remove", array(
-		".id" => "$scr",
-	));
+	if (!empty($scr)) {
+		$API->comm("/system/script/remove", array(
+			".id" => "$scr",
+		));
+	}
 
-	$API->comm("/system/scheduler/remove", array(
-		".id" => "$sch",
-	));
+	if (!empty($sch)) {
+		$API->comm("/system/scheduler/remove", array(
+			".id" => "$sch",
+		));
+	}
 
 	$API->comm("/ip/hotspot/user/remove", array(
 		".id" => "$removehotspotuser",

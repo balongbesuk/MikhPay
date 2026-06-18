@@ -1,0 +1,10 @@
+<?php 
+if(substr($_SERVER["REQUEST_URI"], -10) == "config.php"){header("Location:./");}; 
+$data['mikhmon'] = array ('1'=>'mikhmon<|<mikhmon','mikhmon>|>aWNlbA==');
+$mikhmon_api_key = "YOUR_MIKHMON_API_KEY_HERE";
+$midtrans_server_key = "YOUR_MIDTRANS_SERVER_KEY_HERE"; 
+$midtrans_client_key = "YOUR_MIDTRANS_CLIENT_KEY_HERE"; 
+$midtrans_is_production = false;
+
+// Kredensial MikroTik Hotspot (ganti IP, admin, password_hash dengan milik Anda)
+$data['Hotspot'] = array ('1'=>'Hotspot!192.168.1.10','Hotspot@|@admin','Hotspot#|#PASSWORD_HASH','Hotspot%Voucher Hotspot','Hotspot^mywifi.id','Hotspot&Rp','Hotspot*10','Hotspot(1','Hotspot)','Hotspot=10','Hotspot@!@enable');

@@ -30,7 +30,8 @@ $url = $_SERVER['REQUEST_URI'];
 $session = $_GET['session'];
 
 if (!isset($_SESSION["mikhmon"])) {
-  header("Location:./admin.php?id=login");
+  include_once(__DIR__ . '/frontpage.php');
+  exit;
 } elseif (empty($session)) {
   echo "<script>window.location='./admin.php?id=sessions'</script>";
 } else {

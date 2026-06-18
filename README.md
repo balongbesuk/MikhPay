@@ -1,214 +1,105 @@
-### MIKHMON V3
+# Mikhmon v3 - Modernized with REST API & Midtrans QRIS
 
-#### Download update.zip
-[update.zip](https://raw.githubusercontent.com/laksa19/laksa19.github.io/master/download/update.zip){:target="_blank"}
+Mikhmon v3 (Mikrotik Hotspot Monitor) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal dan **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Midtrans Payment Gateway**.
 
-### Changelog
+---
 
-#### Update 06-30 2021 V3.20
-1. Perbaikan typo script profile ```on-login```.
-	- Silakan update user profile dari Mikhmon, dengan cara membuka tiap user profile, kemudian klik Save.
+## 🚀 Fitur Baru
 
-#### Update 24-01 2021
-1. Added docker-compose.yml for test-lab. added mikrotik routeros image.
-	- git clone project
-	- open project folder in terminal
-	- run terminal command --> docker-compose up -d
-	- go to localhost:8081. write ip address 192.168.88.1. write password 12345. apply configuration.
-	- go to localhost:8080. user:mikhmon password:1234. add router. ip address 172.27.0.7, user:admin, password: 12345. write 'test' other inputs.last click save button
-	- for stop --> docker-compose down
-	
-#### Update 09-08 2020 V3.19
-1. Penambahan jumlah sisa voucher di "option comment" laman user list.
+1.  **Portal Pembelian Mandiri (`buy.php`)**:
+    *   Tampilan modern (Glassmorphism & Dark Mode).
+    *   Integrasi **Midtrans Snap SDK** untuk pembayaran instan via **QRIS**, Virtual Account (BCA, Mandiri, BNI, BRI), dan e-Wallet.
+    *   *Real-time Polling* otomatis saat pembayaran lunas untuk langsung menampilkan kode voucher.
+    *   Tombol salin kode voucher sekali klik.
+2.  **REST API Endpoint (`api.php`)**:
+    *   Akses aman dengan **Static API Key**.
+    *   Mendapatkan daftar profil hotspot beserta detail harga.
+    *   Membuat/generate voucher baru secara programatis dari sistem luar (misal: Website BUMDes atau sistem POS).
+3.  **Webhook Notification Handler (`notification.php`)**:
+    *   Verifikasi keamanan data notifikasi menggunakan **Signature Key** Midtrans SHA512.
+    *   Pemrosesan otomatis pembuatan voucher di MikroTik secara *background* setelah pembayaran diverifikasi lunas.
+4.  **PHP 8+ Compatibility**:
+    *   Perbaikan sintaks dan penanganan enkripsi/dekripsi agar kompatibel dengan PHP versi 8.x.
 
-#### Update 04-07 2020
-1. Added Dockerfile for test
-	- git clone project
-	- docker build --tag mikhmonv3 .
-	- docker run --rm -i -t -p 8080:80 --name="mkhmn1" mikhmonv3
-	- go to localhost:8080
+---
 
-#### Update 08-16 2019 V3.18
-1. Penambahan harga jual. (Harga yang tampil di voucher)
+## 🛠️ Panduan Konfigurasi
 
-	*update user profile isi harga jual(selling price) dan update juga template vouchernya, silakan download di [website](https://laksa19.github.io/?mikhmon/v3/voucher)
-	
-2. Untuk pengguna Termux, uninstall Mikhmon kemudian install lagi. 
+### 1. Pengaturan Kredensial & API Key
+Buka file `include/config.php` dan sesuaikan parameter berikut:
+```php
+// API Key untuk mengamankan endpoint REST API (api.php)
+$mikhmon_api_key = "mikhmon_api_key_12345";
 
-#### Update 08-06 2019 V3.17
-1. Perbaikan live report.
-2. Perbaikan generate users.
-3. Penambahan idle tileout (auto logout).
-4. Penambahan ping IP Mikrotik di session settings.
-
-#### Update 07-14 2019 V3.16
-1. Penambahan address pool di add user profile dan edit user profile
-2. Notif new update di admin settings
-
-#### Update 07-02 2019 V3.15
-1. Update RouterOS API for support v6.45.x
-
-#### Update 05-09 2019 V3.14
-1. Perbaikan time zone untuk print / quick print.
-2. Penambahan input comment setelah comment user berubah menjadi tanggal expired.
-
-	![314](https://raw.githubusercontent.com/laksa19/laksa19.github.io/master/img/3.14.gif)
-
-#### Update 04-06 2019 V3.13 r7
-1. Perbaikan add user profile (gagal membuat monitor profile di scheduler).
-2. Perbaikan edit profile (remove monitor profile untuk expired mode none).
-3. Penambahan indikator monitor profile di laman list user profile dan edit user profile (Green = Monitor Profile aktif, Orange = Monitor Profile tidak aktif).
-
-	``` Monitor Profile adalah scheduler yang mengecek expired user ```
-
-	![indicator](https://raw.githubusercontent.com/laksa19/laksa19.github.io/master/img/profile-indicator.png)
-
-#### Update 04-02 2019 V3.13 r6
-1. Perbaikan penghitungan tanggal dan jam monitor user profile. 
-2. Perubahan global function ke local function. 
-
-	Silakan diupdate kembali user profilenya. (buka user profile dari Mikhmon, simpan kembali masing-masing user profile).
-
-	Setelah update user profile hapus semua environment (system -> scripts -> environment).
-
-	![delenvironment](https://raw.githubusercontent.com/laksa19/laksa19.github.io/master/img/delenvironment.gif)
-
-	Link Video [Update Profile v3.13 r6](https://drive.google.com/file/d/1ezFG0yxr3LOTgymH_ivUulF8MVevO2-V/view?usp=sharing)
-
-#### Update 03-31 2019 V3.13 r5
-1. Perbaikan user profile. (user expired dipergantian bulan). Silakan diupdate kembali user profilenya.
-	[https://github.com/laksa19/mikhmonv3/issues/5](https://github.com/laksa19/mikhmonv3/issues/5)
-
-#### Update 03-30 2019 V3.13 r4
-1. Perbaikan edit user.
-2. Penambahan nama profile di filter comment (user list).
-3. Penambahan hapus expired user (klik expired pada kolom comment user list).
-4. Perbaikan print laporan penjualan.
-
-#### Update 03-27 2019 V3.13 r3
-1. Perbaikan edit profile.
-2. Perbaikan userlist (dobel comment di pilihan/filter user berdasarkan comment).
-3. Penambahan changelog di laman About.
-
-#### Update 03-22 2019 V3.13 r2
-1. Perbaikan user profile, untuk data penjualan dobel (user 2 digit angka). Silakan diupdate kembali user profilenya.
-
-#### Update 03-21 2019 V3.13 r1
-1. Perbaikan user profile, untuk data penjualan tidak muncul di Mikhmon. Silakan diupdate kembali user profilenya.
-
-#### Update 03-20 2019 V3.13
-1. Perbaikan QR Code. Tidak lagi menggunakan Google chart API.
-2. Perubahan variable QR Code menjadi <?= $qrcode ?> tanpa tag ```<img>```. 
-	  
-   ! Perlu penyesuaian untuk template hotspot, ubah 
-  ```<img src="<?= $qrcode ?>" >``` menjadi ```<?= $qrcode ?>``` tanpa tag ```<img>```. Bagi yang menggunakan template default bisa reset template default untuk menyesuaikan QR Code.
-	  
-   Untuk template voucher yang lain bisa menyesuaikan ukuran QR Code dapat menambahkan style sebagai berikut.
-   
-```html
-<style>
-  .qrcode{
-  height:80px;
-  width:80px;
-  }
-</style>
+// Kredensial Midtrans (Dapatkan dari Dashboard Midtrans Anda)
+$midtrans_server_key = "SB-Mid-server-YOUR_SANDBOX_SERVER_KEY";
+$midtrans_client_key = "SB-Mid-client-YOUR_SANDBOX_CLIENT_KEY";
+$midtrans_is_production = false; // Ubah ke true jika sudah live/produksi
 ```
 
-![newqr](https://raw.githubusercontent.com/laksa19/laksa19.github.io/master/img/newqr.gif)
-   
-3. Penghapusan Grace period. 
-4. Pehapusan info start dan end user.
-5. Perubahan mode expired. 
-	
-	Mode baru ini tidak lagi menggunakan scheduler per user. Sebagai gantinya informasi tanggal expired akan dipindahkan ke comment user setelah login. Silakan update user profile agar dapat menggunakan mode expired yang baru. Pengecekan expired user yang login sebelum user profile diupdate atau yang masih menggunakan mode expired versi 3.12, bisa melalui scheduler di Mikhmon.
+### 2. URL Halaman Utama
+*   **Web Admin Panel**: `http://172.16.11.91/admin.php`
+*   **Portal Mandiri Pelanggan**: `http://172.16.11.91/buy.php`
+*   **REST API**: `http://172.16.11.91/api.php`
+*   **Notification Webhook**: `http://172.16.11.91/notification.php`
 
-    ! Untuk yang menggunakan expired mode dengan record jangan update user profile yang sudah ada, sampai user dengan profile tersebut sudah habis. Sebaiknya buat user profile baru dan generate user baru dengan user profile tersebut. Apa yang terjadi jika diupdate? Report penjualan akan menjadi bertambah untuk masing-user yang sudah login. Tapi kalau tidak ada masalah dengan data penjualan yang double, silakan update user profilenya.
+---
 
-    ! User yang login sebelum user profile diupdate akan tetap menggunakan sistem atau mode expired yang lama.
-    
-    ! Jangan hapus atau mengganti comment user jika sudah menggunakan format tanggal sebagai berikut :
- 		
-	```mar/20/2019 16:05:11```.
+## 📡 Integrasi & Notifikasi (Webhook)
 
-6. Cek status voucher tidak bisa untuk user yang masih menggunakan profile dengan mode expired versi 3.12.
+Agar kode voucher terbuat secara otomatis di MikroTik setelah pelanggan melakukan pembayaran QRIS/VA:
+1.  **Server Hosting/IP Publik**:
+    Daftarkan URL notifikasi Anda di dashboard Midtrans pada menu **Settings > Payment > Notification URL**:
+    `http://[domain-anda]/notification.php`
+2.  **Server Lokal (Intranet)**:
+    Gunakan tunnel (seperti Ngrok) untuk meneruskan port web server lokal Anda ke internet.
+    ```bash
+    ngrok http 80
+    ```
+    Dapatkan URL HTTPS dari Ngrok (misal: `https://abcd-123.ngrok-free.app`), lalu daftarkan di dashboard Midtrans:
+    `https://abcd-123.ngrok-free.app/notification.php`
 
-#### Update 03-12 2019 V3.12 r1
-1. Perbaikan user profile. Meminimalisir user terhapus sesaat setelah login. !Silakan update user profile dari Mikhmon.
+---
 
-#### Update 03-08 2019 V3.12
-1. Perbaikan remove session.
-2. Penambahan print untuk report
-3. Penambahan filter berdasarkan comment dan range tanggal. (Mikhmon Online).
+## 💻 Panduan REST API (`api.php`)
 
-#### Update 02-14 2019 V3.11
-1. Perbaikan dashboard blank.
-2. Penggantian Print Bluetooth dengan Quick Printer
-3. Penambahan Quick Print. Panduan, https://youtu.be/KGAsHU0qOBA
+Gunakan header `X-API-Key` atau parameter query `api_key` untuk otentikasi.
 
-#### Update 02-06 2019 V3.10
-1. Perbaikan delete logo.
-2. Penambahan pilihan bahasa.
-3. Dukungan untuk print voucher dari Android. Telah diuji untuk Zjiang Printer Thermal Bluetooth - ZJ-5802.
-Panduan, https://laksa19.github.io/printBT.html
+### A. Mendapatkan Daftar Paket/Profil
+*   **Endpoint**: `GET /api.php`
+*   **Parameter**:
+    *   `action=profiles`
+    *   `session=Hotspot` (Nama sesi router Anda)
+*   **Contoh Request**:
+    `GET http://172.16.11.91/api.php?action=profiles&session=Hotspot&api_key=mikhmon_api_key_12345`
 
-#### Update 02-01 2019 V3.9 r3
-1. Perbaaikan cek empty session laman admin
-2. Perbaikan resume report, untuk menampilkan resume bulan sebelumnya.
+### B. Membuat Voucher Baru
+*   **Endpoint**: `POST /api.php`
+*   **Parameter POST**:
+    *   `action=generate`
+    *   `session=Hotspot`
+    *   `profile=Profil_1Jam_2K` (Nama profil hotspot di MikroTik)
+    *   `qty=1` (Jumlah voucher yang ingin dibuat)
 
-#### Update 01-29 2019 V3.9 r2
-1. Perbaaikan load time laman dashboard.
-2. Perbaikan laman uploaad logo.
+---
 
-#### Update 01-29 2019 V3.9 r1
-1. Perbaikan template voucher editor.
-2. Penambahan short tabel.
-3. Perbaikan reset hotspot user.
+## 📝 Changelog (Pembaruan Terbaru)
 
-#### Update 01-27-2019 V3.9
-1. Perbaikan CSS, penambahan tema Blue dan Green.
-2. Cek Koneksi sebelum masuk dashboard dan berganti session.
-3. Penambahan Indikator session Mikhmon yang aktif.
-4. Penambahan fitur Resume Report.
+### 🎨 Tampilan & Navigasi (Mobile First)
+*   **Halaman Depan Utama (`index.php` & `frontpage.php`)**: Pengunjung non-admin sekarang diarahkan langsung ke halaman depan berbayar (`frontpage.php`) saat mengakses root directory `index.php`.
+*   **Premium Light Theme Overhaul**: Desain antarmuka diubah sepenuhnya ke tema terang premium (Light Theme) berbasis HSL (Soft whites, slate text, indigo & emerald accents).
+*   **Bottom Navigation Bar (Mobile)**: Penambahan bilah navigasi bawah statis di HP dengan pelacakan scroll dinamis yang menyorot tab aktif (*Beranda, Beli Voucher, Kebijakan, Kontak*).
+*   **Grid Layout Fix**: Penataan letak grid responsive 1 kolom di HP untuk mencegah card melebar melewati batas layar.
 
-#### Update 01-22-2019 V3.8
-1. Perbaikan Theme.
-2. Traffic dashboard dengan Highchart.
-3. Penambahan fitur Traffic Monitor.
+### ⚡ Fitur Transaksi & UX (Resilience)
+*   **Tombol "Hubungkan Sekarang" (Auto-Login)**: Menampilkan tautan otomatis ke login page hotspot MikroTik berdasarkan konfigurasi `dnsname` ketika voucher lunas.
+*   **Pemulihan Checkout (`localStorage`)**: Transaksi aktif di-caching di browser pembeli. Jika tab tertutup atau ter-refresh, sistem memunculkan banner melayang *"Pembayaran Tertunda"* untuk melanjutkan bayar atau membatalkannya.
+*   **Edukasi Bayar QRIS**: Penambahan informasi tips cara membayar QRIS satu HP (screenshot QR & upload e-wallet).
+*   **Limit Expire QRIS (10 Menit)**: Midtrans Snap diatur kadaluarsa otomatis dalam 10 menit agar tidak menumpuk status transaksi menggantung.
 
-#### Update 01-17-2019 V3.7
-1. Penambahan Light Theme.
-2. Pennambahan menu penngganttian tema di navbar.
-
-#### Update 12-21-2018 V3.6 r1
-1. Penambahan Live Report
-
-#### Update 12-1-2018 V3.6
-1. Penambahan progrss bar.
-2. Enable price use decimal (.).
-3. Filter report by prefix.
-4. Export user to script.
-5. Export user to csv.
-6. Penggantian kolom print menjadi tombol dan penambahan pilihan comment di user list.
-7. Perubahan cara print voucher dari user list.
-6. Beautify template editor dan penambahan tombol view voucher.
-
-#### Update 11-9-2018 V3.5
-1. Penambahan chart traffic. Sesuaikan Max Rx dan Tx di Settings.
-2. Penambahan pilihan filter di Report dan User Log. 
-
-#### Update 10-30-2018 V3.4
-1. Penambahan cek spasi di nama user profile.
-2. Penambahan user profile dan comment di Report. Yang perlu dilakukan adalah update user profile dari Mikhmon, buka user profile yang ingin diupdate kemudian klik Save. 
-3. Penambahan filter berdasarkan server hotspot di Hotspot Active.
-
-#### Update 10-24-2018 V3.3
-1. Perubahan struktur menu.
-2. Penambahan Hotspot Cookie dan System Scheduler.
-3. Perubahan Generate User. Menghilangkan huruf l,L,q,Q,o,O serta angka 1 dan 0.
-4. Perbaikan remove user.
-
-#### Update 09-10-2018 V3.2
-1. Penambahan kolom Time Left di Hotspot Active.
-2. Penambahan Parent Queue di Add dan Edit User Profile (Bagaimana cara penggunaannya? silakan pelajari Simple Queue Mikrotik).
-3. Penyesuaian format Data Limit user menjadi Byte Binary ([base 2](https://www.gbmb.org/gigabytes)).
-4. Reformat Uptime.
+### 🛡️ Audit & Penguatan Keamanan (Security Hardening)
+*   **HTTP Security Headers**: Menambahkan header keamanan (`X-Frame-Options`, `X-Content-Type-Options`, `X-XSS-Protection`) di halaman depan.
+*   **Checkout POST Cooldown**: Batasan jeda klik checkout 10 detik via session PHP untuk memitigasi serangan spam transaksi.
+*   **Whitelisting URL Parameter**: Proteksi tampering parameter `?session=` agar hanya memuat session MikroTik yang valid.
+*   **.htaccess Folder Lock**: Pembuatan otomatis file `.htaccess` berisi `Deny from all` di dalam direktori `voucher/` untuk mencegah download ilegal file log transaksi.
+*   **Auto Garbage Collector**: Penghapusan otomatis file log JSON transaksi yang berumur lebih dari 2 hari (berjalan acak dengan probabilitas 5% saat halaman dimuat).
