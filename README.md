@@ -2,6 +2,8 @@
 
 Mikhmon v3 (Mikrotik Hotspot Monitor) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal dan **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Midtrans Payment Gateway**.
 
+Aplikasi ini dikembangkan dan dimodifikasi dari kode sumber asli [Mikhmon v3 oleh Laksamadi Guko](https://github.com/laksa19/mikhmonv3).
+
 ---
 
 ## 🚀 Fitur Baru
