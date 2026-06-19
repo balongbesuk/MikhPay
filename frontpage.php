@@ -352,6 +352,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GalaxyNet Hotspot - Layanan Internet Wifi Voucher</title>
     <!-- SEO Meta Tags -->
+    <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="description" content="Layanan internet hotspot instan berkecepatan tinggi dengan sistem voucher otomatis via QRIS dan E-Wallet. Cepat, stabil, dan tanpa kontrak bulanan.">
     <meta name="keywords" content="hotspot, voucher hotspot, internet murah, qris hotspot, mikhmon midtrans">
     
