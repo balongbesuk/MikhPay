@@ -1,5 +1,4 @@
 # Ignore local server configurations containing MikroTik and Midtrans credentials
-/include/config.php
 .env
 /data/database.json
 /data/database.php

@@ -18,12 +18,28 @@ if (!function_exists('loadMikhmonEnv')) {
                 // Strip surrounding quotes
                 $value = trim($value, '"\'');
                 if (!array_key_exists($name, $_SERVER) && !array_key_exists($name, $_ENV)) {
-                    putenv(sprintf('%s=%s', $name, $value));
+                    if (function_exists('putenv')) {
+                        putenv(sprintf('%s=%s', $name, $value));
+                    }
                     $_ENV[$name] = $value;
                     $_SERVER[$name] = $value;
                 }
             }
         }
+    }
+}
+
+// Helper function to safely read environment variables
+if (!function_exists('mikhmonEnv')) {
+    function mikhmonEnv($name, $default = null) {
+        if (isset($_ENV[$name])) {
+            return $_ENV[$name];
+        }
+        if (isset($_SERVER[$name])) {
+            return $_SERVER[$name];
+        }
+        $val = function_exists('getenv') ? getenv($name) : false;
+        return $val !== false ? $val : $default;
     }
 }
 
@@ -76,16 +92,16 @@ if (!function_exists('writeAppLog')) {
 }
 
 // Midtrans & WebSocket environment variables config overrides
-$mikhmon_api_key = getenv('MIKHMON_API_KEY') ?: "YOUR_MIKHMON_API_KEY_HERE";
-$midtrans_server_key = getenv('MIDTRANS_SERVER_KEY') ?: "YOUR_MIDTRANS_SERVER_KEY_HERE";
-$midtrans_client_key = getenv('MIDTRANS_CLIENT_KEY') ?: "YOUR_MIDTRANS_CLIENT_KEY_HERE";
-$midtrans_is_production = filter_var(getenv('MIDTRANS_IS_PRODUCTION') ?: false, FILTER_VALIDATE_BOOLEAN);
+$mikhmon_api_key = mikhmonEnv('MIKHMON_API_KEY', "YOUR_MIKHMON_API_KEY_HERE");
+$midtrans_server_key = mikhmonEnv('MIDTRANS_SERVER_KEY', "YOUR_MIDTRANS_SERVER_KEY_HERE");
+$midtrans_client_key = mikhmonEnv('MIDTRANS_CLIENT_KEY', "YOUR_MIDTRANS_CLIENT_KEY_HERE");
+$midtrans_is_production = filter_var(mikhmonEnv('MIDTRANS_IS_PRODUCTION', false), FILTER_VALIDATE_BOOLEAN);
 
-$ws_app_id = getenv('WS_APP_ID') ?: "";
-$ws_app_key = getenv('WS_APP_KEY') ?: "";
-$ws_app_secret = getenv('WS_APP_SECRET') ?: "";
-$ws_cluster = getenv('WS_CLUSTER') ?: "ap1";
+$ws_app_id = mikhmonEnv('WS_APP_ID', "");
+$ws_app_key = mikhmonEnv('WS_APP_KEY', "");
+$ws_app_secret = mikhmonEnv('WS_APP_SECRET', "");
+$ws_cluster = mikhmonEnv('WS_CLUSTER', "ap1");
 
-$ws_host = getenv('WS_HOST') ?: "";
-$ws_port = getenv('WS_PORT') ?: "";
-$ws_scheme = getenv('WS_SCHEME') ?: "";
+$ws_host = mikhmonEnv('WS_HOST', "");
+$ws_port = mikhmonEnv('WS_PORT', "");
+$ws_scheme = mikhmonEnv('WS_SCHEME', "");

@@ -58,7 +58,10 @@ WS_CLUSTER=ap1
 ```
 
 ### 2. Pengaturan Sesi & MikroTik
-Kredensial MikroTik, nama sesi, IP, user, password, dan dnsname diatur secara normal melalui **Web Admin Panel** MikhTrans pada menu **Admin Settings > Add Router / Edit Settings**. Perubahan ini akan tersimpan otomatis di berkas `include/config.php` tanpa mempengaruhi variabel environment Anda.
+Kredensial MikroTik, nama sesi, IP, user, password, dan dnsname diatur secara otomatis melalui **Web Admin Panel** MikhTrans pada menu **Admin Settings > Add Router / Edit Settings**. 
+
+> [!IMPORTANT]
+> Berkas `include/config.php` bawaan repositori sudah dikonfigurasi secara dinamis untuk memuat sesi dari database (`data/database.json`). Anda **TIDAK PERLU** menyalin atau mengubah nama `config.php.example` menjadi `config.php`. Biarkan `include/config.php` bawaan apa adanya agar pengaturan sesi tetap tersimpan otomatis ke database.
 
 ### 3. URL Halaman Utama
 *   **Web Admin Panel**: `http://localhost/admin.php`
