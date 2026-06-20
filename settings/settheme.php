@@ -48,7 +48,10 @@ if (empty($gettheme)) {
 
 } else {
     if (in_array($gettheme, $mtheme)) {
-        include_once('./include/headhtml.php');
+        $is_ajax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        if (!$is_ajax) {
+            include_once('./include/headhtml.php');
+        }
         $gen = '<?php $theme="' . $gettheme . '"; $themecolor="'.$getthemecolor.'";?>';
         $stheme = './include/theme.php';
         $handle = fopen($stheme, 'w') or die('Cannot open file:  ' . $stheme);
@@ -56,12 +59,17 @@ if (empty($gettheme)) {
         fwrite($handle, $data);
         $_SESSION['theme'] = $gettheme;
         $_SESSION['themecolor'] = $getthemecolor;
-        echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>Load '.$gettheme.' theme...</h3></center>';
+        if (!$is_ajax) {
+            echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>Load '.$gettheme.' theme...</h3></center>';
+        }
         echo "<script>window.location='" . $url2 . "'</script>";
         
     } else {
-        include_once('./include/headhtml.php');
-        echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>'.$gettheme.' theme not found...</h3></center>';
+        $is_ajax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+        if (!$is_ajax) {
+            include_once('./include/headhtml.php');
+            echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>'.$gettheme.' theme not found...</h3></center>';
+        }
         echo "<script>window.location='" . $url2 . "'</script>";
     }
 }

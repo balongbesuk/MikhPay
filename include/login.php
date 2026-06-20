@@ -249,7 +249,7 @@ body.login-page {
 .login-form-title {
     font-size: 32px;
     font-weight: 800;
-    color: #ffffff;
+    color: #ffffff !important;
     margin: 0 0 8px 0;
     letter-spacing: -0.5px;
     text-align: left;
@@ -257,7 +257,7 @@ body.login-page {
 
 .login-form-subtitle {
     font-size: 15px;
-    color: #64748b;
+    color: #94a3b8 !important;
     margin: 0 0 40px 0;
     text-align: left;
 }
