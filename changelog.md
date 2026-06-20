@@ -42,6 +42,9 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 - **Theme Toggle Skewed Background Bug**: Memperbaiki distorsi latar belakang miring (jajaran genjang) pada tombol pemilih tema di navbar saat kursor diarahkan (hover), dengan mengisolasi transformasi rotasi 15 derajat secara khusus pada elemen ikon `<i>` alih-alih seluruh kontainer tombol `<a>`.
 - **Teks Input & Ikon Mata Tumpang Tindih (Login Page)**: Memperbaiki masalah di mana ikon pengguna/gembok bertumpang tindih dengan teks placeholder akibat konflik spesifisitas CSS padding, serta menengahkan posisi ikon mata kata sandi secara vertikal (`top: 50%`, `transform: translateY(-50%)`) agar sejajar simetris di sisi kanan input.
 
+### Dihapus
+- **Berkas Sisa Tidak Terpakai**: Menghapus berkas `.profile` (chmod script yang tidak sesuai), `_config.yml` (konfigurasi Jekyll GitHub Pages milik penulis asli), dan `verson.txt` (berkas teks versi duplikat dengan nama typo) yang tidak dibaca oleh aplikasi dan tidak berkaitan dengan fungsionalitas MikhTrans.
+
 
 
 ## [MikhTrans v1.1] - 2026-06-18
