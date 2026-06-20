@@ -24,10 +24,14 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 - **Pelacakan Berkas config.php**: Mengeluarkan `/include/config.php` dari daftar `.gitignore` dan menyertakannya di git agar sistem langsung dapat membaca database sesaat setelah dideploy tanpa manual rename berkas `.example`.
 
 ### Diperbaiki
+- **Akses Forbidden Cetak/Lihat Voucher**: Memperbaiki masalah `403 Forbidden` saat mencoba mengakses cetak/lihat voucher hotspot ([print.php](file:///d:/mikhmonv3ws/Mikhmon Server/mikhmon/voucher/print.php) & [vpreview.php](file:///d:/mikhmonv3ws/Mikhmon Server/mikhmon/voucher/vpreview.php)) di halaman settings, dengan memperbarui aturan keamanan di [voucher/.htaccess](file:///d:/mikhmonv3ws/Mikhmon Server/mikhmon/voucher/.htaccess) agar hanya memblokir file transaksi `*.json` dan tetap mengizinkan eksekusi file PHP.
+- **Eror Dropdown Sesi (Voucher Hotspot)**: Memperbaiki error pada dropdown pemilih sesi di navbar ([menu.php](file:///d:/mikhmonv3ws/Mikhmon Server/mikhmon/include/menu.php)) yang menampilkan variabel internal PHP dari file `config.php` alih-alih nama sesi router yang terdaftar, dengan mengalihkan loop untuk langsung membaca key dari array `$data` hasil query database.
 - **Eror Daftar Sesi (Router List)**: Memperbaiki kesalahan parsing naif di `sessions.php` yang sebelumnya membaca parameter konfigurasi eksternal sebagai sesi router aktif dengan merutekan manajemen sesi langsung via database model.
 - **Kerentanan Keamanan XSS/DOM Injection**: Memperbaiki alert code scanning GitHub Advanced Security pada [mikhmon.js](file:///d:/mikhmonv3ws/Mikhmon Server/mikhmon/js/mikhmon.js) dengan mengubah fungsi manipulasi DOM `.html(n)` menjadi `.text(n)` yang lebih aman dari potensi manipulasi HTML tak tepercaya.
 - **Kompatibilitas putenv() Nonaktif**: Penyesuaian pemuatan berkas `.env` di `env_config.php` dan `config.php.example` dengan mengecek ketersediaan fungsi `putenv()` serta membuat fungsi pembantu `mikhmonEnv()` sebagai fallback ke `$_ENV`/`$_SERVER` agar kompatibel di semua VPS.
 - **Infinite Redirect Loop (Settings)**: Memperbaiki loop redirect tanpa henti di `settings/settings.php` dengan menambahkan fungsi `exit;` setelah redirect JavaScript serta menetapkan nilai mata uang default jika kosong.
+
+
 
 ## [MikhTrans v1.1] - 2026-06-18
 

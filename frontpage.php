@@ -24,8 +24,9 @@ header("X-XSS-Protection: 1; mode=block");
 if (!file_exists(__DIR__ . '/voucher')) {
     mkdir(__DIR__ . '/voucher', 0755, true);
 }
-if (!file_exists(__DIR__ . '/voucher/.htaccess')) {
-    file_put_contents(__DIR__ . '/voucher/.htaccess', "Deny from all\n");
+$htaccess_content = "<Files \"*.json\">\n    Order Deny,Allow\n    Deny from all\n</Files>\n";
+if (!file_exists(__DIR__ . '/voucher/.htaccess') || file_get_contents(__DIR__ . '/voucher/.htaccess') !== $htaccess_content) {
+    file_put_contents(__DIR__ . '/voucher/.htaccess', $htaccess_content);
 }
 
 // Auto-cleanup berkas transaksi usang (> 2 hari) secara berkala

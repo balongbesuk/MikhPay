@@ -260,15 +260,16 @@ include('./info.php');
   <select class="connect optfa ses text-right mr-t-10 pd-5">
     <option id="MikhmonSession" value="<?= $session; ?>"><?= $hotspotname; ?></option>
       <?php
-      foreach (file('./include/config.php') as $line) {
-        $sesname = explode("'", $line)[1];
-        if ($sesname == "" || $sesname== "mikhmon") {
-        } else {
-        if($sesname == $session){
-          echo '<option value="' . $sesname. '">'.$sesname. ' &#x2666;</option>';
-        }else{
-          echo '<option value="' . $sesname. '">'.$sesname. '</option>';
-        }
+      if (isset($data) && is_array($data)) {
+        foreach (array_keys($data) as $sesname) {
+          if ($sesname == "" || $sesname == "mikhmon") {
+            continue;
+          }
+          if ($sesname == $session) {
+            echo '<option value="' . $sesname . '">'.$sesname. ' &#x2666;</option>';
+          } else {
+            echo '<option value="' . $sesname . '">'.$sesname. '</option>';
+          }
         }
       }
       ?>
