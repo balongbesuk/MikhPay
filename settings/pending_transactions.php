@@ -398,6 +398,25 @@ uasort($profileSales, function($a, $b) {
     overflow: hidden;
     border: 1px solid var(--border-color) !important;
 }
+@media (max-width: 750px) {
+    .dash-welcome {
+        padding: 18px 20px !important;
+        border-radius: 12px !important;
+    }
+    .dash-welcome h2 {
+        font-size: 18px !important;
+    }
+}
+@media (max-width: 576px) {
+    .dash-welcome-content {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+        gap: 16px !important;
+    }
+    .dash-welcome-time {
+        text-align: left !important;
+    }
+}
 .dash-welcome::before {
     content: '';
     position: absolute;
@@ -465,6 +484,13 @@ uasort($profileSales, function($a, $b) {
     border-bottom: 2px solid var(--border-color);
     padding-bottom: 12px;
     margin-bottom: 24px;
+    overflow-x: auto;
+    white-space: nowrap;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none; /* Hide scrollbar for Firefox */
+}
+.tab-headers::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for Chrome/Safari/Opera */
 }
 .tab-header-btn {
     background: transparent;
@@ -479,6 +505,8 @@ uasort($profileSales, function($a, $b) {
     display: inline-flex;
     align-items: center;
     gap: 8px;
+    flex-shrink: 0;
+    white-space: nowrap;
 }
 .tab-header-btn:hover {
     color: var(--text-main);

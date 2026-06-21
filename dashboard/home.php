@@ -489,6 +489,7 @@ if (!isset($_SESSION["mikhmon"])) {
 }
 #r_3 .card-table-modern td:nth-child(2) {
     flex: 1 !important;
+    min-width: 70px !important;
     text-align: left !important;
     white-space: nowrap !important;
     overflow: hidden !important;

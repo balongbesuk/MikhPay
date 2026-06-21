@@ -16,6 +16,8 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 ### Diperbaiki
 - **Kebocoran Background Abu-Abu Tab Panel**: Menambahkan aturan override `.tab-panel.active { background: transparent !important; border-radius: 0 !important; }` guna mematikan pewarisan gaya latar belakang abu-abu dan border-radius dari kelas `.active` global bawaan tema Mikhmon.
 - **Penyelarasan Tabel**: Membungkus tabel antrean tertunda dan riwayat transaksi sukses menggunakan container `.overflow` dengan border radius `12px` dan scrollbar kustom.
+- **Tampilan Log Hotspot Mobile**: Menghidupkan kembali visibilitas kolom nama pengguna/kode voucher hotspot pada tampilan mobile dengan menerapkan `min-width: 70px !important;` pada kolom kedua `.card-table-modern`, mencegah kolom mengecil hingga 0px akibat flexbox shrink.
+- **Tata Letak Responsif Antrean Webhook**: Menyelaraskan tab navigasi pada halaman Antrean Webhook agar dapat di-scroll secara horizontal (`overflow-x: auto; white-space: nowrap;`) pada perangkat seluler alih-alih berantakan/wrap vertikal, serta mengoptimalkan padding dan arah flexbox welcome banner untuk layar kecil.
 
 ---
 
