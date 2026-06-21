@@ -191,6 +191,16 @@ if ($transaction_status === 'settlement' || $transaction_status === 'capture') {
         $trans['paid_at'] = time();
         file_put_contents($filepath, json_encode($trans));
         
+        // Kirim notifikasi Telegram ke Admin
+        $telegramMessage = "⚠️ <b>[MikhTrans Alert] Gagal Generate Voucher!</b>\n\n"
+            . "<b>Order ID:</b> <code>{$order_id}</code>\n"
+            . "<b>Sesi Router:</b> <code>{$session}</code>\n"
+            . "<b>Profil/Paket:</b> {$profile}\n"
+            . "<b>Nominal:</b> Rp " . number_format($trans['price'], 0, ',', '.') . "\n"
+            . "<b>Status:</b> Tertunda (Router Offline)\n\n"
+            . "Silakan periksa koneksi router Anda dan lakukan generate manual melalui panel <b>Antrean Webhook</b>.";
+        sendTelegramNotification($telegramMessage);
+        
         http_response_code(500);
         echo "Failed to connect to MikroTik router to generate voucher. Marked as paid_pending_generate.";
         exit;

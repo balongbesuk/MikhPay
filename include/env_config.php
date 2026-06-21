@@ -91,6 +91,48 @@ if (!function_exists('writeAppLog')) {
     }
 }
 
+// Helper untuk mengirim notifikasi Telegram
+if (!function_exists('sendTelegramNotification')) {
+    function sendTelegramNotification($message) {
+        $dbSettings = new \App\Models\AppSettings();
+        $token = $dbSettings->get('telegram_bot_token', mikhmonEnv('TELEGRAM_BOT_TOKEN', ''));
+        $chatId = $dbSettings->get('telegram_chat_id', mikhmonEnv('TELEGRAM_CHAT_ID', ''));
+        
+        if (empty($token) || empty($chatId)) {
+            return false;
+        }
+        
+        $url = "https://api.telegram.org/bot" . $token . "/sendMessage";
+        $data = array(
+            'chat_id' => $chatId,
+            'text' => $message,
+            'parse_mode' => 'HTML'
+        );
+        
+        $options = array(
+            'http' => array(
+                'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
+                'method'  => 'POST',
+                'content' => http_build_query($data),
+                'timeout' => 5,
+            ),
+            'ssl' => array(
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+            )
+        );
+        
+        $context  = stream_context_create($options);
+        $result = @file_get_contents($url, false, $context);
+        
+        if ($result === false) {
+            writeAppLog("TELEGRAM_ERROR", "Gagal mengirim notifikasi Telegram.");
+            return false;
+        }
+        return true;
+    }
+}
+
 // Midtrans & WebSocket environment variables config overrides
 $mikhmon_api_key = mikhmonEnv('MIKHMON_API_KEY', "YOUR_MIKHMON_API_KEY_HERE");
 $midtrans_server_key = mikhmonEnv('MIDTRANS_SERVER_KEY', "YOUR_MIDTRANS_SERVER_KEY_HERE");

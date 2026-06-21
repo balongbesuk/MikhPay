@@ -2,6 +2,15 @@
 
 Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen ini.
 
+## [MikhTrans v1.3] - 2026-06-21
+
+### Ditambahkan
+- **Notifikasi Telegram Bot (Admin Alert)**: Pengiriman notifikasi real-time instan ke admin via Telegram jika ada transaksi lunas Midtrans namun pembuatan voucher di MikroTik tertunda (`paid_pending_generate`) akibat router offline.
+- **Sistem Backup Data Hibrida (ZIP & TAR)**: Fitur "Buat & Unduh Backup" pada halaman admin untuk mencadangkan berkas sensitif (`.env`, `data/database.php`, dan semua log transaksi `voucher/*.json`). Menggunakan kompresi `.zip` jika ekstensi PHP `ZipArchive` terpasang, dengan fallback otomatis ke arsip `.tar` menggunakan generator ustar murni (pure PHP) jika modul ZIP tidak tersedia di server.
+- **Tab Pengaturan & Backup**: Panel baru di halaman Antrean Webhook (`settings/pending_transactions.php`) untuk mengelola kredensial Telegram Bot (Bot Token & Chat ID), melakukan pengujian pengiriman notifikasi, dan mengunduh cadangan data.
+
+---
+
 ## [MikhTrans v1.2] - 2026-06-21
 
 ### Ditambahkan

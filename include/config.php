@@ -3,6 +3,7 @@ if(substr($_SERVER["REQUEST_URI"], -10) == "config.php"){header("Location:./");}
 
 // Load autoloader fallback
 require_once dirname(__FILE__) . '/autoload.php';
+require_once dirname(__FILE__) . '/env_config.php';
 
 // Initialize models
 $dbSettings = new \App\Models\AppSettings();
