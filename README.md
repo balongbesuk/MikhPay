@@ -177,7 +177,7 @@ Berikut adalah beberapa kendala umum yang sering terjadi saat melakukan deploy M
     ```
 
 ### 3. Jangan Menimpa `config.php` dengan `config.php.example`
-*   **Penyebab**: Pengguna lama Mikhmon terbiasa mengubah nama berkas `.example` ke `.php`. Pada MikhTrans v2.0+, berkas `include/config.php` sudah disertakan langsung di repositori untuk menjembatani sesi router ke database.
+*   **Penyebab**: Pengguna lama Mikhmon terbiasa mengubah nama berkas `.example` ke `.php`. Pada MikhTrans v1.0+, berkas `include/config.php` sudah disertakan langsung di repositori untuk menjembatani sesi router ke database.
 *   **Solusi**: Biarkan `include/config.php` bawaan apa adanya. Anda hanya perlu menyalin `.env.example` ke `.env` di root folder dan menyesuaikan API Key Midtrans Anda di sana.
 
 ---

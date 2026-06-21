@@ -441,7 +441,7 @@ body.login-page input.login-input {
             <div class="login-left-logo">
                 <i class="fa fa-wifi"></i>
             </div>
-            <h2 class="login-left-title">MikhTrans v2.0</h2>
+            <h2 class="login-left-title">MikhTrans v1.1</h2>
             <p class="login-left-desc">Billing Hotspot & Router Manager dengan integrasi pembayaran otomatis Midtrans. Manajemen terstruktur, cepat, dan aman.</p>
             
             <div class="login-left-stats">
