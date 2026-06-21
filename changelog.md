@@ -2,6 +2,15 @@
 
 Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen ini.
 
+## [MikhTrans v1.2] - 2026-06-21
+
+### Ditambahkan
+- **Antrean Webhook (Resilience Queue)**: Menyimpan transaksi dengan status `paid_pending_generate` jika router offline sewaktu webhook Midtrans melacak pelunasan. Ditambahkan tombol "Generate/Retry" di admin panel dan informasi error yang ramah di portal frontpage.
+- **REST API Rate Limiting**: Membatasi laju request ke `api.php` hingga 30 request/menit/IP menggunakan pembacaan file cache `data/rate_limit.json` yang terproteksi file lock.
+- **Dashboard Ringkasan Multi-Router**: Mengubah halaman daftar sesi di `sessions.php` menjadi grid visual interaktif yang menampilkan status online, CPU, uptime, dan jumlah user aktif yang dimuat secara asinkron (AJAX) secara paralel untuk tiap router.
+
+---
+
 ## [MikhTrans v1.1] - 2026-06-21
 
 ### Diubah

@@ -84,30 +84,52 @@ if (!isset($_SESSION["mikhmon"])) {
                 $value = $sessionData['session_name'];
                 ?>
                     <div class="col-12">
-                        <div class="box box-bordered">
-                                <div class="box-group">
-                                  
-                                  <div class="box-group-icon">
-                                    <span class="connect pointer" id="<?= $value; ?>">
-                                    <i class="fa fa-server"></i>
-                                    </span>
-                                  </div>
-                                
-                                  <div class="box-group-area">
-                                    <span>
-                                      <?= $_hotspot_name ?> : <?= explode('%', $data[$value][4])[1]; ?><br>
-                                      <?= $_session_name ?> : <?= $value; ?><br>
-                                      <span class="connect pointer"  id="<?= $value; ?>"><i class="fa fa-external-link"></i> <?= $_open ?></span>&nbsp;
-                                      <a href="./admin.php?id=settings&session=<?= $value; ?>"><i class="fa fa-edit"></i> <?= $_edit ?></a>&nbsp;
-                                      <a href="javascript:void(0)" onclick="if(confirm('Are you sure to delete data <?= $value;
-                                      echo " (" . explode('%', $data[$value][4])[1] . ")"; ?>?')){loadpage('./admin.php?id=remove-session&session=<?= $value; ?>')}else{}"><i class="fa fa-remove"></i> <?= $_delete ?></a>
-                                    </span>
-
-                                  </div>
-                                </div>
+                        <div class="box box-bordered session-card" data-session="<?= $value; ?>">
+                            <div class="box-group">
                               
+                              <div class="box-group-icon">
+                                <span class="connect pointer" id="<?= $value; ?>">
+                                  <i class="fa fa-server"></i>
+                                </span>
+                              </div>
+                            
+                              <div class="box-group-area">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
+                                    <strong style="font-size: 15px; color: var(--text-main);"><?= explode('%', $data[$value][4])[1] ?: $value; ?></strong>
+                                    <span class="status-indicator" style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: bold; color: var(--text-muted);">
+                                        <span class="dot-pulse" style="width: 8px; height: 8px; border-radius: 50%; background: #9CA3AF; display: inline-block;"></span>
+                                        <span class="status-text">Checking...</span>
+                                    </span>
+                                </div>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; text-align: left;">
+                                  Sesi: <span style="font-family: monospace; font-weight: bold;"><?= $value; ?></span>
+                                </div>
+                                
+                                <!-- Metrics grid -->
+                                <div class="session-metrics" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 8px 0;">
+                                    <div style="font-size: 11px; text-align: center;">
+                                        <span style="display: block; color: var(--text-muted); margin-bottom: 2px;">CPU Load</span>
+                                        <strong class="metric-cpu" style="color: var(--text-main);">-</strong>
+                                    </div>
+                                    <div style="font-size: 11px; text-align: center; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);">
+                                        <span style="display: block; color: var(--text-muted); margin-bottom: 2px;">Active Users</span>
+                                        <strong class="metric-active" style="color: var(--text-main);">-</strong>
+                                    </div>
+                                    <div style="font-size: 11px; text-align: center;">
+                                        <span style="display: block; color: var(--text-muted); margin-bottom: 2px;">Uptime</span>
+                                        <strong class="metric-uptime" style="color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">-</strong>
+                                    </div>
+                                </div>
+
+                                <div style="display: flex; gap: 12px; font-size: 12px; font-weight: bold; justify-content: flex-start;">
+                                  <span class="connect pointer" id="<?= $value; ?>"><i class="fa fa-external-link"></i> <?= $_open ?></span>
+                                  <a href="./admin.php?id=settings&session=<?= $value; ?>"><i class="fa fa-edit"></i> <?= $_edit ?></a>
+                                  <a href="javascript:void(0)" onclick="if(confirm('Are you sure to delete data <?= $value; ?>?')){loadpage('./admin.php?id=remove-session&session=<?= $value; ?>')}"><i class="fa fa-remove"></i> <?= $_delete ?></a>
+                                </div>
+                              </div>
                             </div>
-                          </div>
+                        </div>
+                    </div>
               <?php
               }
           ?>
@@ -324,6 +346,63 @@ if (!isset($_SESSION["mikhmon"])) {
     });
   });
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Perform status checking for each session card
+    document.querySelectorAll('.session-card').forEach(function(card) {
+        var sessionName = card.getAttribute('data-session');
+        var dot = card.querySelector('.dot-pulse');
+        var statusText = card.querySelector('.status-text');
+        var metricCpu = card.querySelector('.metric-cpu');
+        var metricActive = card.querySelector('.metric-active');
+        var metricUptime = card.querySelector('.metric-uptime');
+        
+        // Add pulse animation class to dot during loading
+        dot.style.animation = "pulse-dot-checking 1.2s infinite ease-in-out";
+        
+        fetch('./dashboard/session_status.php?session=' + encodeURIComponent(sessionName))
+            .then(response => response.json())
+            .then(data => {
+                dot.style.animation = "none";
+                if (data.status === "online") {
+                    dot.style.background = "#10B981"; // Emerald green
+                    statusText.innerText = "Online";
+                    statusText.style.color = "#10B981";
+                    
+                    metricCpu.innerText = data.cpu;
+                    metricActive.innerText = data.active_users + " / " + data.total_users;
+                    metricUptime.innerText = data.uptime;
+                    metricUptime.title = data.uptime;
+                } else {
+                    dot.style.background = "#EF4444"; // Red
+                    statusText.innerText = "Offline";
+                    statusText.style.color = "#EF4444";
+                    
+                    metricCpu.innerText = "Offline";
+                    metricActive.innerText = "Offline";
+                    metricUptime.innerText = "Offline";
+                }
+            })
+            .catch(err => {
+                dot.style.animation = "none";
+                dot.style.background = "#EF4444";
+                statusText.innerText = "Offline";
+                statusText.style.color = "#EF4444";
+                
+                metricCpu.innerText = "Error";
+                metricActive.innerText = "Error";
+                metricUptime.innerText = "Error";
+            });
+    });
+});
+</script>
+<style>
+@keyframes pulse-dot-checking {
+    0% { transform: scale(0.85); opacity: 0.5; }
+    50% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(0.85); opacity: 0.5; }
+}
+</style>
 
 
 

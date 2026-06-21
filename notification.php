@@ -186,8 +186,13 @@ if ($transaction_status === 'settlement' || $transaction_status === 'capture') {
         exit;
     } else {
         writeAppLog("WEBHOOK_ERROR", "Gagal koneksi API MikroTik saat notifikasi lunas untuk Order ID: " . $order_id);
+        
+        $trans['status'] = 'paid_pending_generate';
+        $trans['paid_at'] = time();
+        file_put_contents($filepath, json_encode($trans));
+        
         http_response_code(500);
-        echo "Failed to connect to MikroTik router to generate voucher.";
+        echo "Failed to connect to MikroTik router to generate voucher. Marked as paid_pending_generate.";
         exit;
     }
 

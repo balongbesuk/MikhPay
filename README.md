@@ -1,6 +1,6 @@
-# MikhTrans v1.1 - Modernized with REST API & Midtrans QRIS
+# MikhTrans v1.2 - Modernized with REST API & Midtrans QRIS
 
-MikhTrans v1.1 (Mikrotik Hotspot Monitor & Transaction System) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal dan **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Midtrans Payment Gateway**.
+MikhTrans v1.2 (Mikrotik Hotspot Monitor & Transaction System) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal dan **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Midtrans Payment Gateway**.
 
 Aplikasi ini dikembangkan dan dimodifikasi dari kode sumber asli [Mikhmon v3 oleh Laksamadi Guko](https://github.com/laksa19/mikhmonv3).
 

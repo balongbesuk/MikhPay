@@ -11,6 +11,80 @@ header('Content-Type: application/json');
 error_reporting(0);
 ini_set('display_errors', 0);
 
+// Rate Limiting (Maksimum 30 request per menit per IP)
+$ipAddress = isset($_SERVER['HTTP_CLIENT_IP']) 
+    ? $_SERVER['HTTP_CLIENT_IP'] 
+    : (isset($_SERVER['HTTP_X_FORWARDED_FOR']) 
+        ? explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0] 
+        : $_SERVER['REMOTE_ADDR']);
+
+$rateLimitFile = __DIR__ . '/data/rate_limit.json';
+$limit = 30; // request
+$period = 60; // seconds
+
+$allowed = true;
+$remaining = $limit;
+$now = time();
+
+if (file_exists($rateLimitFile) || is_writable(dirname($rateLimitFile))) {
+    $fp = fopen($rateLimitFile, 'c+');
+    if ($fp) {
+        if (flock($fp, LOCK_EX)) {
+            $size = @filesize($rateLimitFile);
+            $data = $size > 0 ? json_decode(fread($fp, $size), true) : [];
+            if (!is_array($data)) $data = [];
+            
+            // Clean up expired records
+            foreach ($data as $ip => $record) {
+                if (isset($record['reset_time']) && $record['reset_time'] < $now) {
+                    unset($data[$ip]);
+                }
+            }
+            
+            if (isset($data[$ipAddress])) {
+                $record = $data[$ipAddress];
+                if (isset($record['reset_time']) && $record['reset_time'] > $now) {
+                    if (isset($record['count']) && $record['count'] >= $limit) {
+                        $allowed = false;
+                    } else {
+                        $data[$ipAddress]['count'] = isset($data[$ipAddress]['count']) ? $data[$ipAddress]['count'] + 1 : 1;
+                    }
+                    $remaining = max(0, $limit - $data[$ipAddress]['count']);
+                } else {
+                    $data[$ipAddress] = [
+                        'count' => 1,
+                        'reset_time' => $now + $period
+                    ];
+                    $remaining = $limit - 1;
+                }
+            } else {
+                $data[$ipAddress] = [
+                    'count' => 1,
+                    'reset_time' => $now + $period
+                ];
+                $remaining = $limit - 1;
+            }
+            
+            ftruncate($fp, 0);
+            rewind($fp);
+            fwrite($fp, json_encode($data));
+            fflush($fp);
+        }
+        flock($fp, LOCK_UN);
+        fclose($fp);
+    }
+}
+
+if (!$allowed) {
+    http_response_code(429);
+    echo json_encode(['status' => 'error', 'message' => 'Too Many Requests. Rate limit exceeded. Try again later.']);
+    exit;
+}
+
+// Add Rate Limit headers
+header('X-RateLimit-Limit: ' . $limit);
+header('X-RateLimit-Remaining: ' . $remaining);
+
 // Load Config Utama
 if (!file_exists(__DIR__ . '/include/config.php')) {
     http_response_code(500);

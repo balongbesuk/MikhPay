@@ -30,6 +30,32 @@ function startTransactionPolling(orderId) {
                 if (data.status === "success") {
                     clearInterval(checkInterval);
                     window.location.href = "index.php?show_voucher=1&order_id=" + orderId + "&session=" + encodeURIComponent(FrontpageConfig.session) + "#paket";
+                } else if (data.status === "paid_pending_generate") {
+                    clearInterval(checkInterval);
+                    var paymentOverlay = document.getElementById("loadingPayment");
+                    if (paymentOverlay) {
+                        paymentOverlay.innerHTML = `
+                            <div class="card" style="width: 100%; max-width: 440px; margin: 0 auto; text-align: center; background: white; border: 1px solid var(--border-color); padding: 24px; border-radius: 16px; box-shadow: var(--shadow-primary); color: var(--text-main, #3E3E3E);">
+                                <i class="fa fa-exclamation-triangle" style="color: #F59E0B; font-size: 48px; margin-bottom: 16px; display: block;"></i>
+                                <h2 style="font-family: 'Plus Jakarta Sans', sans-serif; color: #1F2937; margin-bottom: 8px; font-size: 20px;">Pembayaran Berhasil!</h2>
+                                <p style="font-size: 13px; color: #4B5563; line-height: 1.6; margin-bottom: 16px;">
+                                    Terima kasih, pembayaran Anda telah kami terima. Namun saat ini <strong>koneksi ke router sedang mengalami gangguan</strong>.
+                                </p>
+                                <p style="font-size: 13px; color: #4B5563; line-height: 1.6; margin-bottom: 24px;">
+                                    Admin sedang memproses voucher Anda secara manual. Silakan hubungi admin dan tunjukkan <strong>Order ID</strong> berikut:
+                                </p>
+                                <div style="background: #F3F4F6; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 15px; font-weight: bold; color: #111827; margin-bottom: 20px; display: flex; align-items: center; justify-content: center; gap: 8px; border: 1px solid var(--border-color);">
+                                    <span id="pendingOrderId">${orderId}</span>
+                                    <i class="fa-regular fa-copy" style="cursor: pointer; color: var(--primary);" onclick="var r = document.createRange(); r.selectNode(document.getElementById('pendingOrderId')); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); document.execCommand('copy'); alert('Order ID disalin!');" title="Salin Order ID"></i>
+                                </div>
+                                <a href="index.php?session=${encodeURIComponent(FrontpageConfig.session)}" style="display: block; width: 100%; padding: 12px; background: var(--primary); color: white; border-radius: 8px; text-decoration: none; font-weight: bold; text-align: center;">Kembali ke Beranda</a>
+                            </div>
+                        `;
+                        localStorage.removeItem('active_order_id');
+                        localStorage.removeItem('active_snap_token');
+                    } else {
+                        window.location.href = "index.php?show_voucher=1&order_id=" + orderId + "&session=" + encodeURIComponent(FrontpageConfig.session) + "#paket";
+                    }
                 }
             })
             .catch(err => console.error("Error polling order status: ", err));

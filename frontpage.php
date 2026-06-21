@@ -108,14 +108,20 @@ if (isset($_GET['check_order'])) {
     
     if (file_exists($filepath)) {
         $trans = json_decode(file_get_contents($filepath), true);
-        if (isset($trans['status']) && $trans['status'] === 'settlement') {
+        if (isset($trans['status']) && $trans['status'] === 'settlement' && !empty($trans['username'])) {
             echo json_encode([
                 'status' => 'success',
-                'username' => isset($trans['username']) ? $trans['username'] : '',
-                'password' => isset($trans['password']) ? $trans['password'] : '',
+                'username' => $trans['username'],
+                'password' => $trans['password'],
                 'profile' => isset($trans['profile']) ? $trans['profile'] : '',
                 'price' => isset($trans['price']) ? $trans['price'] : 0,
                 'validity' => isset($trans['validity']) ? $trans['validity'] : ''
+            ]);
+            exit;
+        } elseif (isset($trans['status']) && ($trans['status'] === 'paid_pending_generate' || ($trans['status'] === 'settlement' && empty($trans['username'])))) {
+            echo json_encode([
+                'status' => 'paid_pending_generate',
+                'order_id' => $order_id
             ]);
             exit;
         }
@@ -149,6 +155,7 @@ if (isset($data[$selected_session])) {
 $profiles = [];
 $error_msg = "";
 $success_voucher = null;
+$pending_voucher = null;
 $router_online = false;
 
 // Tampilkan voucher sukses jika redirect kembali dari pembayaran
@@ -157,13 +164,21 @@ if (isset($_GET['show_voucher']) && !empty($show_voucher_id)) {
     $filepath = __DIR__ . "/voucher/trans-" . $show_voucher_id . ".json";
     if (file_exists($filepath)) {
         $trans = json_decode(file_get_contents($filepath), true);
-        if (isset($trans['status']) && $trans['status'] === 'settlement') {
+        if (isset($trans['status']) && $trans['status'] === 'settlement' && !empty($trans['username'])) {
             $success_voucher = [
                 'username' => $trans['username'],
                 'password' => $trans['password'],
                 'profile' => $trans['profile'],
                 'price' => $trans['price'],
                 'validity' => $trans['validity']
+            ];
+            $currency = isset($data[$selected_session]) ? explode('&', $data[$selected_session][6])[1] : 'Rp';
+        } elseif (isset($trans['status']) && ($trans['status'] === 'paid_pending_generate' || ($trans['status'] === 'settlement' && empty($trans['username'])))) {
+            $pending_voucher = [
+                'order_id' => $show_voucher_id,
+                'profile' => isset($trans['profile']) ? $trans['profile'] : '',
+                'price' => isset($trans['price']) ? $trans['price'] : 0,
+                'validity' => isset($trans['validity']) ? $trans['validity'] : ''
             ];
             $currency = isset($data[$selected_session]) ? explode('&', $data[$selected_session][6])[1] : 'Rp';
         }
@@ -577,6 +592,84 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                         }
                     }, function(err) {
                         alert("Gagal menyalin kode: " + codeText);
+                    });
+                }
+            </script>
+        <?php elseif ($pending_voucher): ?>
+            <!-- Menampilkan Info Transaksi Pending Karena Router Offline -->
+            <div class="receipt-card" style="border-top: 5px solid #F59E0B;">
+                <div class="success-icon" style="background: rgba(245, 158, 11, 0.1); color: #F59E0B;">
+                    <i class="fa fa-exclamation-triangle"></i>
+                </div>
+                <div class="receipt-title">Pembayaran Diterima!</div>
+                <div class="receipt-subtitle" style="margin-bottom: 24px;">Pembayaran Anda sukses, tetapi koneksi ke router hotspot sedang terganggu.</div>
+
+                <div class="voucher-box" style="background: #FFFBEB; border: 1px dashed #FCD34D;">
+                    <div style="font-size: 14px; color: #92400E; font-weight: bold; margin-bottom: 8px;">
+                        Status: Pembuatan Voucher Tertunda
+                    </div>
+                    <div style="font-size: 12px; color: #B45309; line-height: 1.5; text-align: left;">
+                        Sistem sedang mengantrekan pembuatan voucher Anda. Silakan hubungi pemilik hotspot dengan menunjukkan Order ID di bawah ini jika voucher tidak terbit secara otomatis dalam beberapa menit.
+                    </div>
+                </div>
+
+                <div class="receipt-info-grid">
+                    <div class="receipt-info-item">
+                        <span>Order ID</span>
+                        <strong id="pendingOrderId" style="font-family: monospace; display: inline-flex; align-items: center; gap: 6px;">
+                            <?= htmlspecialchars($pending_voucher['order_id']) ?>
+                            <i class="fa-regular fa-copy" style="cursor: pointer; color: var(--primary); font-size: 14px;" onclick="copyPendingOrderId()" title="Salin Order ID"></i>
+                        </strong>
+                    </div>
+                    <div class="receipt-info-item">
+                        <span>Nama Paket</span>
+                        <strong><?= htmlspecialchars($pending_voucher['profile']) ?></strong>
+                    </div>
+                    <div class="receipt-info-item">
+                        <span>Total Bayar</span>
+                        <strong>
+                            <?php
+                            if ($currency === 'RP' || $currency === 'Rp') {
+                                echo "Rp " . number_format($pending_voucher['price'], 0, ',', '.');
+                            } else {
+                                echo htmlspecialchars($currency) . " " . number_format($pending_voucher['price']);
+                            }
+                            ?>
+                        </strong>
+                    </div>
+                </div>
+
+                <div class="receipt-actions" style="flex-direction: column; width: 100%; gap: 12px;">
+                    <div style="display: flex; gap: 12px; width: 100%;">
+                        <button class="btn-copy" onclick="copyPendingOrderId()" style="flex: 1;">Salin Order ID</button>
+                        <a href="index.php?session=<?= urlencode($selected_session) ?>" class="btn-done" style="flex: 1;">Selesai</a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Toast Copy Notification -->
+            <div id="copyToastPending" class="toast-copy">
+                <i class="fa fa-circle-check" style="color: #10b981; font-size: 16px;"></i>
+                <span>Order ID berhasil disalin!</span>
+            </div>
+
+            <script>
+                // Bersihkan data transaksi aktif dari localStorage
+                localStorage.removeItem('active_order_id');
+                localStorage.removeItem('active_snap_token');
+
+                function copyPendingOrderId() {
+                    var orderId = document.getElementById("pendingOrderId").innerText.trim();
+                    navigator.clipboard.writeText(orderId).then(function() {
+                        var toast = document.getElementById("copyToastPending");
+                        if (toast) {
+                            toast.classList.add("show");
+                            setTimeout(function() {
+                                toast.classList.remove("show");
+                            }, 3000);
+                        }
+                    }, function(err) {
+                        alert("Gagal menyalin Order ID: " + orderId);
                     });
                 }
             </script>

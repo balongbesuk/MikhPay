@@ -183,6 +183,9 @@ if ($id == "login" || substr($url, -1) == "p") {
   $dbSessions = new \App\Models\RouterSession();
   $dbSessions->delete($session);
   echo "<script>window.location='./admin.php?id=sessions'</script>";
+} elseif ($id == "pending-transactions") {
+  include_once('./include/menu.php');
+  include_once('./settings/pending_transactions.php');
 } elseif ($id == "about") {
   include_once('./include/menu.php');
   include_once('./include/about.php');

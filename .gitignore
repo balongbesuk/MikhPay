@@ -2,6 +2,7 @@
 .env
 /data/database.json
 /data/database.php
+/data/rate_limit.json
 
 
 # Ignore customer transaction log files
