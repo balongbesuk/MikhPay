@@ -29,18 +29,6 @@ if (!file_exists(__DIR__ . '/voucher/.htaccess') || file_get_contents(__DIR__ . 
     file_put_contents(__DIR__ . '/voucher/.htaccess', $htaccess_content);
 }
 
-// Auto-cleanup berkas transaksi usang (> 2 hari) secara berkala
-if (rand(1, 100) <= 5) {
-    $dir = __DIR__ . '/voucher/';
-    if (is_dir($dir)) {
-        foreach (glob($dir . 'trans-*.json') as $file) {
-            if (time() - filemtime($file) > 172800) { // 2 hari
-                @unlink($file);
-            }
-        }
-    }
-}
-
 // Include config
 if (!file_exists(__DIR__ . '/include/config.php')) {
     die("Configuration file config.php not found.");
@@ -48,6 +36,20 @@ if (!file_exists(__DIR__ . '/include/config.php')) {
 include_once(__DIR__ . '/include/config.php');
 include_once(__DIR__ . '/include/env_config.php');
 include_once(__DIR__ . '/include/csrf.php');
+
+// Auto-cleanup berkas transaksi usang secara berkala berbasis konfigurasi retensi
+if (rand(1, 100) <= 5) {
+    $dir = __DIR__ . '/voucher/';
+    if (is_dir($dir)) {
+        $retention_days = isset($dbSettings) ? (int)$dbSettings->get('log_retention_days', 2) : 2;
+        $retention_seconds = $retention_days * 86400;
+        foreach (glob($dir . 'trans-*.json') as $file) {
+            if (time() - filemtime($file) > $retention_seconds) {
+                @unlink($file);
+            }
+        }
+    }
+}
 
 // Safety defaults for Midtrans config
 $midtrans_server_key = isset($midtrans_server_key) ? $midtrans_server_key : '';
@@ -385,13 +387,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
         }
     }
 }
+// Load portal customization settings
+$portal_title = isset($dbSettings) ? $dbSettings->get('portal_title', 'GalaxyNet') : 'GalaxyNet';
+$portal_logo_url = isset($dbSettings) ? $dbSettings->get('portal_logo_url', '') : '';
+$portal_accent_color = isset($dbSettings) ? $dbSettings->get('portal_accent_color', '#008BC9') : '#008BC9';
+$portal_support_wa = isset($dbSettings) ? $dbSettings->get('portal_support_wa', '') : '';
+$portal_support_telegram = isset($dbSettings) ? $dbSettings->get('portal_support_telegram', '') : '';
+
+// Safety defaults for Midtrans config
+$midtrans_server_key = isset($midtrans_server_key) ? $midtrans_server_key : '';
+$midtrans_client_key = isset($midtrans_client_key) ? $midtrans_client_key : '';
+$midtrans_is_production = isset($midtrans_is_production) ? $midtrans_is_production : false;
 ?>
 <!DOCTYPE html>
 <html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GalaxyNet Hotspot - Layanan Internet Wifi Voucher</title>
+    <title><?= htmlspecialchars($portal_title) ?> - Layanan Internet Wifi Voucher</title>
     <!-- SEO Meta Tags -->
     <meta name="robots" content="noindex, nofollow, noarchive">
     <meta name="description" content="Layanan internet hotspot instan berkecepatan tinggi dengan sistem voucher otomatis via QRIS dan E-Wallet. Cepat, stabil, dan tanpa kontrak bulanan.">
@@ -407,6 +420,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
             data-client-key="<?= $midtrans_client_key ?>"></script>
 
     <link rel="stylesheet" href="css/frontpage.css">
+    <style>
+        :root {
+            --primary: <?= $portal_accent_color ?>;
+            --primary-glow: <?= $portal_accent_color ?>26;
+        }
+    </style>
 </head>
 <body>
 
@@ -415,9 +434,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
         <div class="wrapper">
             <div style="display: flex; align-items: center; gap: 8px;">
                 <a href="#" class="logo">
-                    <i class="fa fa-wifi"></i> GalaxyNet
+                    <?php if (!empty($portal_logo_url)): ?>
+                        <img src="<?= htmlspecialchars($portal_logo_url) ?>" alt="Logo" style="height: 24px; vertical-align: middle; margin-right: 8px; border-radius: 4px;">
+                    <?php else: ?>
+                        <i class="fa fa-wifi"></i>
+                    <?php endif; ?>
+                    <?= htmlspecialchars($portal_title) ?>
                 </a>
-                <span class="status-indicator-dot <?= $router_online ? 'online' : 'offline' ?>" title="<?= $router_online ? 'GalaxyNet Server: Online' : 'GalaxyNet Server: Offline' ?>"></span>
+                <span class="status-indicator-dot <?= $router_online ? 'online' : 'offline' ?>" title="<?= htmlspecialchars($portal_title) ?> Server: <?= $router_online ? 'Online' : 'Offline' ?>"></span>
             </div>
             <nav class="menu-links">
                 <a href="#home">Home</a>
@@ -804,13 +828,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
         <!-- Syarat & Ketentuan Content -->
         <div class="tab-content active" id="syarat-ketentuan">
             <h3>Syarat & Ketentuan Layanan</h3>
-            <p>Selamat datang di layanan GalaxyNet Hotspot. Dengan membeli dan menggunakan voucher kami, Anda menyetujui seluruh ketentuan berikut:</p>
+            <p>Selamat datang di layanan <?= htmlspecialchars($portal_title) ?> Hotspot. Dengan membeli dan menggunakan voucher kami, Anda menyetujui seluruh ketentuan berikut:</p>
             <ol>
                 <li><strong>Penggunaan Voucher:</strong> Setiap voucher hotspot hanya berlaku untuk 1 (satu) perangkat dalam satu satuan waktu akses, kecuali dinyatakan lain pada jenis paket.</li>
                 <li><strong>Masa Berlaku Voucher:</strong> Masa aktif voucher dimulai sejak pengguna pertama kali melakukan koneksi (login) ke jaringan hotspot kami.</li>
                 <li><strong>Batas Tanggung Jawab:</strong> Kami berupaya memberikan konektivitas terbaik. Namun, kami tidak bertanggung jawab atas gangguan sinyal yang disebabkan oleh faktor geografis, interferensi perangkat pengguna, atau kendala teknis tak terduga di luar jangkauan infrastruktur kami.</li>
                 <li><strong>Larangan Penggunaan:</strong> Pengguna dilarang menggunakan layanan internet hotspot kami untuk aktivitas ilegal, penyebaran konten berhak cipta secara tidak sah, peretasan, spamming, serta tindakan kriminal siber lainnya yang melanggar hukum Negara Republik Indonesia.</li>
-                <li><strong>Perubahan Layanan:</strong> GalaxyNet Hotspot berhak menyesuaikan tarif, alokasi bandwidth, dan kebijakan operasional hotspot sewaktu-waktu demi menjaga kualitas layanan yang optimal bagi semua pelanggan.</li>
+                <li><strong>Perubahan Layanan:</strong> <?= htmlspecialchars($portal_title) ?> Hotspot berhak menyesuaikan tarif, alokasi bandwidth, dan kebijakan operasional hotspot sewaktu-waktu demi menjaga kualitas layanan yang optimal bagi semua pelanggan.</li>
             </ol>
         </div>
 
@@ -822,7 +846,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                 <li><strong>Kriteria Pengembalian Dana:</strong> Pelanggan berhak mengajukan pengembalian dana penuh jika sistem hotspot mengalami gangguan total (down time) berkelanjutan lebih dari 24 jam berturut-turut yang disebabkan langsung oleh kendala server atau infrastruktur kami.</li>
                 <li><strong>Pembatalan Transaksi:</strong> Transaksi pembayaran yang telah berhasil diproses oleh Midtrans tidak dapat dibatalkan atau dikembalikan apabila kode voucher telah aktif atau digunakan oleh pembeli.</li>
                 <li><strong>Kesalahan Pembelian:</strong> Kami tidak menyediakan pengembalian dana (refund) untuk kesalahan pemilihan paket oleh pembeli (misal salah pilih durasi atau tipe voucher). Mohon teliti kembali sebelum melakukan transaksi.</li>
-                <li><strong>Prosedur Pengajuan:</strong> Untuk mengajukan pengembalian dana, silakan kirimkan bukti pembayaran Midtrans yang sah dan tangkapan layar kendala ke kontak bisnis resmi kami (Email: <em>support@galaxynet.my.id</em> / WhatsApp).</li>
+                <li><strong>Prosedur Pengajuan:</strong> Untuk mengajukan pengembalian dana, silakan kirimkan bukti pembayaran Midtrans yang sah dan tangkapan layar kendala ke kontak bisnis resmi kami.</li>
                 <li><strong>Waktu Proses:</strong> Dana pengembalian yang disetujui akan ditransfer kembali ke rekening bank atau e-wallet asal pelanggan dalam kurun waktu maksimal 3 (tiga) hari kerja sejak pengajuan disetujui.</li>
             </ol>
         </div>
@@ -842,21 +866,43 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                         <i class="fa fa-envelope"></i>
                         <div class="contact-item-text">
                             <h4>Email Resmi Support</h4>
-                            <p>support@galaxynet.my.id</p>
+                            <p>support@<?= strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $portal_title)) ?>.my.id</p>
                         </div>
                     </div>
+                    
+                    <?php if (!empty($portal_support_wa)): ?>
                     <div class="contact-item">
-                        <i class="fa-brands fa-whatsapp"></i>
+                        <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 20px;"></i>
+                        <div class="contact-item-text">
+                            <h4>WhatsApp Support</h4>
+                            <p><a href="https://wa.me/<?= preg_replace('/[^0-9]/', '', $portal_support_wa) ?>" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: none;"><?= htmlspecialchars($portal_support_wa) ?></a></p>
+                        </div>
+                    </div>
+                    <?php else: ?>
+                    <div class="contact-item">
+                        <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 20px;"></i>
                         <div class="contact-item-text">
                             <h4>WhatsApp / Telepon</h4>
                             <p>+62 812 3456 7890</p>
                         </div>
                     </div>
+                    <?php endif; ?>
+                    
+                    <?php if (!empty($portal_support_telegram)): ?>
+                    <div class="contact-item">
+                        <i class="fa-brands fa-telegram" style="color: #0088cc; font-size: 20px;"></i>
+                        <div class="contact-item-text">
+                            <h4>Telegram Support</h4>
+                            <p><a href="https://t.me/<?= htmlspecialchars($portal_support_telegram) ?>" target="_blank" style="color: var(--primary); font-weight: 600; text-decoration: none;">@<?= htmlspecialchars($portal_support_telegram) ?></a></p>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
                     <div class="contact-item">
                         <i class="fa fa-location-dot"></i>
                         <div class="contact-item-text">
                             <h4>Alamat Kantor</h4>
-                            <p>GalaxyNet Hotspot Area, Jl. Raya Jombang No. 123, Jombang, 61471, Indonesia</p>
+                            <p><?= htmlspecialchars($portal_title) ?> Hotspot Area, Jl. Raya Jombang No. 123, Jombang, 61471, Indonesia</p>
                         </div>
                     </div>
                     <div class="contact-item">
@@ -894,11 +940,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
             <div class="footer-links">
                 <a href="#home">Beranda</a>
                 <a href="#paket">Beli Voucher</a>
-                <a href="#syarat">Syarat & Kebentuan</a>
+                <a href="#syarat">Syarat & Ketentuan</a>
                 <a href="#kontak">Hubungi Kami</a>
                 <a href="admin.php?id=login">Admin Portal</a>
             </div>
-            <p>&copy; <?= date("Y") ?> GalaxyNet Hotspot. All Rights Reserved. Seluruh transaksi diproses dalam Rupiah (IDR).</p>
+            <p>&copy; <?= date("Y") ?> <?= htmlspecialchars($portal_title) ?> Hotspot. All Rights Reserved. Seluruh transaksi diproses dalam Rupiah (IDR).</p>
             <p style="font-size: 11px; color: var(--text-muted); padding-bottom: 60px;">Diintegrasikan dengan sistem billing otomatis Mikhmon & payment gateway Midtrans.</p>
         </div>
     </footer>

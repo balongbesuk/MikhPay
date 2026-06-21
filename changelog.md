@@ -2,6 +2,23 @@
 
 Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen ini.
 
+## [MikhTrans v1.4] - 2026-06-21
+
+### Ditambahkan
+- **Welcome Status Banner & Stats**: Banner `.dash-welcome` bernuansa gradient biru-ungu di bagian atas menu Antrean Webhook untuk menyajikan status bot Telegram, jumlah antrean, jumlah transaksi sukses, dan total omzet nominal secara dinamis.
+- **Desain Tab Modern & Ikonik**: Navigasi tab panel dilengkapi dengan ikon FontAwesome pada masing-masing tombol dan aksen warna active/hover adaptif sesuai CSS variable (`--primary`, `--primary-glow`).
+- **Visualisasi Grafik Penjualan Dinamis**: Integrasi Chart.js di tab Analitik Penjualan yang adaptif membaca computed CSS variable `--primary` untuk sinkronisasi warna chart otomatis saat tema admin diubah.
+- **Pemisahan Tombol Simpan Pengaturan**: Menambahkan tombol simpan spesifik di masing-masing form pengaturan (Telegram Bot, Portal Pelanggan, Retensi Log) untuk fungsionalitas simpan terpisah yang lebih intuitif.
+
+### Diubah
+- **Penyelarasan Tata Letak Berdampingan (Side-by-Side Flex Layout)**: Menggunakan custom flexbox (`.row-flex` dan `.col-flex-6`) berbasis `box-sizing: border-box` di tab Pengaturan & Backup agar kolom konfigurasi seimbang, terbagi merata 50/50 secara sejajar di desktop, dan responsif menumpuk di perangkat seluler.
+
+### Diperbaiki
+- **Kebocoran Background Abu-Abu Tab Panel**: Menambahkan aturan override `.tab-panel.active { background: transparent !important; border-radius: 0 !important; }` guna mematikan pewarisan gaya latar belakang abu-abu dan border-radius dari kelas `.active` global bawaan tema Mikhmon.
+- **Penyelarasan Tabel**: Membungkus tabel antrean tertunda dan riwayat transaksi sukses menggunakan container `.overflow` dengan border radius `12px` dan scrollbar kustom.
+
+---
+
 ## [MikhTrans v1.3] - 2026-06-21
 
 ### Ditambahkan
