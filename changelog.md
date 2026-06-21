@@ -16,6 +16,9 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 - **Cache Profil Hotspot (Frontpage)**: Menambahkan file-based cache dengan TTL 5 menit untuk daftar profil paket voucher di halaman pelanggan (`frontpage.php`), mengurangi koneksi TCP ke router MikroTik pada setiap kunjungan halaman publik.
 - **Optimasi Query Resource & System Clock**: Menghapus query `/system/clock/print` dari pemroses AJAX reloads (`aload.php`) karena banner jam terupdate secara mandiri di sisi client via JavaScript, serta menerapkan filter `.proplist` pada query `/system/resource/print` di dashboard (`home.php` & `aload.php`) untuk membatasi payload data hanya pada field yang digunakan.
 
+### Dihapus
+- **Berkas Migrasi SQL/JSON Usang**: Menghapus file migrasi lawas yang tidak digunakan lagi (`system/migrate.php`, `system/migrate_v2.php`, `system/migrate_v3.php`) untuk merapikan struktur berkas proyek.
+
 ---
 
 ## [MikhTrans v2.0] - 2026-06-20
