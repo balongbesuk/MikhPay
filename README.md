@@ -1,6 +1,6 @@
-# MikhPay v1.8 - Modernized with REST API & Midtrans QRIS
+# MikhPay - Modernized with REST API & Midtrans QRIS
 
-MikhPay v1.8 (Mikrotik Hotspot Monitor & Transaction System) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal, **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Midtrans Payment Gateway**, serta sistem **Pengerasan Keamanan (Security Hardening)** kelas enterprise.
+MikhPay (Mikrotik Hotspot Monitor & Transaction System) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal, **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Midtrans Payment Gateway**, serta sistem **Pengerasan Keamanan (Security Hardening)** kelas enterprise.
 
 Aplikasi ini dikembangkan dan dimodifikasi dari kode sumber asli [Mikhmon v3 oleh Laksamadi Guko](https://github.com/laksa19/mikhmonv3).
 
