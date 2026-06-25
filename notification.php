@@ -322,7 +322,7 @@ if ($transaction_status === 'settlement' || $transaction_status === 'capture') {
         file_put_contents($filepath, json_encode($trans));
         
         // Kirim notifikasi Telegram ke Admin
-        $telegramMessage = "⚠️ <b>[MikhTrans Alert] Gagal Generate Voucher!</b>\n\n"
+        $telegramMessage = "⚠️ <b>[MikhPay Alert] Gagal Generate Voucher!</b>\n\n"
             . "<b>Order ID:</b> <code>{$order_id}</code>\n"
             . "<b>Sesi Router:</b> <code>{$session}</code>\n"
             . "<b>Profil/Paket:</b> {$profile}\n"

@@ -1,8 +1,15 @@
 # Changelog
 
-Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen ini.
+Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 
-## [MikhTrans v1.8] - 2026-06-21
+## [MikhPay v2.0] - 2026-06-25
+
+### Rebranding
+- **Rebranding Global**: Mengubah seluruh nama aplikasi dan referensi teks dari "MikhTrans" menjadi "MikhPay" di seluruh kode sumber, pengaturan, dan dokumentasi.
+
+---
+
+## [MikhPay v1.8] - 2026-06-21
 
 ### Keamanan / Pengerasan Sistem
 - **Proteksi Brute-Force Login Admin**: Membatasi kegagalan percobaan login administrator maksimal 5 kali dalam waktu 10 menit per alamat IP di `admin.php` menggunakan database rate-limit terisolasi untuk melindungi sistem dari serangan menebak kata sandi.
@@ -16,12 +23,12 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 - **Layout Welcome Banner Mobile**: Menyelaraskan teks waktu dan tanggal pada *banner* selamat datang (Dashboard) agar rata kiri dengan menyetel ulang aturan flexbox (`align-items: flex-start`) pada tampilan seluler, mencegah teks waktu tampil mengambang di tengah layar.
 - **SyntaxError JSON.parse (Traffic Monitor)**: Memperbaiki kemunculan error konsol merah beruntun (`Unexpected token '<'`) pada grafik pantauan lalu lintas (Traffic Monitor) dan dasbor yang terjadi ketika sesi login admin telah kedaluwarsa. Sistem kini menangkap kegagalan *parsing* secara halus (`try-catch`) saat AJAX secara tak sengaja memuat halaman login HTML, mencegah *crash* pada *script* di peramban pengguna.
 - **TypeError DOM Reference (Halaman Login)**: Memperbaiki *error javascript* (`Cannot read properties of null`) yang muncul di halaman *login* karena *script* UI (`mikhmon-ui.min.js` dan `mikhmon.js`) mencoba mengakses elemen antarmuka (*sidebar toggle*, penanda waktu sesi) yang tidak ada di halaman tersebut. Pengecekan elemen (*null check*) telah ditambahkan.
-- **Error 404 GitHub Update Checker**: Menghapus *script* bawaan pengecek pembaruan (Update Checker) di halaman pengaturan Sesi (Sessions). *Script* lama tersebut mencoba memuat data `version.txt` dari repositori GitHub Mikhmonv3 versi orisinal yang saat ini sudah tidak tersedia, sehingga selalu menyebabkan *error* 404 *Not Found* di konsol peramban. Fitur ini tidak lagi relevan untuk versi *fork* MikhTrans.
+- **Error 404 GitHub Update Checker**: Menghapus *script* bawaan pengecek pembaruan (Update Checker) di halaman pengaturan Sesi (Sessions). *Script* lama tersebut mencoba memuat data `version.txt` dari repositori GitHub Mikhmonv3 versi orisinal yang saat ini sudah tidak tersedia, sehingga selalu menyebabkan *error* 404 *Not Found* di konsol peramban. Fitur ini tidak lagi relevan untuk versi *fork* MikhPay.
 - **Toggle Tema Macet di Dashboard**: Memperbaiki isu di mana mengubah tema (gelap/terang) atau bahasa saat berada di halaman *Dashboard* menyebabkan antarmuka macet dengan pesan `Loading theme...` yang tidak berkesudahan. Ini disebabkan karena proses *background* (AJAX) secara tak sengaja ikut memuat seluruh halaman *Dashboard* ke dalam *buffer*, sehingga menyebabkan konflik *script*. Mekanisme penggantian tema (`settheme.php`) dan bahasa (`setlang.php`) kini secara eksplisit menghentikan *rendering* halaman setelah tema berhasil diubah (`exit;`), memastikan peramban selalu berhasil di-*refresh*.
 
 ---
 
-## [MikhTrans v1.7] - 2026-06-21
+## [MikhPay v1.7] - 2026-06-21
 
 ### Keamanan / Pengerasan Sistem
 - **Session Fixation Protection**: Mengintegrasikan `session_regenerate_id(true)` secara dinamis pada saat login admin berhasil untuk mencegah pembajakan sesi.
@@ -31,7 +38,7 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 
 ---
 
-## [MikhTrans v1.6] - 2026-06-21
+## [MikhPay v1.6] - 2026-06-21
 
 ### Ditambahkan
 - **Riwayat Pembelian Lokal (localStorage)**: Menambahkan kontainer riwayat voucher pembelian terakhir pelanggan yang terintegrasi di atas daftar paket produk, lengkap dengan tombol salin andal, status paket, dan tombol auto-connect.
@@ -42,7 +49,7 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 
 ---
 
-## [MikhTrans v1.5] - 2026-06-21
+## [MikhPay v1.5] - 2026-06-21
 
 ### Ditambahkan
 - **QR Code Voucher Offline (QRious)**: Integrasi pustaka Javascript QRious (`js/qrious.min.js`) pada halaman sukses portal pelanggan (`frontpage.php`). QR Code secara otomatis di-render secara *client-side* (offline-compatible) mengarah ke URL auto-login hotspot (jika DNS name aktif) atau ke kode voucher, diposisikan secara berdampingan (*side-by-side flex layout*) dengan kode voucher teks biasa.
@@ -56,7 +63,7 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 
 ---
 
-## [MikhTrans v1.4] - 2026-06-21
+## [MikhPay v1.4] - 2026-06-21
 
 ### Ditambahkan
 - **Welcome Status Banner & Stats**: Banner `.dash-welcome` bernuansa gradient biru-ungu di bagian atas menu Antrean Webhook untuk menyajikan status bot Telegram, jumlah antrean, jumlah transaksi sukses, dan total omzet nominal secara dinamis.
@@ -75,7 +82,7 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 
 ---
 
-## [MikhTrans v1.3] - 2026-06-21
+## [MikhPay v1.3] - 2026-06-21
 
 ### Ditambahkan
 - **Notifikasi Telegram Bot (Admin Alert)**: Pengiriman notifikasi real-time instan ke admin via Telegram jika ada transaksi lunas Midtrans namun pembuatan voucher di MikroTik tertunda (`paid_pending_generate`) akibat router offline.
@@ -84,7 +91,7 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 
 ---
 
-## [MikhTrans v1.2] - 2026-06-21
+## [MikhPay v1.2] - 2026-06-21
 
 ### Ditambahkan
 - **Antrean Webhook (Resilience Queue)**: Menyimpan transaksi dengan status `paid_pending_generate` jika router offline sewaktu webhook Midtrans melacak pelunasan. Ditambahkan tombol "Generate/Retry" di admin panel dan informasi error yang ramah di portal frontpage.
@@ -93,7 +100,7 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 
 ---
 
-## [MikhTrans v1.1] - 2026-06-21
+## [MikhPay v1.1] - 2026-06-21
 
 ### Diubah
 - **Pembersihan Kode Native PHP 8.2 (Depresiasi PHP 5.4)**: Menghapus seluruh polyfill kompatibilitas PHP versi lama (`hash_equals`, `password_hash`, `password_verify`) dan memfaktorkan ulang kode pada `include/csrf.php` serta `lib/routeros_api.class.php` agar memanfaatkan fungsi bawaan PHP 8.2+ secara langsung (seperti `random_bytes` untuk generate IV dan token CSRF).
@@ -103,7 +110,7 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 
 ---
 
-## [MikhTrans v1.0] - 2026-06-21
+## [MikhPay v1.0] - 2026-06-21
 
 ### Ditambahkan
 - **Proteksi CSRF (Cross-Site Request Forgery)**: Menambahkan helper `include/csrf.php` dengan token per-sesi yang memproteksi seluruh form POST kritis (login admin, pembelian voucher frontpage) dari serangan CSRF.
@@ -141,7 +148,7 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 - **Desain Premium Dashboard Admin**: Merombak tampilan dashboard admin (`home.php`) dengan desain card modern, border tipis, bayangan lembut, font Plus Jakarta Sans, ikon bergaya lingkaran minimalis, serta penyesuaian otomatis warna background, border, dan teks yang beradaptasi secara dinamis ke tema aktif (Dark, Light, dll.) menggunakan CSS Variables.
 - **Desain Premium 2-Panel Login (Admin)**: Merombak total tampilan login panel admin (`login.php`) menggunakan struktur 2-panel modern (panel visual info/branding di sisi kiri dengan efek blob & panel form interaktif di sisi kanan), font premium Plus Jakarta Sans, tombol input minimalis dengan ikon, eye-toggle untuk visibilitas password, serta layout responsive-collapse di mobile.
 - **De-obfuscation Total Kode JavaScript**: Refaktor dan konversi seluruh script inline yang sebelumnya disamarkan (obfuscated) dengan array hex menjadi kode JavaScript/jQuery modern yang bersih, efisien, dan mudah dipelihara.
-- **Penghapusan Proteksi DRM Logo/Brand**: Menghapus script validasi paksa innerHTML `#brand` (`You destroy MIKHMON`) agar visual dashboard dapat disesuaikan secara bebas untuk branding modern MikhTrans.
+- **Penghapusan Proteksi DRM Logo/Brand**: Menghapus script validasi paksa innerHTML `#brand` (`You destroy MIKHMON`) agar visual dashboard dapat disesuaikan secara bebas untuk branding modern MikhPay.
 - **Card-Based Log Feed**: Mengubah layout log hotspot dashboard dari tabel kaku menjadi daftar log card modern dengan shadow, margin lembut, dan transisi hover.
 - **Floating Labels (Settings & Sessions)**: Form input settings dan sessions admin menggunakan pola floating label modern yang bergerak halus ke atas disertai focus-ring.
 - **Penghapusan Data Sensitif Pribadi**: Mengganti data email, nomor WhatsApp, dan alamat kantor riil dalam berkas `frontpage.php` dan `composer.json` dengan data dummy demi menjaga privasi di repositori publik.
@@ -172,4 +179,4 @@ Semua pembaruan penting pada modifikasi MikhTrans ini akan dicatat di dokumen in
 
 ### Dihapus
 - **Berkas Migrasi SQL/JSON Usang**: Menghapus file migrasi lawas yang tidak digunakan lagi (`system/migrate.php`, `system/migrate_v2.php`, `system/migrate_v3.php`) untuk merapikan struktur berkas proyek.
-- **Berkas Sisa Tidak Terpakai**: Menghapus berkas `.profile` (chmod script yang tidak sesuai), `_config.yml` (konfigurasi Jekyll GitHub Pages milik penulis asli), dan `verson.txt` (berkas teks versi duplikat dengan nama typo) yang tidak dibaca oleh aplikasi dan tidak berkaitan dengan fungsionalitas MikhTrans.
+- **Berkas Sisa Tidak Terpakai**: Menghapus berkas `.profile` (chmod script yang tidak sesuai), `_config.yml` (konfigurasi Jekyll GitHub Pages milik penulis asli), dan `verson.txt` (berkas teks versi duplikat dengan nama typo) yang tidak dibaca oleh aplikasi dan tidak berkaitan dengan fungsionalitas MikhPay.

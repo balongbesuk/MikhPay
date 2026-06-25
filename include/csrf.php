@@ -1,6 +1,6 @@
 <?php
 /**
- * CSRF Protection Helper untuk MikhTrans
+ * CSRF Protection Helper untuk MikhPay
  * Mencegah serangan Cross-Site Request Forgery pada semua form POST.
  * Dioptimalkan untuk PHP 8.2 ke atas.
  */

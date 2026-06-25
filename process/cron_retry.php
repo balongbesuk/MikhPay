@@ -1,6 +1,6 @@
 <?php
 /**
- * MikhTrans Auto-Retry Background Job (Cron)
+ * MikhPay Auto-Retry Background Job (Cron)
  * v1.4
  */
 
@@ -83,7 +83,7 @@ if (is_array($files)) {
                     writeAppLog("CRON_RETRY_SUCCESS", "Voucher " . $username . " sukses digenerate via Cron untuk Order ID: " . $order_id);
                     
                     // Kirim notifikasi Telegram sukses ke Admin
-                    $telegramMessage = "✅ <b>[MikhTrans Cron] Voucher Berhasil Diterbitkan!</b>\n\n"
+                    $telegramMessage = "✅ <b>[MikhPay Cron] Voucher Berhasil Diterbitkan!</b>\n\n"
                         . "<b>Order ID:</b> <code>{$order_id}</code>\n"
                         . "<b>Sesi Router:</b> <code>{$session}</code>\n"
                         . "<b>Voucher:</b> <code>{$username}</code>\n"

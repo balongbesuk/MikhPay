@@ -1,7 +1,7 @@
 <?php
 /**
  * Webhook Pending Transactions & History Manager
- * MikhTrans v1.1
+ * MikhPay v1.1
  */
 
 if (!isset($_SESSION["mikhmon"])) {
@@ -253,10 +253,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $settingsModel->set('portal_support_telegram', $p_tele);
         
         $success_msg = ($langid == 'id') 
-            ? "Sukses! Pengaturan MikhTrans berhasil disimpan." 
-            : "Success! MikhTrans settings successfully saved.";
+            ? "Sukses! Pengaturan MikhPay berhasil disimpan." 
+            : "Success! MikhPay settings successfully saved.";
     } elseif ($_POST['action'] === 'test_telegram') {
-        $testMsg = "🔔 <b>[MikhTrans] Test Notifikasi Sukses!</b>\n\nIntegrasi Telegram Bot Anda telah berhasil dikonfigurasi.";
+        $testMsg = "🔔 <b>[MikhPay] Test Notifikasi Sukses!</b>\n\nIntegrasi Telegram Bot Anda telah berhasil dikonfigurasi.";
         if (sendTelegramNotification($testMsg)) {
             $success_msg = ($langid == 'id')
                 ? "Sukses! Test notifikasi terkirim ke Telegram."
@@ -297,11 +297,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
     }
 }
 
-// Load MikhTrans credentials and configs
+// Load MikhPay credentials and configs
 $telegram_bot_token = $settingsModel->get('telegram_bot_token', mikhmonEnv('TELEGRAM_BOT_TOKEN', ''));
 $telegram_chat_id = $settingsModel->get('telegram_chat_id', mikhmonEnv('TELEGRAM_CHAT_ID', ''));
 $log_retention_days = (int)$settingsModel->get('log_retention_days', 2);
-$portal_title = $settingsModel->get('portal_title', 'MikhTrans Portal');
+$portal_title = $settingsModel->get('portal_title', 'MikhPay Portal');
 $portal_logo_url = $settingsModel->get('portal_logo_url', '');
 $portal_accent_color = $settingsModel->get('portal_accent_color', '#008BC9');
 $portal_support_wa = $settingsModel->get('portal_support_wa', '');
@@ -610,7 +610,7 @@ uasort($profileSales, function($a, $b) {
                 </div>
                 <div class="dash-welcome-time">
                     <div class="time-big" style="font-size: 24px;"><i class="fa fa-exchange"></i></div>
-                    <div class="time-date">MikhTrans v1.4</div>
+                    <div class="time-date">MikhPay v1.4</div>
                 </div>
             </div>
         </div>

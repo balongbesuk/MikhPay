@@ -1,7 +1,7 @@
 <?php
 /**
  * Real-Time Session Status JSON API
- * MikhTrans v1.1
+ * MikhPay v1.1
  */
 
 session_start();

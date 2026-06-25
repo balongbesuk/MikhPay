@@ -1,7 +1,7 @@
 <?php
 /*
  *  Copyright (C) 2018 Laksamadi Guko.
- *  Modified for MikhTrans Dashboard Overhaul.
+ *  Modified for MikhPay Dashboard Overhaul.
  */
 session_start();
 // hide all error

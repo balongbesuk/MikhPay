@@ -1,6 +1,6 @@
 # Security Policy & Best Practices
 
-Dokumen ini menjelaskan kebijakan keamanan, fitur pengamanan yang diimplementasikan pada **MikhTrans v1.1**, serta rekomendasi konfigurasi untuk menjaga keamanan sistem Anda.
+Dokumen ini menjelaskan kebijakan keamanan, fitur pengamanan yang diimplementasikan pada **MikhPay v1.1**, serta rekomendasi konfigurasi untuk menjaga keamanan sistem Anda.
 
 ## Kebijakan Keamanan (Security Policy)
 
@@ -44,7 +44,7 @@ Selalu gunakan sertifikat SSL/TLS pada server hosting Anda. HTTPS memastikan dat
 
 ### 2. Batasi Akses API MikroTik
 *   Jangan membuka port API MikroTik (`8728` atau `8729` untuk SSL) secara bebas ke seluruh internet.
-*   Pada pengaturan router MikroTik Anda (`IP -> Services`), batasi opsi **Available From** pada port API hanya untuk alamat IP publik milik Web Server hosting MikhTrans Anda.
+*   Pada pengaturan router MikroTik Anda (`IP -> Services`), batasi opsi **Available From** pada port API hanya untuk alamat IP publik milik Web Server hosting MikhPay Anda.
 
 ### 3. Gunakan Password Admin yang Kuat
-Ganti username default `mikhmon` dan password default `1234` di menu **Admin Settings** MikhTrans dengan kombinasi karakter yang rumit (panjang minimal 12 karakter, terdiri dari huruf besar, huruf kecil, angka, dan simbol).
+Ganti username default `mikhmon` dan password default `1234` di menu **Admin Settings** MikhPay dengan kombinasi karakter yang rumit (panjang minimal 12 karakter, terdiri dari huruf besar, huruf kecil, angka, dan simbol).

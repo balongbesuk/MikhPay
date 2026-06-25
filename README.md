@@ -1,6 +1,6 @@
-# MikhTrans v1.8 - Modernized with REST API & Midtrans QRIS
+# MikhPay v1.8 - Modernized with REST API & Midtrans QRIS
 
-MikhTrans v1.8 (Mikrotik Hotspot Monitor & Transaction System) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal, **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Midtrans Payment Gateway**, serta sistem **Pengerasan Keamanan (Security Hardening)** kelas enterprise.
+MikhPay v1.8 (Mikrotik Hotspot Monitor & Transaction System) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal, **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Midtrans Payment Gateway**, serta sistem **Pengerasan Keamanan (Security Hardening)** kelas enterprise.
 
 Aplikasi ini dikembangkan dan dimodifikasi dari kode sumber asli [Mikhmon v3 oleh Laksamadi Guko](https://github.com/laksa19/mikhmonv3).
 
@@ -37,7 +37,7 @@ Aplikasi ini dikembangkan dan dimodifikasi dari kode sumber asli [Mikhmon v3 ole
 ## 🛠️ Panduan Konfigurasi & Instalasi
 
 ### 1. Buat Berkas Lingkungan Terproteksi (`.env.php`)
-Buat berkas baru bernama `.env.php` di root direktori MikhTrans Anda (sejajar dengan `index.php`). Salin dan sesuaikan konfigurasi berikut:
+Buat berkas baru bernama `.env.php` di root direktori MikhPay Anda (sejajar dengan `index.php`). Salin dan sesuaikan konfigurasi berikut:
 
 ```php
 <?php header('HTTP/1.0 403 Forbidden'); exit; ?>
@@ -66,7 +66,7 @@ WS_CLUSTER="ap1"
 ```
 
 ### 2. Pengaturan Sesi & MikroTik
-Kredensial MikroTik, nama sesi, IP, user, password, dan dnsname diatur secara otomatis melalui **Web Admin Panel** MikhTrans pada menu **Admin Settings > Add Router / Edit Settings**.
+Kredensial MikroTik, nama sesi, IP, user, password, dan dnsname diatur secara otomatis melalui **Web Admin Panel** MikhPay pada menu **Admin Settings > Add Router / Edit Settings**.
 
 > [!IMPORTANT]
 > Berkas `include/config.php` bawaan repositori sudah dikonfigurasi secara dinamis untuk memuat sesi dari database (`data/database.php`). Anda **TIDAK PERLU** menyalin atau mengubah nama `config.php.example` menjadi `config.php`. Biarkan `include/config.php` bawaan apa adanya agar pengaturan sesi tetap tersimpan otomatis ke database.
@@ -97,7 +97,7 @@ Agar kode voucher terbuat secara otomatis di MikroTik setelah pelanggan melakuka
 
 ## 🔌 Integrasi Halaman Login MikroTik (`login.html`)
 
-Agar pelanggan dapat membeli voucher secara langsung saat terhubung ke Hotspot, Anda perlu menghubungkan halaman login bawaan MikroTik (`login.html`) dengan portal MikhTrans.
+Agar pelanggan dapat membeli voucher secara langsung saat terhubung ke Hotspot, Anda perlu menghubungkan halaman login bawaan MikroTik (`login.html`) dengan portal MikhPay.
 
 ### 1. Tambahkan Tombol Beli Voucher di `login.html`
 Edit berkas `login.html` di dalam folder `hotspot` MikroTik Anda (dapat diunduh via FTP atau menu Files di Winbox). Tambahkan kode tombol berikut:
@@ -106,14 +106,14 @@ Edit berkas `login.html` di dalam folder `hotspot` MikroTik Anda (dapat diunduh 
     Beli Voucher Otomatis (QRIS / E-Wallet)
 </a>
 ```
-*Ganti `http://172.16.11.91/` dengan alamat IP atau Domain tempat Anda meng-host MikhTrans.*
+*Ganti `http://172.16.11.91/` dengan alamat IP atau Domain tempat Anda meng-host MikhPay.*
 
 ### 2. Konfigurasi Walled Garden MikroTik
-Karena pelanggan yang belum login diblokir akses internetnya oleh MikroTik, Anda wajib mendaftarkan alamat IP server MikhTrans dan domain Midtrans/Pusher ke **Walled Garden** agar dapat diakses secara gratis sebelum login.
+Karena pelanggan yang belum login diblokir akses internetnya oleh MikroTik, Anda wajib mendaftarkan alamat IP server MikhPay dan domain Midtrans/Pusher ke **Walled Garden** agar dapat diakses secara gratis sebelum login.
 
 Jalankan perintah berikut di **New Terminal** Winbox MikroTik Anda:
 ```routeros
-# Izinkan akses ke Web Server MikhTrans
+# Izinkan akses ke Web Server MikhPay
 /ip hotspot walled-garden ip add dst-host=172.16.11.91 action=allow
 
 # Izinkan sistem pembayaran Midtrans & E-Wallet (GoPay, ShopeePay, dll)
@@ -133,10 +133,10 @@ Jalankan perintah berikut di **New Terminal** Winbox MikroTik Anda:
 /ip hotspot walled-garden add dst-host=fonts.gstatic.com action=allow
 /ip hotspot walled-garden add dst-host=cdnjs.cloudflare.com action=allow
 ```
-*Ganti `172.16.11.91` pada baris pertama dengan IP/Domain publik hosting portal MikhTrans Anda.*
+*Ganti `172.16.11.91` pada baris pertama dengan IP/Domain publik hosting portal MikhPay Anda.*
 
 ### 3. Login Otomatis (Auto-Login)
-Setelah pembayaran lunas, portal MikhTrans akan memunculkan tombol **"Hubungkan Sekarang"**. Tombol ini otomatis mengirimkan parameter login langsung ke MikroTik (`http://[dnsname]/login?username=[voucher]&password=[voucher]`) sehingga pengguna langsung terhubung ke internet tanpa perlu mengetik kode voucher secara manual.
+Setelah pembayaran lunas, portal MikhPay akan memunculkan tombol **"Hubungkan Sekarang"**. Tombol ini otomatis mengirimkan parameter login langsung ke MikroTik (`http://[dnsname]/login?username=[voucher]&password=[voucher]`) sehingga pengguna langsung terhubung ke internet tanpa perlu mengetik kode voucher secara manual.
 
 ---
 
@@ -166,14 +166,14 @@ Gunakan header `X-API-Key` atau parameter query `api_key` untuk otentikasi.
 
 ### 1. Error: `Call to undefined function putenv()`
 *   **Penyebab**: VPS (seperti aaPanel) menonaktifkan fungsi `putenv()` demi alasan keamanan melalui direktif `disable_functions` di file `php.ini`.
-*   **Solusi**: MikhTrans v1.0+ sudah dilengkapi helper `mikhmonEnv()` yang aman dan kompatibel tanpa bergantung pada `putenv()`. Jika Anda masih menemui kendala ini, pastikan Anda menggunakan berkas `include/env_config.php` terbaru.
+*   **Solusi**: MikhPay v1.0+ sudah dilengkapi helper `mikhmonEnv()` yang aman dan kompatibel tanpa bergantung pada `putenv()`. Jika Anda masih menemui kendala ini, pastikan Anda menggunakan berkas `include/env_config.php` terbaru.
 
 ### 2. Kolom Input Kosong Kembali setelah Klik "Save" / Ping Host Kosong
 *   **Penyebab**: Web server (user `www` atau `www-data`) tidak memiliki hak akses menulis (*write permission*) pada folder `/data`. Hal ini terjadi jika Anda melakukan clone/pull git menggunakan user `root`.
 *   **Solusi**: Ubah kepemilikan owner folder `data/` menjadi `www` lewat File Manager aaPanel (klik kanan folder `data` -> **Permission** -> Ubah Owner ke **`www`** dengan permission **`755`** / **`775`** dan centang **Apply to subdir**).
 
 ### 3. Jangan Menimpa `config.php` dengan `config.php.example`
-*   **Penyebab**: Pengguna lama Mikhmon terbiasa mengubah nama berkas `.example` ke `.php`. Pada MikhTrans v1.0+, berkas `include/config.php` sudah disertakan langsung di repositori untuk menjembatani sesi router ke database.
+*   **Penyebab**: Pengguna lama Mikhmon terbiasa mengubah nama berkas `.example` ke `.php`. Pada MikhPay v1.0+, berkas `include/config.php` sudah disertakan langsung di repositori untuk menjembatani sesi router ke database.
 *   **Solusi**: Biarkan `include/config.php` bawaan apa adanya. Anda hanya perlu menyalin `.env.example` ke `.env.php` di root folder dan menyesuaikan API Key Anda di sana.
 
 ---

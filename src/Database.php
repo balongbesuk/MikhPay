@@ -2,7 +2,7 @@
 namespace App;
 
 /**
- * JSON Database Manager untuk MikhTrans
+ * JSON Database Manager untuk MikhPay
  * Mengelola penyimpanan terstruktur dalam file JSON dengan penguncian berkas (file locking)
  * untuk menghindari korupsi data tanpa ketergantungan pada ekstensi pdo_sqlite.
  * Ditulis agar kompatibel dengan PHP 5.x ke atas.

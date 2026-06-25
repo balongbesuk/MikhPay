@@ -1,6 +1,6 @@
 <?php
 /**
- * MikhTrans Custom PSR-4 Autoloader
+ * MikhPay Custom PSR-4 Autoloader
  * Menyediakan autoloading otomatis untuk namespace 'App\' yang mengarah ke folder 'src/'.
  * Berfungsi sebagai fallback mandiri jika Composer tidak terpasang di sistem pengguna.
  */

@@ -222,7 +222,7 @@ if (!isset($_SESSION["mikhmon"])) {
                                 s.push("<span style=\"color:" + this.series.color + "; font-size: 1.5em;\">" + this.series.symbolUnicode + "</span><b>" + this.series.name + ":</b> " + parseFloat((y / Math.pow(1024, unitIndex)).toFixed(2)) + " " + units[unitIndex]);
                               }
                             });
-                            return "<b>MikhTrans Traffic Monitor</b><br /><br /><b>Time: </b>" + Highcharts.dateFormat("%H:%M:%S", new Date(this.x)) + "<br />" + s.join(" <br/> ");
+                            return "<b>MikhPay Traffic Monitor</b><br /><br /><b>Time: </b>" + Highcharts.dateFormat("%H:%M:%S", new Date(this.x)) + "<br />" + s.join(" <br/> ");
                           },
                           shared: true                                                      
                         },

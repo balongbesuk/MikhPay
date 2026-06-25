@@ -441,7 +441,7 @@ body.login-page input.login-input {
             <div class="login-left-logo">
                 <i class="fa fa-wifi"></i>
             </div>
-            <h2 class="login-left-title">MikhTrans v1.3</h2>
+            <h2 class="login-left-title">MikhPay v1.3</h2>
             <p class="login-left-desc">Billing Hotspot & Router Manager dengan integrasi pembayaran otomatis Midtrans. Manajemen terstruktur, cepat, dan aman.</p>
             
             <div class="login-left-stats">
@@ -505,7 +505,7 @@ body.login-page input.login-input {
             <?php endif; ?>
             
             <div class="login-right-footer">
-                <span>&copy; <?= date("Y") ?> <a href="https://github.com/balongbesuk/MikhTrans" target="_blank">MikhTrans</a>. All rights reserved.</span>
+                <span>&copy; <?= date("Y") ?> <a href="https://github.com/balongbesuk/MikhPay" target="_blank">MikhPay</a>. All rights reserved.</span>
             </div>
         </div>
     </div>
