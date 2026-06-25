@@ -133,7 +133,9 @@ function makeAllSortable(e) {
 $(".main-container").fadeIn(400);
 $("#loading").hide();
 
-var idleto, idto = document.getElementById("idto").innerHTML;
+var idleto;
+var idtoElem = document.getElementById("idto");
+var idto = idtoElem ? idtoElem.innerHTML : "disable";
 
 function idleTimer() {
   var e = document.getElementById("timer");
