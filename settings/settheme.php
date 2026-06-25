@@ -54,9 +54,11 @@ if (empty($gettheme)) {
         }
         $gen = '<?php $theme="' . $gettheme . '"; $themecolor="'.$getthemecolor.'";?>';
         $stheme = './include/theme.php';
-        $handle = fopen($stheme, 'w') or die('Cannot open file:  ' . $stheme);
-        $data = $gen;
-        fwrite($handle, $data);
+        $handle = @fopen($stheme, 'w');
+        if ($handle) {
+            fwrite($handle, $gen);
+            fclose($handle);
+        }
         $_SESSION['theme'] = $gettheme;
         $_SESSION['themecolor'] = $getthemecolor;
         if (!$is_ajax) {
