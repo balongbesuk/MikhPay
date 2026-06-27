@@ -106,10 +106,12 @@ if (isset($data[$selected_session])) {
         $API->disconnect();
     } else {
         $trans['status'] = 'paid_pending_generate';
-        writeAppLog("QRIS_VERIFY_ERROR", "Gagal koneksi ke router saat verifikasi QRIS nominal: " . $nominal);
+        $trans['router_error'] = "ErrNo: " . $API->error_no . ", ErrStr: " . $API->error_str;
+        writeAppLog("QRIS_VERIFY_ERROR", "Gagal koneksi ke router (" . $trans['router_error'] . ") saat verifikasi QRIS nominal: " . $nominal);
     }
 } else {
     $trans['status'] = 'paid_pending_generate';
+    $trans['router_error'] = "Session " . $selected_session . " tidak ditemukan di database.";
 }
 
 // Simpan kembali status JSON
@@ -119,6 +121,7 @@ echo json_encode([
     'status' => 'success',
     'message' => 'Pembayaran berhasil dikonfirmasi.',
     'order_id' => $found_order_id,
-    'voucher_status' => $trans['status']
+    'voucher_status' => $trans['status'],
+    'router_error' => isset($trans['router_error']) ? $trans['router_error'] : null
 ]);
 ?>
