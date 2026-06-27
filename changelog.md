@@ -2,6 +2,16 @@
 
 Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 
+## [MikhPay v2.0] - 2026-06-27
+
+### Ditambahkan
+- **Sistem QRIS Dinamis Mandiri**: Merombak total metode pembayaran dengan menghilangkan dependensi ke pihak ketiga (Midtrans), digantikan dengan mesin pembuat QRIS dinamis mandiri (berjalan secara offline/lokal) yang secara otomatis menyisipkan kode nominal unik (1-99) dan meregenerasi checksum CRC16 pada kode QR statis GoPay pengguna. 
+- **Endpoint Verifikasi Otomatis (qris_verify.php)**: Menambahkan antarmuka API khusus yang mendukung verifikasi otomatis berbasis nominal unik via webhook pihak ketiga atau MacroDroid.
+- **Auto Cleanup Transaksi (cron_qris)**: Menambahkan *cron job* untuk membersihkan riwayat tagihan *pending* yang sudah berusia lebih dari 15 menit agar kode unik terbebaskan kembali untuk transaksi baru.
+
+### Dihapus
+- **Midtrans Payment Gateway**: Menghapus total seluruh integrasi SDK Snap JavaScript, antarmuka checkout Midtrans UI overlay, pemanggil webhook (`notification.php`), serta konfigurasi kredensial *server key* Midtrans dari dalam basis kode proyek.
+
 ## [MikhPay v2.0] - 2026-06-25
 
 ### Rebranding

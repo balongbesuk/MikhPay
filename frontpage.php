@@ -56,56 +56,11 @@ if (rand(1, 100) <= 5) {
     }
 }
 
-// Safety defaults for Midtrans config
-$midtrans_server_key = isset($midtrans_server_key) ? $midtrans_server_key : '';
-$midtrans_client_key = isset($midtrans_client_key) ? $midtrans_client_key : '';
-$midtrans_is_production = isset($midtrans_is_production) ? $midtrans_is_production : false;
+// Safety defaults for QRIS config
+$qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN) : false;
+$qris_static_string = isset($qris_static_string) ? $qris_static_string : '';
 
-// Helper untuk meminta Snap Token ke Midtrans
-function getMidtransSnapToken($order_id, $price, $server_key, $is_production) {
-    $url = $is_production 
-        ? "https://app.midtrans.com/snap/v1/transactions" 
-        : "https://app.sandbox.midtrans.com/snap/v1/transactions";
-        
-    $auth = base64_encode($server_key . ":");
-    
-    $payload = [
-        'transaction_details' => [
-            'order_id' => $order_id,
-            'gross_amount' => (int)$price
-        ],
-        'expiry' => [
-            'start_time' => date("Y-m-d H:i:s O"),
-            'unit' => 'minute',
-            'duration' => 10
-        ],
-        'credit_card' => [
-            'secure' => true
-        ]
-    ];
-    
-    $context = stream_context_create([
-        'http' => [
-            'method' => 'POST',
-            'header' => "Content-Type: application/json\r\n" .
-                        "Accept: application/json\r\n" .
-                        "Authorization: Basic $auth\r\n",
-            'content' => json_encode($payload),
-            'timeout' => 10,
-            'ignore_errors' => true
-        ],
-        'ssl' => [
-            'verify_peer' => true,
-            'verify_peer_name' => true
-        ]
-    ]);
-    
-    $response = @file_get_contents($url, false, $context);
-    if ($response) {
-        return json_decode($response, true);
-    }
-    return null;
-}
+// QRIS helper functions (empty, handled by lib/qris.php)
 
 // Endpoint Polling Pengecekan Status Pembayaran (Client-side fetch)
 if (isset($_GET['check_order'])) {
@@ -354,11 +309,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                         // Generate Order ID unik
                         $snap_order_id = "MK-" . preg_replace('/[^a-zA-Z0-9]/', '', $selected_session) . "-" . preg_replace('/[^a-zA-Z0-9]/', '', $profile_to_buy) . "-" . time();
                         
-                        // Panggil Midtrans Snap
-                        $snapResult = getMidtransSnapToken($snap_order_id, $price, $midtrans_server_key, $midtrans_is_production);
-                        
-                        if (isset($snapResult['token'])) {
-                            $snap_token = $snapResult['token'];
+                        if ($qris_mode && !empty($qris_static_string)) {
+                            // MODE QRIS MANDIRI
+                            include_once(__DIR__ . '/lib/qris.php');
+                            
+                            // Tambahkan kode unik (1 - 99)
+                            $unique_code = rand(1, 99);
+                            $total_price = $price + $unique_code;
+                            
+                            $qrisGen = new QrisGenerator($qris_static_string);
+                            $dynamic_qris_string = $qrisGen->generateDynamic($total_price);
+                            
+                            $snap_token = $dynamic_qris_string; // Kita pinjam variabel snap_token untuk menyimpan string qris
                             
                             // Simpan data pending transaksi
                             $transData = [
@@ -366,7 +328,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                                 'order_id' => $snap_order_id,
                                 'session' => $selected_session,
                                 'profile' => $profile_to_buy,
-                                'price' => $price,
+                                'price' => $total_price, // Harga sudah termasuk kode unik
+                                'base_price' => $price,
                                 'validity' => $validity,
                                 'created_at' => time()
                             ];
@@ -376,8 +339,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                             }
                             file_put_contents(__DIR__ . "/voucher/trans-" . $snap_order_id . ".json", json_encode($transData));
                         } else {
-                            $error_msg = "Gagal membuat tagihan pembayaran ke Midtrans.";
-                            writeAppLog("MIDTRANS_ERROR", "Gagal membuat snap token untuk Order ID: " . $snap_order_id . ". Response: " . json_encode($snapResult));
+                            $error_msg = "Sistem QRIS Mandiri belum dikonfigurasi.";
+                            writeAppLog("QRIS_ERROR", "Gagal membuat qris untuk Order ID: " . $snap_order_id . ". QRIS Mode mati atau string kosong.");
                         }
                     } else {
                         $error_msg = "Profil paket tidak ditemukan.";
@@ -419,11 +382,7 @@ $midtrans_is_production = isset($midtrans_is_production) ? $midtrans_is_producti
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- Midtrans Snap JS -->
-    <script type="text/javascript"
-            src="https://app.<?= $midtrans_is_production ? '' : 'sandbox.' ?>midtrans.com/snap/snap.js"
-            data-client-key="<?= $midtrans_client_key ?>"></script>
-    <script src="js/qrious.min.js"></script>
+    <!-- QR Code Script is loaded dynamically when needed -->
 
     <link rel="stylesheet" href="css/frontpage.css">
     <style>
@@ -1057,76 +1016,61 @@ $midtrans_is_production = isset($midtrans_is_production) ? $midtrans_is_producti
         </a>
     </nav>
 
-    <!-- Midtrans Snap Transaction Overlay -->
+    <!-- QRIS Transaction Overlay -->
     <?php if (!empty($snap_token)): ?>
         <div class="loading-overlay" id="loadingPayment">
-            <div class="skeleton-card" style="width: 100%; max-width: 440px; margin: 0 auto 24px auto; text-align: left; background: var(--card-bg); backdrop-filter: blur(var(--glass-blur)); border: 1px solid var(--border-color); box-shadow: var(--shadow-primary);">
-                <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 8px;">
-                    <div class="skeleton" style="width: 48px; height: 48px; border-radius: 50%;"></div>
-                    <div style="flex: 1;">
-                        <div class="skeleton skeleton-title" style="width: 60%; height: 20px; margin-bottom: 8px;"></div>
-                        <div class="skeleton skeleton-text" style="width: 40%; height: 12px; margin-bottom: 0;"></div>
-                    </div>
-                </div>
-                
-                <div style="border-top: 1px dashed var(--border-color); border-bottom: 1px dashed var(--border-color); padding: 16px 0; margin: 8px 0;">
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                        <div class="skeleton skeleton-text" style="width: 30%; height: 14px; margin-bottom: 0;"></div>
-                        <div class="skeleton skeleton-text" style="width: 40%; height: 14px; margin-bottom: 0;"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
-                        <div class="skeleton skeleton-text" style="width: 25%; height: 14px; margin-bottom: 0;"></div>
-                        <div class="skeleton skeleton-text" style="width: 35%; height: 14px; margin-bottom: 0;"></div>
-                    </div>
-                    <div style="display: flex; justify-content: space-between; margin-bottom: 0;">
-                        <div class="skeleton skeleton-text" style="width: 35%; height: 14px; margin-bottom: 0;"></div>
-                        <div class="skeleton skeleton-text" style="width: 20%; height: 14px; margin-bottom: 0;"></div>
-                    </div>
-                </div>
-                
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 8px;">
-                    <div class="skeleton skeleton-text" style="width: 40%; height: 24px; margin-bottom: 0;"></div>
-                    <div class="skeleton skeleton-text" style="width: 30%; height: 36px; border-radius: 8px; margin-bottom: 0;"></div>
-                </div>
+            <h2>Scan QRIS untuk Membayar</h2>
+            <div style="background: white; padding: 20px; border-radius: 12px; display: inline-block; margin: 16px 0;">
+                <div id="qrisCanvas"></div>
             </div>
-            <h2>Menunggu Pembayaran QRIS / E-Wallet</h2>
-            <p>Silakan selesaikan transaksi Anda pada pop-up pembayaran Midtrans di layar.</p>
-            <p style="margin-top: 8px; font-size: 12px; color: var(--text-muted);">Order ID: <?= htmlspecialchars($snap_order_id) ?></p>
-
-            <div class="qris-tip-box" style="margin-top: 24px; background: rgba(255, 255, 255, 0.95); border: 1px dashed var(--border-color); padding: 16px; border-radius: 12px; font-size: 13px; text-align: left; max-width: 440px; color: var(--text-main); line-height: 1.5; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05); margin-left: auto; margin-right: auto;">
-                <i class="fa fa-circle-info" style="color: var(--primary); font-size: 16px; float: left; margin-right: 10px; margin-top: 2px;"></i>
-                <div style="overflow: hidden;">
-                    <strong style="display: block; margin-bottom: 4px; color: var(--primary);">Tips Bayar Satu Perangkat (HP):</strong>
-                    Screenshot/tangkap layar kode QR pembayaran dari Midtrans, lalu buka aplikasi e-wallet Anda (Gopay, OVO, Dana, LinkAja, Mobile Banking, dll.). Pilih fitur **Bayar/Scan**, lalu klik ikon galeri untuk mengunggah gambar screenshot tersebut.
-                </div>
+            
+            <?php
+            // Karena kita minjam variabel snap_token, harga total ada di $transData
+            $total_harga_unik = 0;
+            if (isset($transData['price'])) {
+                $total_harga_unik = $transData['price'];
+            }
+            ?>
+            <p style="font-size: 18px; color: var(--accent); font-weight: bold; margin-bottom: 8px;">
+                Total: Rp <?= number_format($total_harga_unik, 0, ',', '.') ?>
+            </p>
+            <p style="color: var(--text-muted); font-size: 14px;">(Mohon transfer TEPAT hingga 3 digit terakhir!)</p>
+            
+            <p style="margin-top: 16px; font-size: 12px; color: var(--text-muted);">Order ID: <?= htmlspecialchars($snap_order_id) ?></p>
+            
+            <div class="cta-group" style="margin-top: 24px;">
+                <a href="index.php?session=<?= urlencode($selected_session) ?>#paket" class="btn-secondary-action">Batalkan</a>
             </div>
         </div>
 
+        <script src="js/qrcode.min.js"></script>
         <script>
             document.addEventListener("DOMContentLoaded", function() {
                 var orderId = "<?= $snap_order_id ?>";
-                var snapToken = "<?= $snap_token ?>";
+                var qrisString = "<?= $snap_token ?>";
                 
-                localStorage.setItem('active_order_id', orderId);
-                localStorage.setItem('active_snap_token', snapToken);
-                
-                snap.pay(snapToken, {
-                    onSuccess: function(result) {
-                        initWebSocketConnection(orderId);
-                    },
-                    onPending: function(result) {
-                        initWebSocketConnection(orderId);
-                    },
-                    onError: function(result) {
-                        alert("Pembuatan transaksi gagal atau dibatalkan.");
-                        localStorage.removeItem('active_order_id');
-                        localStorage.removeItem('active_snap_token');
-                        window.location.href = "index.php?session=<?= urlencode($selected_session) ?>#paket";
-                    },
-                    onClose: function() {
-                        initWebSocketConnection(orderId);
-                    }
+                // Render QR Code
+                var qrcode = new QRCode(document.getElementById("qrisCanvas"), {
+                    text: qrisString,
+                    width: 250,
+                    height: 250,
+                    colorDark : "#000000",
+                    colorLight : "#ffffff",
+                    correctLevel : QRCode.CorrectLevel.M
                 });
+                
+                // Polling transaksi
+                var checkInterval = setInterval(function() {
+                    fetch("frontpage.php?check_order=" + orderId)
+                        .then(r => r.json())
+                        .then(data => {
+                            if (data.status === 'success' || data.status === 'paid_pending_generate') {
+                                clearInterval(checkInterval);
+                                window.location.href = "frontpage.php?show_voucher=1&order_id=" + orderId + "&session=<?= urlencode($selected_session) ?>";
+                            }
+                        })
+                        .catch(e => console.error(e));
+                }, 3000);
             });
         </script>
     <?php endif; ?>
@@ -1135,8 +1079,6 @@ $midtrans_is_production = isset($midtrans_is_production) ? $midtrans_is_producti
     <script>
         var FrontpageConfig = {
             session: "<?= urlencode($selected_session) ?>",
-            clientKey: "<?= $midtrans_client_key ?>",
-            isProduction: <?= $midtrans_is_production ? 'true' : 'false' ?>,
             ws: {
                 enabled: <?= !empty($ws_app_key) ? 'true' : 'false' ?>,
                 key: "<?= htmlspecialchars($ws_app_key) ?>",

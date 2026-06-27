@@ -138,11 +138,11 @@ if (!function_exists('sendTelegramNotification')) {
     }
 }
 
-// Midtrans & WebSocket environment variables config overrides
+// QRIS environment variables config overrides
 $mikhmon_api_key = mikhmonEnv('MIKHMON_API_KEY', "YOUR_MIKHMON_API_KEY_HERE");
-$midtrans_server_key = mikhmonEnv('MIDTRANS_SERVER_KEY', "YOUR_MIDTRANS_SERVER_KEY_HERE");
-$midtrans_client_key = mikhmonEnv('MIDTRANS_CLIENT_KEY', "YOUR_MIDTRANS_CLIENT_KEY_HERE");
-$midtrans_is_production = filter_var(mikhmonEnv('MIDTRANS_IS_PRODUCTION', false), FILTER_VALIDATE_BOOLEAN);
+$qris_mode = filter_var(mikhmonEnv('QRIS_MODE', false), FILTER_VALIDATE_BOOLEAN);
+$qris_static_string = mikhmonEnv('QRIS_STATIC_STRING', "");
+$qris_secret_token = mikhmonEnv('QRIS_SECRET_TOKEN', "token_rahasia");
 
 $ws_app_id = mikhmonEnv('WS_APP_ID', "");
 $ws_app_key = mikhmonEnv('WS_APP_KEY', "");
