@@ -19,6 +19,10 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 - **Pemasangan Script `qrious.min.js` (`frontpage.php`)**: Memperbaiki masalah QR Code auto-login voucher yang kosong (putih polos) di halaman struk sukses karena library *qrious* tidak dimuat.
 - **Pengecekan Status Router Real-Time di Halaman Sukses**: Memperbaiki status router yang keliru tampil "Offline" pada halaman struk voucher sukses dengan tetap menjalankan fungsi cek koneksi MikroTik secara *real-time*.
 
+### Keamanan
+- **Proteksi Berkas Transaksi via PHP Encapsulation**: Mengubah ekstensi penyimpanan berkas transaksi dari `.json` menjadi `.php` (`trans-*.php`) yang dilindungi header `403 Forbidden` di baris pertama. Ini mencegah unduhan langsung berkas transaksi berisi kode voucher secara ilegal pada web server Nginx/Apache.
+- **Pencegahan Directory Listing Nginx**: Menambahkan berkas `index.php` berproteksi 403 di dalam direktori sensitif (`voucher/`, `data/`, dan `logs/`) untuk menutup celah keamanan perayapan folder (*folder traversal*).
+
 
 ## [MikhPay v2.0] - 2026-06-25
 
