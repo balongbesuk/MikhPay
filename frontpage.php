@@ -1052,38 +1052,204 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
 
     <!-- QRIS Transaction Overlay -->
     <?php if (!empty($snap_token)): ?>
+        <style>
+            .loading-overlay {
+                background: rgba(15, 23, 42, 0.7) !important;
+                backdrop-filter: blur(12px) !important;
+                -webkit-backdrop-filter: blur(12px) !important;
+                display: flex !important;
+                align-items: center;
+                justify-content: center;
+                padding: 16px;
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: 9999;
+                overflow-y: auto;
+                box-sizing: border-box;
+            }
+            .qris-modal-card {
+                background: #ffffff;
+                border-radius: 24px;
+                padding: 24px;
+                width: 100%;
+                max-width: 400px;
+                box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+                text-align: center;
+                animation: qrisModalFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+                color: #1e293b;
+                box-sizing: border-box;
+                margin: auto;
+            }
+            @keyframes qrisModalFade {
+                from { opacity: 0; transform: scale(0.95) translateY(10px); }
+                to { opacity: 1; transform: scale(1) translateY(0); }
+            }
+            .qris-header-title {
+                font-size: 20px;
+                font-weight: 800;
+                color: #0f172a;
+                margin: 0 0 6px 0;
+                letter-spacing: -0.5px;
+            }
+            .qris-header-desc {
+                font-size: 13px;
+                color: #64748b;
+                margin: 0 0 16px 0;
+            }
+            .timer-badge {
+                background: #fef2f2;
+                border: 1px solid #fca5a5;
+                color: #ef4444;
+                padding: 6px 14px;
+                border-radius: 20px;
+                font-size: 13px;
+                font-weight: 700;
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                margin-bottom: 20px;
+                animation: timerPulse 2s infinite;
+            }
+            @keyframes timerPulse {
+                0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
+                70% { transform: scale(1.02); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+                100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+            }
+            .qris-qr-container {
+                background: #ffffff;
+                padding: 16px;
+                border-radius: 20px;
+                border: 1px solid #e2e8f0;
+                display: inline-block;
+                margin-bottom: 20px;
+                box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+            }
+            .btn-download-qris-new {
+                background: #10b981;
+                color: white;
+                border: none;
+                padding: 10px 18px;
+                border-radius: 12px;
+                font-weight: 700;
+                cursor: pointer;
+                font-size: 13px;
+                display: inline-flex;
+                align-items: center;
+                gap: 8px;
+                transition: all 0.2s;
+                box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+                margin-top: 10px;
+                text-decoration: none;
+            }
+            .btn-download-qris-new:hover {
+                background: #059669;
+                transform: translateY(-1px);
+                box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+            }
+            .qris-total-amount {
+                font-size: 26px;
+                color: #10b981;
+                font-weight: 800;
+                margin: 0 0 4px 0;
+                letter-spacing: -0.5px;
+            }
+            .qris-warning-text {
+                color: #ef4444;
+                font-size: 13px;
+                margin: 0 0 16px 0;
+                font-weight: 700;
+            }
+            .qris-info-box {
+                background: #f8fafc;
+                border: 1px solid #e2e8f0;
+                border-radius: 14px;
+                padding: 12px;
+                font-size: 11px;
+                line-height: 1.5;
+                color: #475569;
+                text-align: left;
+                margin-bottom: 20px;
+            }
+            .qris-info-box i {
+                color: #3b82f6;
+                font-size: 14px;
+                float: left;
+                margin-right: 8px;
+                margin-top: 2px;
+            }
+            .btn-cancel-qris-new {
+                background: transparent;
+                border: 1px solid #cbd5e1;
+                color: #64748b;
+                padding: 10px 24px;
+                border-radius: 12px;
+                font-weight: 600;
+                cursor: pointer;
+                font-size: 14px;
+                transition: all 0.2s;
+                width: 100%;
+                display: block;
+                box-sizing: border-box;
+                text-decoration: none;
+            }
+            .btn-cancel-qris-new:hover {
+                background: #f1f5f9;
+                color: #334155;
+                border-color: #94a3b8;
+            }
+        </style>
         <div class="loading-overlay" id="loadingPayment">
-            <h2>Scan QRIS untuk Membayar</h2>
-            <div style="background: white; padding: 20px; border-radius: 12px; display: inline-block; margin: 16px 0;">
-                <div id="qrisCanvas"></div>
-                <div style="margin-top: 10px;">
-                    <button type="button" id="btnDownloadQris" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
-                        <i class="fa fa-download"></i> Simpan Gambar QRIS
+            <div class="qris-modal-card">
+                <h3 class="qris-header-title">Selesaikan Pembayaran</h3>
+                <p class="qris-header-desc">Scan atau unduh QRIS di bawah ini</p>
+                
+                <?php
+                // Hitung sisa waktu pembayaran (15 menit = 900 detik)
+                $remaining_seconds = 900;
+                if (isset($transData['created_at'])) {
+                    $elapsed = time() - $transData['created_at'];
+                    $remaining_seconds = 900 - $elapsed;
+                    if ($remaining_seconds < 0) $remaining_seconds = 0;
+                }
+                
+                $total_harga_unik = 0;
+                $kode_unik_harga = 0;
+                if (isset($transData['price']) && isset($transData['base_price'])) {
+                    $total_harga_unik = $transData['price'];
+                    $kode_unik_harga = $transData['price'] - $transData['base_price'];
+                }
+                ?>
+                
+                <div class="timer-badge">
+                    <i class="fa fa-clock"></i> Bayar sebelum: <span id="countdownTimer">15:00</span>
+                </div>
+                
+                <div class="qris-qr-container">
+                    <div id="qrisCanvas"></div>
+                    <button type="button" id="btnDownloadQris" class="btn-download-qris-new">
+                        <i class="fa fa-download"></i> Simpan QRIS ke Galeri
                     </button>
                 </div>
-            </div>
-            
-            <?php
-            // Karena kita minjam variabel snap_token, harga total ada di $transData
-            $total_harga_unik = 0;
-            $kode_unik_harga = 0;
-            if (isset($transData['price']) && isset($transData['base_price'])) {
-                $total_harga_unik = $transData['price'];
-                $kode_unik_harga = $transData['price'] - $transData['base_price'];
-            }
-            ?>
-            <p style="font-size: 18px; color: var(--accent); font-weight: bold; margin-bottom: 4px;">
-                Total: Rp <?= number_format($total_harga_unik, 0, ',', '.') ?>
-            </p>
-            <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 8px 0; font-weight: 600;">(Mohon transfer TEPAT hingga 3 digit terakhir!)</p>
-            <p style="font-size: 11px; color: var(--text-muted); max-width: 320px; margin: 0 auto 16px auto; line-height: 1.4; background: rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: 8px; text-align: left;">
-                <i class="fa fa-info-circle" style="color: #6366f1; font-size: 13px; float: left; margin-right: 8px; margin-top: 2px;"></i> Angka unik di atas (Rp <?= $kode_unik_harga ?>) adalah kode acak pelacakan otomatis sistem. Jaminan 100% uang Anda tetap utuh untuk aktivasi paket internet.
-            </p>
-            
-            <p style="margin-top: 16px; font-size: 12px; color: var(--text-muted);">Order ID: <?= htmlspecialchars($snap_order_id) ?></p>
-            
-            <div class="cta-group" style="margin-top: 24px;">
-                <button type="button" onclick="window.location.href='index.php?session=<?= urlencode($selected_session) ?>'" class="btn-secondary-action">Batalkan</button>
+                
+                <div class="qris-total-amount">
+                    Rp <?= number_format($total_harga_unik, 0, ',', '.') ?>
+                </div>
+                <div class="qris-warning-text">
+                    (Mohon transfer TEPAT hingga 3 digit terakhir!)
+                </div>
+                
+                <div class="qris-info-box">
+                    <i class="fa fa-info-circle"></i> Angka unik sebesar <b>Rp <?= $kode_unik_harga ?></b> ditambahkan sebagai verifikasi otomatis oleh sistem. Jaminan 100% uang Anda tetap utuh untuk aktivasi voucher.
+                </div>
+                
+                <div style="font-size: 11px; color: #94a3b8; margin-bottom: 20px;">
+                    Order ID: <?= htmlspecialchars($snap_order_id) ?>
+                </div>
+                
+                <button type="button" onclick="window.location.href='index.php?session=<?= urlencode($selected_session) ?>'" class="btn-cancel-qris-new">Batalkan Pesanan</button>
             </div>
         </div>
 
@@ -1096,8 +1262,8 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 // Render QR Code
                 var qrcode = new QRCode(document.getElementById("qrisCanvas"), {
                     text: qrisString,
-                    width: 250,
-                    height: 250,
+                    width: 230,
+                    height: 230,
                     colorDark : "#000000",
                     colorLight : "#ffffff",
                     correctLevel : QRCode.CorrectLevel.M
@@ -1130,6 +1296,27 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                         }
                     });
                 }
+
+                // Countdown Timer Logic
+                var remainingSeconds = <?= $remaining_seconds ?>;
+                var countdownEl = document.getElementById("countdownTimer");
+                
+                function updateTimer() {
+                    if (remainingSeconds <= 0) {
+                        clearInterval(timerInterval);
+                        countdownEl.innerHTML = "Kedaluwarsa!";
+                        alert("Waktu batas pembayaran Anda telah habis. Silakan buat pesanan paket baru.");
+                        window.location.href = 'index.php?session=<?= urlencode($selected_session) ?>';
+                        return;
+                    }
+                    var minutes = Math.floor(remainingSeconds / 60);
+                    var seconds = remainingSeconds % 60;
+                    countdownEl.innerHTML = (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+                    remainingSeconds--;
+                }
+                
+                updateTimer();
+                var timerInterval = setInterval(updateTimer, 1000);
                 
                 // Polling transaksi
                 var checkInterval = setInterval(function() {
@@ -1138,6 +1325,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                         .then(data => {
                             if (data.status === 'success' || data.status === 'paid_pending_generate') {
                                 clearInterval(checkInterval);
+                                clearInterval(timerInterval);
                                 window.location.href = "frontpage.php?show_voucher=1&order_id=" + orderId + "&session=<?= urlencode($selected_session) ?>";
                             }
                         })
