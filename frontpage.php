@@ -579,6 +579,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 <span>Kode voucher berhasil disalin!</span>
             </div>
 
+            <script src="js/qrious.min.js"></script>
             <script>
                 // Bersihkan data transaksi aktif dari localStorage setelah voucher sukses dimuat
                 localStorage.removeItem('active_order_id');
