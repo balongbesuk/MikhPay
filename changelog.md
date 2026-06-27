@@ -10,6 +10,7 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 - **Auto Cleanup Transaksi (cron_qris)**: Menambahkan *cron job* untuk membersihkan riwayat tagihan *pending* yang sudah berusia lebih dari 15 menit agar kode unik terbebaskan kembali untuk transaksi baru.
 - **Batasi Limit Transaksi Pending per Pelanggan**: Mengintegrasikan sistem proteksi spamming di mana 1 IP pelanggan dibatasi hanya bisa memiliki maksimal 1 transaksi pending aktif. Jika mencoba memesan paket kembali, sistem secara cerdas akan langsung memulihkan (*restore*) modal QRIS transaksi aktif yang sama untuk mengamankan slot kode unik.
 - **Sistem Pembatalan Pesanan Aktif**: Memperbarui tombol "Batalkan Pesanan" pada halaman utama agar langsung menghapus berkas transaksi pending terkait secara aman di server, membebaskan kode unik agar pelanggan bisa berganti pilihan paket internet secara instan.
+- **Validasi Ketersediaan Router Real-Time**: Mengintegrasikan sistem verifikasi koneksi API MikroTik secara *real-time* sesaat sebelum transaksi QRIS dibuat, mencegah pembuatan tagihan baru jika router dalam kondisi offline/mati lampu demi menghindari transaksi gantung.
 
 ### Dihapus
 - **Midtrans Payment Gateway**: Menghapus total seluruh integrasi SDK Snap JavaScript, antarmuka checkout Midtrans UI overlay, pemanggil webhook (`notification.php`), serta konfigurasi kredensial *server key* Midtrans dari dalam basis kode proyek.
