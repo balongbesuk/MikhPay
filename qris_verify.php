@@ -75,12 +75,12 @@ if (isset($data[$selected_session])) {
     $API->debug = false;
     
     if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
-        // Generate Username & Password acak
-        include_once(__DIR__ . '/include/functions.php'); // Jika ada fungsi helper tambahan
-        
         $userLength = 5;
-        // Basic random string jika fungsi randNLC tidak tersedia
-        $username = substr(str_shuffle("abcdefghjkmnpqrstuvwxyz23456789"), 0, $userLength);
+        if (function_exists('randNLC')) {
+            $username = randNLC($userLength);
+        } else {
+            $username = substr(str_shuffle("abcdefghjkmnpqrstuvwxyz23456789"), 0, $userLength);
+        }
         $password = $username;
         $comment = "QRIS-" . $found_order_id . "-" . date("m.d.y");
         
