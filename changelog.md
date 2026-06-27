@@ -12,6 +12,10 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 ### Dihapus
 - **Midtrans Payment Gateway**: Menghapus total seluruh integrasi SDK Snap JavaScript, antarmuka checkout Midtrans UI overlay, pemanggil webhook (`notification.php`), serta konfigurasi kredensial *server key* Midtrans dari dalam basis kode proyek.
 
+### Diperbaiki
+- **Batalkan Transaksi QRIS (Sticky Overlay)**: Memperbaiki *bug* pada halaman *frontpage* di mana *overlay* pop-up pembayaran QRIS tidak mau tertutup ketika tombol "Batalkan" ditekan. Tombol telah direstrukturisasi agar melakukan muat ulang halaman penuh (*hard reload*) alih-alih sekadar lompat *hash fragment*, sekaligus mencabut sistem pengecekan riwayat usang (*Resume Flow*) peninggalan Midtrans.
+
+
 ## [MikhPay v2.0] - 2026-06-25
 
 ### Rebranding
