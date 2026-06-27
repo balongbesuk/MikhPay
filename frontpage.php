@@ -1039,7 +1039,7 @@ $midtrans_is_production = isset($midtrans_is_production) ? $midtrans_is_producti
             <p style="margin-top: 16px; font-size: 12px; color: var(--text-muted);">Order ID: <?= htmlspecialchars($snap_order_id) ?></p>
             
             <div class="cta-group" style="margin-top: 24px;">
-                <a href="index.php?session=<?= urlencode($selected_session) ?>#paket" class="btn-secondary-action">Batalkan</a>
+                <button type="button" onclick="window.location.href='index.php?session=<?= urlencode($selected_session) ?>'" class="btn-secondary-action">Batalkan</button>
             </div>
         </div>
 
