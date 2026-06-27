@@ -40,10 +40,10 @@ $trans = null;
 if (is_dir($dir)) {
     $files = glob($dir . 'trans-*.json');
     foreach ($files as $file) {
-        $data = json_decode(file_get_contents($file), true);
-        if (isset($data['status']) && $data['status'] === 'pending' && isset($data['price']) && (int)$data['price'] === $nominal) {
-            $found_order_id = $data['order_id'];
-            $trans = $data;
+        $transData = json_decode(file_get_contents($file), true);
+        if (isset($transData['status']) && $transData['status'] === 'pending' && isset($transData['price']) && (int)$transData['price'] === $nominal) {
+            $found_order_id = $transData['order_id'];
+            $trans = $transData;
             break;
         }
     }
