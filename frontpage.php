@@ -63,6 +63,30 @@ if (rand(1, 100) <= 5) {
 $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN) : false;
 $qris_static_string = isset($qris_static_string) ? $qris_static_string : '';
 
+// Batalkan transaksi aktif dari pengguna
+if (isset($_GET['cancel_order'])) {
+    $cancel_id = preg_replace('/[^a-zA-Z0-9\-]/', '', $_GET['cancel_order']);
+    $filepath = __DIR__ . "/voucher/trans-" . $cancel_id . ".php";
+    if (!file_exists($filepath)) {
+        $filepath = __DIR__ . "/voucher/trans-" . $cancel_id . ".json";
+    }
+    if (file_exists($filepath)) {
+        $tData = readTransactionFile($filepath);
+        if ($tData && isset($tData['status']) && $tData['status'] === 'pending') {
+            $ip_ok = !isset($tData['client_ip']) || $tData['client_ip'] === $_SERVER['REMOTE_ADDR'];
+            if ($ip_ok) {
+                @unlink($filepath);
+                writeAppLog("TRANSACTION_CANCELLED", "Order ID: " . $cancel_id . " dibatalkan oleh pengguna.");
+            }
+        }
+    }
+    unset($_SESSION['active_order_id']);
+    unset($_SESSION['active_snap_token']);
+    
+    header("Location: index.php?session=" . urlencode($selected_session));
+    exit;
+}
+
 // QRIS helper functions (empty, handled by lib/qris.php)
 
 // Endpoint Polling Pengecekan Status Pembayaran (Client-side fetch)
@@ -286,10 +310,41 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
     } else {
         $_SESSION['last_checkout_time'] = time();
 
-        // Pastikan router harus online untuk membeli
-        if (!$router_online) {
-            $error_msg = "Gagal memproses transaksi: MikroTik sedang offline.";
+        // Pastikan tidak ada transaksi pending aktif milik IP klien ini
+        $client_ip = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '';
+        $found_existing = null;
+        if (!empty($client_ip)) {
+            $dir = __DIR__ . '/voucher/';
+            if (is_dir($dir)) {
+                $files = array_merge(
+                    glob($dir . 'trans-*.json'),
+                    glob($dir . 'trans-*.php')
+                );
+                $now = time();
+                foreach ($files as $file) {
+                    $tData = readTransactionFile($file);
+                    if ($tData && isset($tData['status']) && $tData['status'] === 'pending'
+                        && isset($tData['client_ip']) && $tData['client_ip'] === $client_ip
+                        && ($now - $tData['created_at']) < 900) {
+                        $found_existing = $tData;
+                        break;
+                    }
+                }
+            }
+        }
+
+        if ($found_existing) {
+            // Restore transaksi pending yang sudah ada secara otomatis
+            $snap_order_id = $found_existing['order_id'];
+            $snap_token = isset($found_existing['qris_string']) ? $found_existing['qris_string'] : '';
+            $transData = $found_existing;
+            $_SESSION['active_order_id'] = $snap_order_id;
+            $_SESSION['active_snap_token'] = $snap_token;
         } else {
+            // Pastikan router harus online untuk membeli
+            if (!$router_online) {
+                $error_msg = "Gagal memproses transaksi: MikroTik sedang offline.";
+            } else {
             $profile_to_buy = $_POST['buy_profile'];
             
             if (!empty($selected_session)) {
@@ -366,7 +421,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                                 'price' => $total_price, // Harga sudah termasuk kode unik
                                 'base_price' => $price,
                                 'validity' => $validity,
-                                'created_at' => time()
+                                'created_at' => time(),
+                                'client_ip' => isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '',
+                                'qris_string' => $dynamic_qris_string
                             ];
                             
                             if (!file_exists(__DIR__ . '/voucher')) {
@@ -387,6 +444,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                     writeAppLog("MIKROTIK_ERROR", "Gagal koneksi API MikroTik saat checkout profil: " . $profile_to_buy);
                 }
             }
+        }
         }
     }
 }
@@ -1262,7 +1320,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                     Order ID: <?= htmlspecialchars($snap_order_id) ?>
                 </div>
                 
-                <button type="button" onclick="window.location.href='index.php?session=<?= urlencode($selected_session) ?>'" class="btn-cancel-qris-new">Batalkan Pesanan</button>
+                <button type="button" onclick="window.location.href='frontpage.php?cancel_order=<?= urlencode($snap_order_id) ?>&session=<?= urlencode($selected_session) ?>'" class="btn-cancel-qris-new">Batalkan Pesanan</button>
             </div>
         </div>
 
