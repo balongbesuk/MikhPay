@@ -312,8 +312,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                             // MODE QRIS MANDIRI
                             include_once(__DIR__ . '/lib/qris.php');
                             
-                            // Tambahkan kode unik (1 - 99)
-                            $unique_code = rand(1, 99);
+                            // Cari kode unik (1 - 99) yang tidak sedang aktif (pending) di folder voucher
+                            $active_codes = [];
+                            $dir = __DIR__ . '/voucher/';
+                            if (is_dir($dir)) {
+                                $files = glob($dir . 'trans-*.json');
+                                foreach ($files as $file) {
+                                    $tData = json_decode(file_get_contents($file), true);
+                                    if (isset($tData['status']) && $tData['status'] === 'pending' && isset($tData['price']) && isset($tData['base_price'])) {
+                                        $diff = (int)$tData['price'] - (int)$tData['base_price'];
+                                        if ($diff >= 1 && $diff <= 99) {
+                                            $active_codes[] = $diff;
+                                        }
+                                    }
+                                }
+                            }
+                            // Dapatkan angka 1-99 yang tidak ada di $active_codes
+                            $available_codes = array_diff(range(1, 99), $active_codes);
+                            if (empty($available_codes)) {
+                                // Fallback jika semua slot 99 kode unik penuh (sangat jarang terjadi)
+                                $unique_code = rand(1, 99);
+                            } else {
+                                // Ambil satu secara acak dari kode yang masih kosong
+                                $unique_code = $available_codes[array_rand($available_codes)];
+                            }
+                            
                             $total_price = $price + $unique_code;
                             
                             $qrisGen = new QrisGenerator($qris_static_string);
@@ -564,7 +587,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
 
                 <div class="receipt-actions" style="flex-direction: column; width: 100%; gap: 12px;">
                     <?php if (!empty($login_url)): ?>
-                        <a href="<?= htmlspecialchars($login_url) ?>" class="btn-connect btn-connect-pulse">Hubungkan Sekarang</a>
+                        <a href="<?= htmlspecialchars($login_url) ?>" onclick="autoCopyBeforeConnect(event, '<?= htmlspecialchars($success_voucher['username']) ?>')" class="btn-connect btn-connect-pulse">Hubungkan Sekarang</a>
                     <?php endif; ?>
                     <div style="display: flex; gap: 12px; width: 100%;">
                         <button class="btn-copy" onclick="copyVoucherCode()">Salin Kode</button>
@@ -581,6 +604,21 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
 
             <script src="js/qrious.min.js"></script>
             <script>
+                function autoCopyBeforeConnect(event, codeText) {
+                    event.preventDefault();
+                    var targetUrl = event.currentTarget.getAttribute("href");
+                    
+                    if (typeof copyTextToClipboard === "function") {
+                        copyTextToClipboard(codeText, function() {
+                            window.location.href = targetUrl;
+                        }, function() {
+                            window.location.href = targetUrl;
+                        });
+                    } else {
+                        window.location.href = targetUrl;
+                    }
+                }
+
                 // Bersihkan data transaksi aktif dari localStorage setelah voucher sukses dimuat
                 localStorage.removeItem('active_order_id');
                 localStorage.removeItem('active_snap_token');
@@ -1018,19 +1056,29 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
             <h2>Scan QRIS untuk Membayar</h2>
             <div style="background: white; padding: 20px; border-radius: 12px; display: inline-block; margin: 16px 0;">
                 <div id="qrisCanvas"></div>
+                <div style="margin-top: 10px;">
+                    <button type="button" id="btnDownloadQris" style="background: #10b981; color: white; border: none; padding: 8px 16px; border-radius: 8px; font-weight: bold; cursor: pointer; font-size: 13px; display: inline-flex; align-items: center; gap: 6px; box-shadow: 0 4px 6px rgba(0,0,0,0.1);">
+                        <i class="fa fa-download"></i> Simpan Gambar QRIS
+                    </button>
+                </div>
             </div>
             
             <?php
             // Karena kita minjam variabel snap_token, harga total ada di $transData
             $total_harga_unik = 0;
-            if (isset($transData['price'])) {
+            $kode_unik_harga = 0;
+            if (isset($transData['price']) && isset($transData['base_price'])) {
                 $total_harga_unik = $transData['price'];
+                $kode_unik_harga = $transData['price'] - $transData['base_price'];
             }
             ?>
-            <p style="font-size: 18px; color: var(--accent); font-weight: bold; margin-bottom: 8px;">
+            <p style="font-size: 18px; color: var(--accent); font-weight: bold; margin-bottom: 4px;">
                 Total: Rp <?= number_format($total_harga_unik, 0, ',', '.') ?>
             </p>
-            <p style="color: var(--text-muted); font-size: 14px;">(Mohon transfer TEPAT hingga 3 digit terakhir!)</p>
+            <p style="color: var(--text-muted); font-size: 13px; margin: 0 0 8px 0; font-weight: 600;">(Mohon transfer TEPAT hingga 3 digit terakhir!)</p>
+            <p style="font-size: 11px; color: var(--text-muted); max-width: 320px; margin: 0 auto 16px auto; line-height: 1.4; background: rgba(255, 255, 255, 0.05); padding: 8px 12px; border-radius: 8px; text-align: left;">
+                <i class="fa fa-info-circle" style="color: #6366f1; font-size: 13px; float: left; margin-right: 8px; margin-top: 2px;"></i> Angka unik di atas (Rp <?= $kode_unik_harga ?>) adalah kode acak pelacakan otomatis sistem. Jaminan 100% uang Anda tetap utuh untuk aktivasi paket internet.
+            </p>
             
             <p style="margin-top: 16px; font-size: 12px; color: var(--text-muted);">Order ID: <?= htmlspecialchars($snap_order_id) ?></p>
             
@@ -1054,6 +1102,34 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                     colorLight : "#ffffff",
                     correctLevel : QRCode.CorrectLevel.M
                 });
+
+                // Download QRIS Handler
+                var btnDownload = document.getElementById("btnDownloadQris");
+                if (btnDownload) {
+                    btnDownload.addEventListener("click", function() {
+                        var container = document.getElementById("qrisCanvas");
+                        var img = container.querySelector("img");
+                        var canvas = container.querySelector("canvas");
+                        var dataUrl = "";
+                        
+                        if (img && img.src && img.src.indexOf("data:image") === 0) {
+                            dataUrl = img.src;
+                        } else if (canvas) {
+                            dataUrl = canvas.toDataURL("image/png");
+                        }
+                        
+                        if (dataUrl) {
+                            var link = document.createElement("a");
+                            link.href = dataUrl;
+                            link.download = "qris_mikhpay_" + orderId + ".png";
+                            document.body.appendChild(link);
+                            link.click();
+                            document.body.removeChild(link);
+                        } else {
+                            alert("Gagal mengunduh QRIS. Silakan ambil tangkapan layar (screenshot) kode QR di atas.");
+                        }
+                    });
+                }
                 
                 // Polling transaksi
                 var checkInterval = setInterval(function() {
