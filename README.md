@@ -1,6 +1,6 @@
-# MikhPay - Modernized with REST API & Midtrans QRIS
+# MikhPay - Modernized with REST API & QRIS Mandiri
 
-MikhPay (Mikrotik Hotspot Monitor & Transaction System) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal, **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Midtrans Payment Gateway**, serta sistem **Pengerasan Keamanan (Security Hardening)** kelas enterprise.
+MikhPay (Mikrotik Hotspot Monitor & Transaction System) adalah aplikasi web berbasis PHP untuk mengelola dan memantau Hotspot MikroTik, khususnya untuk pembuatan voucher otomatis. Versi ini telah dimodernisasi dengan penambahan **REST API** untuk integrasi eksternal, **Portal Pembelian Voucher Mandiri** terintegrasi dengan **Sistem QRIS Dinamis Mandiri** (tanpa potongan payment gateway pihak ketiga), serta sistem **Pengerasan Keamanan (Security Hardening)** kelas enterprise.
 
 Aplikasi ini dikembangkan dan dimodifikasi dari kode sumber asli [Mikhmon v3 oleh Laksamadi Guko](https://github.com/laksa19/mikhmonv3).
 
@@ -10,19 +10,17 @@ Aplikasi ini dikembangkan dan dimodifikasi dari kode sumber asli [Mikhmon v3 ole
 
 1. **Portal Pembelian Mandiri (`frontpage.php`)**
    - **Tampilan Modern**: Desain premium berorientasi *mobile-first* (Light Theme, Glassmorphism, dan Bottom Nav).
-   - **Integrasi Pembayaran**: Mendukung **Midtrans Snap SDK** untuk pembayaran aman via **QRIS**, Virtual Account (BCA, Mandiri, BNI, BRI), dan e-Wallet.
-   - **Real-time Updates**: Menggunakan **WebSockets (Pusher/Soketi)** untuk mendeteksi pembayaran lunas secara instan.
-   - **Polling Fallback**: Transisi otomatis ke HTTP Polling jika websocket mengalami kendala atau gagal tersambung dalam 5 detik.
+   - **Sistem QRIS Mandiri**: Membuat QR Code QRIS dinamis (berisi nominal unik tambahan) secara lokal (offline) langsung dari *string* QRIS Statis Anda tanpa pihak ketiga.
+   - **Real-time Updates**: Status pembayaran dapat terpantau menggunakan HTTP Polling.
 
 2. **REST API Endpoint (`api.php`)**
    - **Keamanan**: Otentikasi aman menggunakan parameter `api_key` atau header `X-API-Key`.
    - **Informasi Paket**: Endpoint cepat untuk melihat profil hotspot dan detail harga.
    - **Generate Voucher**: Pembuatan kode voucher secara otomatis dan programatis untuk diintegrasikan dengan aplikasi pihak ketiga.
 
-3. **Webhook Notification Handler (`notification.php`)**
-   - **Validasi HMAC SHA512**: Verifikasi keamanan signature transaksi langsung dari Midtrans.
-   - **Verifikasi Status Ganda (Dual-Check)**: Melakukan pemanggilan asinkron langsung dari server ke endpoint API Midtrans untuk memvalidasi ulang status dan jumlah nominal transaksi sebelum voucher diterbitkan di router.
-   - **Idempotensi**: Pencegahan pemrosesan transaksi berulang untuk menjaga konsistensi database dan router.
+3. **Verifikasi Pembayaran Otomatis (`qris_verify.php`)**
+   - **Dukungan MacroDroid/Tasker**: Endpoint verifikasi ringan untuk disambungkan dengan aplikasi automasi HP (pembaca notifikasi E-Wallet/Mutasi Bank) menggunakan `QRIS_SECRET_TOKEN`.
+   - **Auto-Cleanup**: Terdapat *cronjob* pembersih transaksi (`cron_qris.php`) untuk membatalkan tagihan kedaluwarsa setelah 15 menit agar kode unik terbebas.
 
 4. **Penguatan Keamanan Sistem (Security Hardening - v1.7 & v1.8)**
    - **Brute-Force Protection**: Membatasi kegagalan percobaan login administrator maksimal **5 kali**. IP yang melanggar diblokir otomatis selama **10 menit** (`data/login_rate_limit.json`).
@@ -48,12 +46,12 @@ Buat berkas baru bernama `.env.php` di root direktori MikhPay Anda (sejajar deng
 # API Key untuk mengamankan REST API (api.php / cron_retry.php)
 MIKHMON_API_KEY="mikhmon_api_key_12345"
 
-# Kredensial Midtrans (Dapatkan dari Dashboard Midtrans)
-MIDTRANS_SERVER_KEY="SB-Mid-server-YOUR_SANDBOX_SERVER_KEY"
-MIDTRANS_CLIENT_KEY="SB-Mid-client-YOUR_SANDBOX_CLIENT_KEY"
-MIDTRANS_IS_PRODUCTION=false # Ubah ke true jika sudah live/produksi
+# Kredensial QRIS Mandiri (Ganti dengan string hasil scan QR statis Anda)
+QRIS_MODE=true
+QRIS_STATIC_STRING="00020101021126670016COM.GO-JEK.WWW0118...YOUR_QRIS_STRING..."
+QRIS_SECRET_TOKEN="ganti_dengan_token_rahasia_anda_123"
 
-# WebSocket (Pusher / Soketi) - Opsional untuk status lunas real-time instan
+# WebSocket (Pusher / Soketi) - Opsional
 WS_APP_ID="YOUR_PUSHER_APP_ID"
 WS_APP_KEY="YOUR_PUSHER_KEY"
 WS_APP_SECRET="YOUR_PUSHER_SECRET"
@@ -79,19 +77,17 @@ Kredensial MikroTik, nama sesi, IP, user, password, dan dnsname diatur secara ot
 
 ---
 
-## 📡 Integrasi & Webhook Midtrans
+## 📡 Integrasi MacroDroid (Otomatisasi Verifikasi)
 
-Agar kode voucher terbuat secara otomatis di MikroTik setelah pelanggan melakukan pembayaran QRIS/VA:
-1. **Server Hosting / IP Publik**:
-   Daftarkan URL notifikasi Anda di dashboard Midtrans pada menu **Settings > Payment > Notification URL**:
-   `http://[domain-anda]/notification.php`
-2. **Server Lokal (Intranet)**:
-   Gunakan tunnel (seperti Ngrok) untuk meneruskan port web server lokal Anda ke internet.
-   ```bash
-   ngrok http 80
-   ```
-   Dapatkan URL HTTPS dari Ngrok (misal: `https://abcd-123.ngrok-free.app`), lalu daftarkan di dashboard Midtrans:
-   `https://abcd-123.ngrok-free.app/notification.php`
+Agar kode voucher terbuat secara otomatis di MikroTik setelah pelanggan mentransfer saldo ke GoPay/OVO/Dana Anda:
+1. **Siapkan HP Android Selalu Menyala**:
+   Gunakan HP (yang login ke akun e-wallet/bank penerima dana QRIS Anda) dan pasang aplikasi **MacroDroid**.
+2. **Buat Macro Pembaca Notifikasi**:
+   Buat aturan jika muncul notifikasi uang masuk (misal dari GoPay: "Berhasil terima saldo Rp X..."), ambil (ekstrak) nominal uangnya ke dalam variabel.
+3. **HTTP GET Request (Webhook)**:
+   Buat aksi di MacroDroid untuk mengeksekusi URL berikut ke server MikhPay Anda:
+   `http://[domain-anda.com]/qris_verify.php?token=ganti_dengan_token_rahasia_anda_123&nominal=[VARIABEL_NOMINAL]`
+   Sistem MikhPay akan langsung mencocokkan nominal tersebut dengan *database* transaksi *pending* dan menerbitkan voucher dalam hitungan detik!
 
 ---
 
@@ -116,9 +112,7 @@ Jalankan perintah berikut di **New Terminal** Winbox MikroTik Anda:
 # Izinkan akses ke Web Server MikhPay
 /ip hotspot walled-garden ip add dst-host=172.16.11.91 action=allow
 
-# Izinkan sistem pembayaran Midtrans & E-Wallet (GoPay, ShopeePay, dll)
-/ip hotspot walled-garden add dst-host=*.midtrans.com action=allow
-/ip hotspot walled-garden add dst-host=*.sandbox.midtrans.com action=allow
+# Izinkan sistem pembayaran e-wallet agar pelanggan bisa scan QR dari HP-nya
 /ip hotspot walled-garden add dst-host=*.gopay.co.id action=allow
 /ip hotspot walled-garden add dst-host=*.go-pay.co.id action=allow
 /ip hotspot walled-garden add dst-host=*.gopayapi.com action=allow
