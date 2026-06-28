@@ -215,7 +215,16 @@ if($idleto != "disable"){
 <?php 
 } ?>  
   <a href="./admin.php?id=sessions" class="menu <?= $ssesslist; ?>"><i class="fa fa-gear"></i> <?= $_admin_settings ?></a>
-  <a href="./admin.php?id=pending-transactions" class="menu <?= ($id == 'pending-transactions') ? 'active' : ''; ?>"><i class="fa fa-exchange"></i> <?= ($langid == 'id') ? 'Antrean Webhook' : 'Webhook Queue' ?></a>
+  <div class="dropdown-btn <?= ($id == 'pending-transactions') ? 'active' : ''; ?>"><i class="fa fa-exchange"></i> <?= ($langid == 'id') ? 'Antrean Webhook' : 'Webhook Queue' ?>
+    <i class="fa fa-caret-down"></i>
+  </div>
+  <div class="dropdown-container <?= ($id == 'pending-transactions') ? 'menu-open' : ''; ?>">
+    <a href="./admin.php?id=pending-transactions&tab=tab-pending" class="<?= ($id == 'pending-transactions' && ($_GET['tab'] == 'tab-pending' || empty($_GET['tab']))) ? 'active' : ''; ?>"> &nbsp;&nbsp;&nbsp;<i class="fa fa-clock-o"></i> <?= ($langid == 'id') ? 'Antrean Tertunda' : 'Pending Queue' ?></a>
+    <a href="./admin.php?id=pending-transactions&tab=tab-analytics" class="<?= ($id == 'pending-transactions' && $_GET['tab'] == 'tab-analytics') ? 'active' : ''; ?>"> &nbsp;&nbsp;&nbsp;<i class="fa fa-line-chart"></i> <?= ($langid == 'id') ? 'Analitik Penjualan' : 'Sales Analytics' ?></a>
+    <a href="./admin.php?id=pending-transactions&tab=tab-history" class="<?= ($id == 'pending-transactions' && $_GET['tab'] == 'tab-history') ? 'active' : ''; ?>"> &nbsp;&nbsp;&nbsp;<i class="fa fa-history"></i> <?= ($langid == 'id') ? 'Riwayat Transaksi' : 'Transaction History' ?></a>
+    <a href="./admin.php?id=pending-transactions&tab=tab-logs" class="<?= ($id == 'pending-transactions' && $_GET['tab'] == 'tab-logs') ? 'active' : ''; ?>"> &nbsp;&nbsp;&nbsp;<i class="fa fa-terminal"></i> Log Aktivitas</a>
+    <a href="./admin.php?id=pending-transactions&tab=tab-settings" class="<?= ($id == 'pending-transactions' && $_GET['tab'] == 'tab-settings') ? 'active' : ''; ?>"> &nbsp;&nbsp;&nbsp;<i class="fa fa-sliders"></i> <?= ($langid == 'id') ? 'Pengaturan & Backup' : 'Settings & Backup' ?></a>
+  </div>
   <a href="./admin.php?id=settings&router=new-<?= rand(1111,9999) ?>" class="menu <?= $snsettings ?>"><i class="fa fa-plus"></i> <?= $_add_router ?></a>
   <a href="./admin.php?id=about" class="menu <?= $sabout; ?>"><i class="fa fa-info-circle"></i> <?= $_about ?></a>
 

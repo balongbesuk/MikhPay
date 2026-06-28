@@ -712,7 +712,7 @@ uasort($profileSales, function($a, $b) {
         <?php endif; ?>
 
         <div class="tab-container">
-            <div class="tab-headers">
+            <div class="tab-headers" style="display: none;">
                 <button class="tab-header-btn active" onclick="openTab('tab-pending', this)">
                     <i class="fa fa-clock-o"></i> <?= ($langid == 'id') ? 'Antrean Tertunda' : 'Pending Queue' ?> (<?= count($pendingTransactions) ?>)
                 </button>
@@ -1512,11 +1512,23 @@ function filterHistoryTable() {
 
 // Restore active tab and initialize real-time features on load
 document.addEventListener("DOMContentLoaded", function() {
-    var activeTab = localStorage.getItem('mikhtrans_active_tab');
+    var urlParams = new URLSearchParams(window.location.search);
+    var activeTab = urlParams.get('tab');
+    
+    if (!activeTab) {
+        activeTab = localStorage.getItem('mikhtrans_active_tab');
+    }
+    
     if (activeTab && document.getElementById(activeTab)) {
         var btn = Array.from(document.querySelectorAll('.tab-header-btn')).find(b => b.getAttribute('onclick').includes(activeTab));
         if (btn) {
             openTab(activeTab, btn);
+        }
+    } else {
+        // Default to pending tab if nothing is set
+        var defaultBtn = document.querySelector('.tab-header-btn');
+        if (defaultBtn) {
+            openTab('tab-pending', defaultBtn);
         }
     }
 
