@@ -41,6 +41,50 @@ include_once(__DIR__ . '/include/config.php');
 include_once(__DIR__ . '/include/env_config.php');
 include_once(__DIR__ . '/include/csrf.php');
 
+// Handle AJAX contact form submission
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'submit_contact') {
+    header('Content-Type: application/json');
+    
+    // CSRF verification
+    if (!csrf_verify()) {
+        echo json_encode(['status' => 'error', 'message' => 'Token CSRF tidak valid. Silakan muat ulang halaman.']);
+        exit;
+    }
+    
+    $c_name = isset($_POST['c_name']) ? trim($_POST['c_name']) : '';
+    $c_email = isset($_POST['c_email']) ? trim($_POST['c_email']) : '';
+    $c_msg = isset($_POST['c_msg']) ? trim($_POST['c_msg']) : '';
+    
+    if (empty($c_name) || empty($c_msg)) {
+        echo json_encode(['status' => 'error', 'message' => 'Nama lengkap dan pesan wajib diisi.']);
+        exit;
+    }
+    
+    // Check if telegram bot is configured
+    $dbSettings = new \App\Models\AppSettings();
+    $token = $dbSettings->get('telegram_bot_token', mikhmonEnv('TELEGRAM_BOT_TOKEN', ''));
+    $chatId = $dbSettings->get('telegram_chat_id', mikhmonEnv('TELEGRAM_CHAT_ID', ''));
+    
+    if (empty($token) || empty($chatId)) {
+        echo json_encode(['status' => 'error', 'message' => 'Fitur kontak pesan dinonaktifkan sementara karena Telegram Bot belum diaktifkan oleh admin.']);
+        exit;
+    }
+    
+    // Format Telegram message
+    $telegramMessage = "📩 <b>[MikhPay] Pesan Baru dari Pelanggan</b>\n\n";
+    $telegramMessage .= "👤 <b>Nama:</b> " . htmlspecialchars($c_name) . "\n";
+    $telegramMessage .= "📧 <b>Email:</b> " . (!empty($c_email) ? htmlspecialchars($c_email) : "-") . "\n";
+    $telegramMessage .= "💬 <b>Pesan:</b>\n" . htmlspecialchars($c_msg) . "\n\n";
+    $telegramMessage .= "📅 <i>Dikirim: " . date("d/m/Y H:i:s") . " WIB</i>";
+    
+    if (sendTelegramNotification($telegramMessage)) {
+        echo json_encode(['status' => 'success', 'message' => 'Pesan Anda berhasil terkirim ke Telegram Support kami!']);
+    } else {
+        echo json_encode(['status' => 'error', 'message' => 'Gagal mengirim pesan ke Telegram. Hubungi admin via WhatsApp/Telegram Support.']);
+    }
+    exit;
+}
+
 // Auto-cleanup berkas transaksi usang secara berkala berbasis konfigurasi retensi
 if (rand(1, 100) <= 5) {
     $dir = __DIR__ . '/voucher/';
@@ -1092,18 +1136,19 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 </div>
 
                 <!-- Contact Message Form -->
-                <form class="contact-form" onsubmit="event.preventDefault(); alert('Pesan Anda berhasil terkirim! Tim kami akan menghubungi Anda segera.'); this.reset();">
+                <form class="contact-form" id="customerContactForm">
+                    <?= csrf_field() ?>
                     <div class="form-group">
                         <label for="c_name">Nama Lengkap</label>
-                        <input type="text" id="c_name" required placeholder="Masukkan nama Anda">
+                        <input type="text" id="c_name" name="c_name" required placeholder="Masukkan nama Anda">
                     </div>
                     <div class="form-group">
                         <label for="c_email">Alamat Email</label>
-                        <input type="email" id="c_email" required placeholder="name@example.com">
+                        <input type="email" id="c_email" name="c_email" required placeholder="name@example.com">
                     </div>
                     <div class="form-group">
                         <label for="c_msg">Pesan / Keluhan</label>
-                        <textarea id="c_msg" rows="4" required placeholder="Tuliskan keluhan atau pertanyaan Anda di sini..."></textarea>
+                        <textarea id="c_msg" name="c_msg" rows="4" required placeholder="Tuliskan keluhan atau pertanyaan Anda di sini..."></textarea>
                     </div>
                     <button type="submit" class="btn-submit">Kirim Pesan</button>
                 </form>
@@ -1483,6 +1528,45 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                     }
                 }
             }
+        });
+
+        // AJAX handler untuk Formulir Kontak & Keluhan Pelanggan ke Telegram Admin
+        $(document).ready(function() {
+            $('#customerContactForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                var $form = $(this);
+                var $submitBtn = $form.find('.btn-submit');
+                var originalBtnText = $submitBtn.text();
+                
+                $submitBtn.prop('disabled', true).text('Mengirim...');
+                
+                $.ajax({
+                    url: window.location.href,
+                    type: 'POST',
+                    data: {
+                        action: 'submit_contact',
+                        csrf_token: $form.find('input[name="csrf_token"]').val(),
+                        c_name: $('#c_name').val(),
+                        c_email: $('#c_email').val(),
+                        c_msg: $('#c_msg').val()
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        $submitBtn.prop('disabled', false).text(originalBtnText);
+                        if (response.status === 'success') {
+                            alert(response.message);
+                            $form[0].reset();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        $submitBtn.prop('disabled', false).text(originalBtnText);
+                        alert('Terjadi kesalahan koneksi saat mengirim pesan.');
+                    }
+                });
+            });
         });
     </script>
 </body>
