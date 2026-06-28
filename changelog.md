@@ -27,6 +27,7 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 
 ### Diubah
 - **Redesain Modern Welcome Banner**: Merombak total tampilan banner sambutan (`.dash-welcome`) pada halaman MikhPay Billing dengan desain modern bernuansa gradien dinamis yang mengikuti pengaturan warna aksen (menggunakan CSS `color-mix` untuk transisi gelap/terang secara otomatis), efek glassmorphic capsule pada indikator status bot Telegram, badge pencapaian lunas/antrean bernuansa blur transparan, serta penggantian judul menjadi **MikhPay Billing Manager** lengkap dengan ikon kartu kredit.
+- **Skema Warna Aksen Dinamis Global**: Mengintegrasikan logika PHP-RGB dinamis pada [headhtml.php](file:///d:/mikhmonv3ws/Mikhmon%20Server/mikhmon/include/headhtml.php) untuk meng-override variabel CSS tema utama (`--primary`, `--primary-dim`, `--primary-glow`, `--primary-hover`, `--border-hover`) secara global di seluruh admin panel. Dengan ini, warna tombol aksi (`bg-primary`), input field focus ring, serta sorotan aktif pada menu dan submenu sidebar otomatis berubah mengikuti warna aksen yang disimpan pengguna di pengaturan portal.
 
 ### Diperbaiki
 - **Status Expired Transaksi Usang**: Memperbaiki logika penentuan status pada tabel Riwayat Transaksi (`pending_transactions.php`) di mana transaksi berstatus `pending` yang umurnya telah melebihi batas waktu pembayaran (5 menit/300 detik) kini secara otomatis di-render sebagai status **Expired** (badge abu-abu) dan dapat disaring dengan tepat menggunakan dropdown filter.
