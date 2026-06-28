@@ -67,13 +67,30 @@ if (file_exists($changelogPath)) {
 }
 ?>
 <style>
+.about-row-flex {
+    display: flex !important;
+    gap: 24px !important;
+    width: 100% !important;
+    flex-wrap: wrap !important;
+    box-sizing: border-box !important;
+}
+.about-col-flex {
+    flex: 1 1 calc(50% - 12px) !important;
+    min-width: 320px !important;
+    box-sizing: border-box !important;
+    display: flex !important;
+    flex-direction: column !important;
+}
 .about-card {
     background: var(--bg-card) !important;
     border: 1px solid var(--border-color) !important;
     border-radius: 20px !important;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.04) !important;
     padding: 28px !important;
-    margin-bottom: 24px !important;
+    box-sizing: border-box !important;
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
 }
 .about-logo {
     display: inline-flex;
@@ -89,6 +106,7 @@ if (file_exists($changelogPath)) {
     margin-bottom: 16px;
 }
 .changelog-container {
+    flex: 1;
     max-height: 480px;
     overflow-y: auto;
     background: var(--bg-body) !important;
@@ -123,8 +141,8 @@ if (file_exists($changelogPath)) {
 }
 </style>
 
-<div class="row">
-  <div class="col-6">
+<div class="about-row-flex">
+  <div class="about-col-flex">
     <div class="about-card">
       <div class="about-logo">
         <i class="fa fa-credit-card"></i>
@@ -161,14 +179,14 @@ if (file_exists($changelogPath)) {
         Terima kasih yang sebesar-besarnya untuk Laksamadi Guko atas pengembangan framework dasar Mikhmon, dan seluruh komunitas yang terus mendukung perbaikan aplikasi ini.
       </p>
       
-      <div style="font-size: 12px; color: var(--text-muted); margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 14px;">
+      <div style="font-size: 12px; color: var(--text-muted); margin-top: 24px; border-top: 1px solid var(--border-color); padding-top: 14px; margin-top: auto;">
         Copyright &copy; 2018 Laksamadi Guko &bull; MikhPay modifications in 2026.
       </div>
     </div>
   </div>
   
-  <div class="col-6">
-    <div class="about-card" style="height: calc(100% - 24px);">
+  <div class="about-col-flex">
+    <div class="about-card">
       <h3 style="font-weight: 800; color: var(--text-bright); margin: 0 0 16px 0; font-size: 18px; display: flex; align-items: center; gap: 8px;"><i class="fa fa-history" style="color: var(--primary);"></i> Pembaruan Sistem (Changelog)</h3>
       <div class="changelog-container">
         <?= $changelogHtml; ?>
