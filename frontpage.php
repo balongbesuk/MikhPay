@@ -1277,11 +1277,11 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 <p class="qris-header-desc">Scan atau unduh QRIS di bawah ini</p>
                 
                 <?php
-                // Hitung sisa waktu pembayaran (15 menit = 900 detik)
-                $remaining_seconds = 900;
+                // Hitung sisa waktu pembayaran (5 menit = 300 detik)
+                $remaining_seconds = 300;
                 if (isset($transData['created_at'])) {
                     $elapsed = time() - $transData['created_at'];
-                    $remaining_seconds = 900 - $elapsed;
+                    $remaining_seconds = 300 - $elapsed;
                     if ($remaining_seconds < 0) $remaining_seconds = 0;
                 }
                 
@@ -1294,7 +1294,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 ?>
                 
                 <div class="timer-badge">
-                    <i class="fa fa-clock"></i> Bayar sebelum: <span id="countdownTimer">15:00</span>
+                    <i class="fa fa-clock"></i> Bayar sebelum: <span id="countdownTimer">05:00</span>
                 </div>
                 
                 <div class="qris-qr-container" style="width: 100%; max-width: 280px; box-sizing: border-box; display: inline-flex; flex-direction: column; align-items: center;">
@@ -1371,10 +1371,14 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 }
 
                 // Countdown Timer Logic
-                var remainingSeconds = <?= $remaining_seconds ?>;
+                var duration = <?= $remaining_seconds ?>;
+                var endTime = Date.now() + (duration * 1000);
                 var countdownEl = document.getElementById("countdownTimer");
                 
                 function updateTimer() {
+                    var now = Date.now();
+                    var remainingSeconds = Math.ceil((endTime - now) / 1000);
+                    
                     if (remainingSeconds <= 0) {
                         clearInterval(timerInterval);
                         countdownEl.innerHTML = "Kedaluwarsa!";
@@ -1385,7 +1389,6 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                     var minutes = Math.floor(remainingSeconds / 60);
                     var seconds = remainingSeconds % 60;
                     countdownEl.innerHTML = (minutes < 10 ? "0" : "") + minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
-                    remainingSeconds--;
                 }
                 
                 updateTimer();

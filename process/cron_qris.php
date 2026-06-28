@@ -8,7 +8,7 @@
 require_once dirname(__FILE__) . '/../include/config.php';
 
 $dir = __DIR__ . '/../voucher/';
-$expiration_time = 15 * 60; // 15 menit
+$expiration_time = 5 * 60; // 5 menit
 
 if (is_dir($dir)) {
     $files = array_merge(
