@@ -19,3 +19,10 @@ Thumbs.db
 *.log
 /logs/error.log.php
 /logs/error-*.log.php
+
+# Ignore hotspot local directory
+/hotspot/
+
+# Ignore PHP transaction files
+/voucher/trans-*.php
+

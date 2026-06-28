@@ -11,6 +11,7 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 - **Batasi Limit Transaksi Pending per Pelanggan**: Mengintegrasikan sistem proteksi spamming di mana 1 IP pelanggan dibatasi hanya bisa memiliki maksimal 1 transaksi pending aktif. Jika mencoba memesan paket kembali, sistem secara cerdas akan langsung memulihkan (*restore*) modal QRIS transaksi aktif yang sama untuk mengamankan slot kode unik.
 - **Sistem Pembatalan Pesanan Aktif**: Memperbarui tombol "Batalkan Pesanan" pada halaman utama agar langsung menghapus berkas transaksi pending terkait secara aman di server, membebaskan kode unik agar pelanggan bisa berganti pilihan paket internet secara instan.
 - **Validasi Ketersediaan Router Real-Time**: Mengintegrasikan sistem verifikasi koneksi API MikroTik secara *real-time* sesaat sebelum transaksi QRIS dibuat, mencegah pembuatan tagihan baru jika router dalam kondisi offline/mati lampu demi menghindari transaksi gantung.
+- **Panduan Screenshot untuk Browser Wi-Fi**: Menambahkan petunjuk alternatif bagi pelanggan jika tombol unduh QRIS gagal mengeksekusi penyimpanan berkas akibat batasan keamanan mini-browser Captive Portal bawaan HP.
 
 ### Dihapus
 - **Midtrans Payment Gateway**: Menghapus total seluruh integrasi SDK Snap JavaScript, antarmuka checkout Midtrans UI overlay, pemanggil webhook (`notification.php`), serta konfigurasi kredensial *server key* Midtrans dari dalam basis kode proyek.
@@ -22,6 +23,8 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 - **Pemasangan Script `qrious.min.js` (`frontpage.php`)**: Memperbaiki masalah QR Code auto-login voucher yang kosong (putih polos) di halaman struk sukses karena library *qrious* tidak dimuat.
 - **Pengecekan Status Router Real-Time di Halaman Sukses**: Memperbaiki status router yang keliru tampil "Offline" pada halaman struk voucher sukses dengan tetap menjalankan fungsi cek koneksi MikroTik secara *real-time*.
 - **Penyelarasan Versi Admin Dashboard**: Memperbarui teks penanda versi hardcoded pada banner utama dashboard admin (`settings/pending_transactions.php`) agar sesuai dengan rilis MikhPay v2.0 terbaru.
+- **Optimalisasi Pop-up QRIS Seluler**: Mengubah desain overlay pop-up modal QRIS menjadi berbasis *block layout* dengan *auto margin* dan *overflow scrolling* agar tidak terpotong di layar HP ber-viewport kecil (CNA).
+- **Resolusi Konflik Transaksi NAT (Satu IP Publik)**: Mengubah parameter pendeteksi transaksi aktif unik dari basis alamat IP menjadi basis Browser Session ID (`session_id()`). Perbaikan ini mencegah perangkat berbeda (seperti PC dan HP) di bawah jaringan Wi-Fi lokal yang sama saling menimpa pesanan QRIS yang sama.
 
 ### Keamanan
 - **Proteksi Berkas Transaksi via PHP Encapsulation**: Mengubah ekstensi penyimpanan berkas transaksi dari `.json` menjadi `.php` (`trans-*.php`) yang dilindungi header `403 Forbidden` di baris pertama. Ini mencegah unduhan langsung berkas transaksi berisi kode voucher secara ilegal pada web server Nginx/Apache.
