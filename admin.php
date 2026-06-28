@@ -80,6 +80,26 @@ if ($_SESSION['theme'] == "") {
     $themecolor = $_SESSION['themecolor'];
 }
 
+// PRG: Intercept save_settings POST before any HTML output
+// so accent color changes take effect immediately on redirect
+if ($id == 'pending-transactions' && isset($_POST['action']) && $_POST['action'] === 'save_settings' && isset($_SESSION['mikhmon'])) {
+    include_once('./include/autoload.php');
+    $earlySettings = new \App\Models\AppSettings();
+    $earlySettings->set('telegram_bot_token', isset($_POST['telegram_bot_token']) ? trim($_POST['telegram_bot_token']) : '');
+    $earlySettings->set('telegram_chat_id', isset($_POST['telegram_chat_id']) ? trim($_POST['telegram_chat_id']) : '');
+    $earlySettings->set('log_retention_days', isset($_POST['log_retention_days']) ? (int)$_POST['log_retention_days'] : 2);
+    $earlySettings->set('portal_title', isset($_POST['portal_title']) ? trim($_POST['portal_title']) : '');
+    $earlySettings->set('portal_logo_url', isset($_POST['portal_logo_url']) ? trim($_POST['portal_logo_url']) : '');
+    $earlySettings->set('portal_accent_color', isset($_POST['portal_accent_color']) ? trim($_POST['portal_accent_color']) : '#008BC9');
+    $earlySettings->set('portal_support_wa', isset($_POST['portal_support_wa']) ? trim($_POST['portal_support_wa']) : '');
+    $earlySettings->set('portal_support_telegram', isset($_POST['portal_support_telegram']) ? trim($_POST['portal_support_telegram']) : '');
+    $earlySettings->set('portal_support_email', isset($_POST['portal_support_email']) ? trim($_POST['portal_support_email']) : '');
+    $earlySettings->set('portal_office_address', isset($_POST['portal_office_address']) ? trim($_POST['portal_office_address']) : '');
+    $earlySettings->set('portal_operational_hours', isset($_POST['portal_operational_hours']) ? trim($_POST['portal_operational_hours']) : '');
+    $_SESSION['mikhtrans_success_msg'] = 'Sukses! Pengaturan MikhPay berhasil disimpan.';
+    header('Location: ./admin.php?id=pending-transactions&tab=tab-settings');
+    exit;
+}
 
 // load config
 include_once('./include/headhtml.php');

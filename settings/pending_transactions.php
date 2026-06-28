@@ -20,6 +20,10 @@ $dbSessions = new \App\Models\RouterSession();
 $settingsModel = new \App\Models\AppSettings();
 $success_msg = '';
 $error_msg = '';
+if (isset($_SESSION['mikhtrans_success_msg'])) {
+    $success_msg = $_SESSION['mikhtrans_success_msg'];
+    unset($_SESSION['mikhtrans_success_msg']);
+}
 
 // Helper to generate backup ZIP file
 function createBackupZip() {
