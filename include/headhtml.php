@@ -67,6 +67,12 @@ error_reporting(0);
 		$primary_glow_light = "rgba($r, $g, $b, 0.08)";
 		$border_hover = "rgba($r, $g, $b, 0.4)";
 		$border_hover_light = "rgba($r, $g, $b, 0.2)";
+		// Calculate darker shade for gradient (mix with black ~25%)
+		$r_dark = max(0, (int)($r * 0.75));
+		$g_dark = max(0, (int)($g * 0.75));
+		$b_dark = max(0, (int)($b * 0.75));
+		$accent_dark = sprintf('#%02x%02x%02x', $r_dark, $g_dark, $b_dark);
+		$welcome_bg = "linear-gradient(135deg, {$portal_accent_color} 0%, {$accent_dark} 100%)";
 		?>
 		<style>
 		:root {
@@ -76,6 +82,8 @@ error_reporting(0);
 			--primary-hover: <?= $portal_accent_color ?> !important;
 			--primary-hover-text: <?= $portal_accent_color ?> !important;
 			--border-hover: <?= $border_hover ?> !important;
+			--info: <?= $portal_accent_color ?> !important;
+			--welcome-bg: <?= $welcome_bg ?> !important;
 		}
 		body.theme-dark {
 			--primary: <?= $portal_accent_color ?> !important;
@@ -84,6 +92,8 @@ error_reporting(0);
 			--primary-hover: <?= $portal_accent_color ?> !important;
 			--primary-hover-text: <?= $portal_accent_color ?> !important;
 			--border-hover: <?= $border_hover ?> !important;
+			--info: <?= $portal_accent_color ?> !important;
+			--welcome-bg: <?= $welcome_bg ?> !important;
 		}
 		body.theme-light, body.theme-blue, body.theme-green, body.theme-pink {
 			--primary: <?= $portal_accent_color ?> !important;
@@ -92,6 +102,8 @@ error_reporting(0);
 			--primary-hover: <?= $portal_accent_color ?> !important;
 			--primary-hover-text: <?= $portal_accent_color ?> !important;
 			--border-hover: <?= $border_hover_light ?> !important;
+			--info: <?= $portal_accent_color ?> !important;
+			--welcome-bg: <?= $welcome_bg ?> !important;
 		}
 		</style>
 	</head>

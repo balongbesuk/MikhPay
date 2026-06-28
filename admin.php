@@ -82,11 +82,8 @@ if ($_SESSION['theme'] == "") {
 
 // PRG: Intercept save_settings POST before any HTML output
 // so accent color changes take effect immediately on redirect
-if ($id == 'pending-transactions' && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'save_settings' && isset($_SESSION['mikhmon'])) {
-    // Verify CSRF token
-    csrf_verify();
-    
-    include_once(__DIR__ . '/include/autoload.php');
+if ($id == 'pending-transactions' && isset($_POST['action']) && $_POST['action'] === 'save_settings' && isset($_SESSION['mikhmon'])) {
+    include_once('./include/autoload.php');
     $earlySettings = new \App\Models\AppSettings();
     $earlySettings->set('telegram_bot_token', isset($_POST['telegram_bot_token']) ? trim($_POST['telegram_bot_token']) : '');
     $earlySettings->set('telegram_chat_id', isset($_POST['telegram_chat_id']) ? trim($_POST['telegram_chat_id']) : '');
@@ -100,7 +97,6 @@ if ($id == 'pending-transactions' && $_SERVER['REQUEST_METHOD'] === 'POST' && is
     $earlySettings->set('portal_office_address', isset($_POST['portal_office_address']) ? trim($_POST['portal_office_address']) : '');
     $earlySettings->set('portal_operational_hours', isset($_POST['portal_operational_hours']) ? trim($_POST['portal_operational_hours']) : '');
     $_SESSION['mikhtrans_success_msg'] = 'Sukses! Pengaturan MikhPay berhasil disimpan.';
-    ob_end_clean();
     header('Location: ./admin.php?id=pending-transactions&tab=tab-settings');
     exit;
 }
