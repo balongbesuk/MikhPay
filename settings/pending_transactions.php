@@ -259,6 +259,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $p_accent = isset($_POST['portal_accent_color']) ? trim($_POST['portal_accent_color']) : '#008BC9';
         $p_wa = isset($_POST['portal_support_wa']) ? trim($_POST['portal_support_wa']) : '';
         $p_tele = isset($_POST['portal_support_telegram']) ? trim($_POST['portal_support_telegram']) : '';
+        $p_email = isset($_POST['portal_support_email']) ? trim($_POST['portal_support_email']) : '';
+        $p_address = isset($_POST['portal_office_address']) ? trim($_POST['portal_office_address']) : '';
+        $p_hours = isset($_POST['portal_operational_hours']) ? trim($_POST['portal_operational_hours']) : '';
         
         $settingsModel->set('telegram_bot_token', $bot_token);
         $settingsModel->set('telegram_chat_id', $chat_id);
@@ -268,6 +271,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
         $settingsModel->set('portal_accent_color', $p_accent);
         $settingsModel->set('portal_support_wa', $p_wa);
         $settingsModel->set('portal_support_telegram', $p_tele);
+        $settingsModel->set('portal_support_email', $p_email);
+        $settingsModel->set('portal_office_address', $p_address);
+        $settingsModel->set('portal_operational_hours', $p_hours);
         
         $success_msg = ($langid == 'id') 
             ? "Sukses! Pengaturan MikhPay berhasil disimpan." 
@@ -323,6 +329,9 @@ $portal_logo_url = $settingsModel->get('portal_logo_url', '');
 $portal_accent_color = $settingsModel->get('portal_accent_color', '#008BC9');
 $portal_support_wa = $settingsModel->get('portal_support_wa', '');
 $portal_support_telegram = $settingsModel->get('portal_support_telegram', '');
+$portal_support_email = $settingsModel->get('portal_support_email', '');
+$portal_office_address = $settingsModel->get('portal_office_address', '');
+$portal_operational_hours = $settingsModel->get('portal_operational_hours', '');
 
 // Load and group transactions
 $dir = __DIR__ . '/../voucher/';
@@ -1143,6 +1152,9 @@ uasort($profileSales, function($a, $b) {
                                     <input type="hidden" name="portal_accent_color" value="<?= htmlspecialchars($portal_accent_color) ?>" />
                                     <input type="hidden" name="portal_support_wa" value="<?= htmlspecialchars($portal_support_wa) ?>" />
                                     <input type="hidden" name="portal_support_telegram" value="<?= htmlspecialchars($portal_support_telegram) ?>" />
+                                    <input type="hidden" name="portal_support_email" value="<?= htmlspecialchars($portal_support_email) ?>" />
+                                    <input type="hidden" name="portal_office_address" value="<?= htmlspecialchars($portal_office_address) ?>" />
+                                    <input type="hidden" name="portal_operational_hours" value="<?= htmlspecialchars($portal_operational_hours) ?>" />
                                     <input type="hidden" name="log_retention_days" value="<?= $log_retention_days ?>" />
                                     
                                     <h4 style="margin-top: 0; margin-bottom: 16px; font-weight: 700; font-size: 14px; color: var(--text-bright); display: flex; align-items: center; gap: 8px;">
@@ -1234,10 +1246,22 @@ uasort($profileSales, function($a, $b) {
                                         <input class="form-control" type="text" id="portal_support_wa" name="portal_support_wa" value="<?= htmlspecialchars($portal_support_wa) ?>" placeholder="+628123456789"/>
                                     </div>
                                     <div class="form-group" style="margin-bottom: 16px;">
-                                        <label for="portal_support_telegram">Telegram Support</label>
-                                        <input class="form-control" type="text" id="portal_support_telegram" name="portal_support_telegram" value="<?= htmlspecialchars($portal_support_telegram) ?>" placeholder="username (tanpa @)"/>
-                                    </div>
-                                    <button type="submit" class="btn bg-primary" style="margin: 0; width: 100%; height: 38px; justify-content: center;">
+                                         <label for="portal_support_telegram">Telegram Support</label>
+                                         <input class="form-control" type="text" id="portal_support_telegram" name="portal_support_telegram" value="<?= htmlspecialchars($portal_support_telegram) ?>" placeholder="username (tanpa @)"/>
+                                     </div>
+                                     <div class="form-group">
+                                         <label for="portal_support_email">Email Resmi Support</label>
+                                         <input class="form-control" type="email" id="portal_support_email" name="portal_support_email" value="<?= htmlspecialchars($portal_support_email) ?>" placeholder="support@domain.my.id"/>
+                                     </div>
+                                     <div class="form-group">
+                                         <label for="portal_operational_hours">Jam Operasional Support</label>
+                                         <input class="form-control" type="text" id="portal_operational_hours" name="portal_operational_hours" value="<?= htmlspecialchars($portal_operational_hours) ?>" placeholder="Setiap Hari: 08.00 WIB - 22.00 WIB"/>
+                                     </div>
+                                     <div class="form-group" style="margin-bottom: 20px;">
+                                         <label for="portal_office_address">Alamat Kantor</label>
+                                         <textarea class="form-control" id="portal_office_address" name="portal_office_address" rows="3" style="resize: vertical; min-height: 80px;" placeholder="Alamat Kantor Pusat / Cabang..."><?= htmlspecialchars($portal_office_address) ?></textarea>
+                                     </div>
+                                     <button type="submit" class="btn bg-primary" style="margin: 0; width: 100%; height: 38px; justify-content: center;">
                                         <i class="fa fa-save"></i> Simpan Pengaturan Portal
                                     </button>
                                 </form>
@@ -1256,6 +1280,9 @@ uasort($profileSales, function($a, $b) {
                                     <input type="hidden" name="portal_accent_color" value="<?= htmlspecialchars($portal_accent_color) ?>" />
                                     <input type="hidden" name="portal_support_wa" value="<?= htmlspecialchars($portal_support_wa) ?>" />
                                     <input type="hidden" name="portal_support_telegram" value="<?= htmlspecialchars($portal_support_telegram) ?>" />
+                                    <input type="hidden" name="portal_support_email" value="<?= htmlspecialchars($portal_support_email) ?>" />
+                                    <input type="hidden" name="portal_office_address" value="<?= htmlspecialchars($portal_office_address) ?>" />
+                                    <input type="hidden" name="portal_operational_hours" value="<?= htmlspecialchars($portal_operational_hours) ?>" />
                                     
                                     <h4 style="margin-top: 0; margin-bottom: 16px; font-weight: 700; font-size: 14px; color: var(--text-bright); display: flex; align-items: center; gap: 8px;">
                                         <i class="fa fa-clock-o" style="color: #10b981;"></i> Retensi Log

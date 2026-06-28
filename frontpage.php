@@ -476,6 +476,9 @@ $portal_logo_url = isset($dbSettings) ? $dbSettings->get('portal_logo_url', '') 
 $portal_accent_color = isset($dbSettings) ? $dbSettings->get('portal_accent_color', '#008BC9') : '#008BC9';
 $portal_support_wa = isset($dbSettings) ? $dbSettings->get('portal_support_wa', '') : '';
 $portal_support_telegram = isset($dbSettings) ? $dbSettings->get('portal_support_telegram', '') : '';
+$portal_support_email = isset($dbSettings) ? $dbSettings->get('portal_support_email', '') : '';
+$portal_office_address = isset($dbSettings) ? $dbSettings->get('portal_office_address', '') : '';
+$portal_operational_hours = isset($dbSettings) ? $dbSettings->get('portal_operational_hours', '') : '';
 
 // Safety defaults for env config
 $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN) : false;?>
@@ -1040,7 +1043,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                         <i class="fa fa-envelope"></i>
                         <div class="contact-item-text">
                             <h4>Email Resmi Support</h4>
-                            <p>support@<?= strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $portal_title)) ?>.my.id</p>
+                            <p><?= !empty($portal_support_email) ? htmlspecialchars($portal_support_email) : 'support@' . strtolower(preg_replace('/[^a-zA-Z0-9]/', '', $portal_title)) . '.my.id' ?></p>
                         </div>
                     </div>
                     
@@ -1076,14 +1079,14 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                         <i class="fa fa-location-dot"></i>
                         <div class="contact-item-text">
                             <h4>Alamat Kantor</h4>
-                            <p><?= htmlspecialchars($portal_title) ?> Hotspot Area, Jl. Raya Jombang No. 123, Jombang, 61471, Indonesia</p>
+                            <p><?= !empty($portal_office_address) ? nl2br(htmlspecialchars($portal_office_address)) : htmlspecialchars($portal_title) . ' Hotspot Area, Jl. Raya Jombang No. 123, Jombang, 61471, Indonesia' ?></p>
                         </div>
                     </div>
                     <div class="contact-item">
                         <i class="fa fa-clock"></i>
                         <div class="contact-item-text">
                             <h4>Jam Operasional Support</h4>
-                            <p>Setiap Hari: 08.00 WIB - 22.00 WIB</p>
+                            <p><?= !empty($portal_operational_hours) ? htmlspecialchars($portal_operational_hours) : 'Setiap Hari: 08.00 WIB - 22.00 WIB' ?></p>
                         </div>
                     </div>
                 </div>
