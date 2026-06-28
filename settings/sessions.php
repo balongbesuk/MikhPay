@@ -84,52 +84,53 @@ if (!isset($_SESSION["mikhmon"])) {
                 $value = $sessionData['session_name'];
                 ?>
                     <div class="col-12">
-                        <div class="box box-bordered session-card" data-session="<?= $value; ?>">
-                            <div class="box-group">
+                        <div class="box box-bordered session-card" data-session="<?= $value; ?>" style="padding: 24px !important; border-radius: 16px !important; border: 1px solid var(--border-color) !important; background: var(--bg-card, #ffffff) !important; box-shadow: 0 4px 18px rgba(0, 0, 0, 0.02) !important;">
+                            <div class="box-group" style="display: flex; gap: 20px; align-items: flex-start;">
                               
-                              <div class="box-group-icon">
-                                <span class="connect pointer" id="<?= $value; ?>">
-                                  <i class="fa fa-server"></i>
+                              <div class="box-group-icon" style="background: linear-gradient(135deg, var(--primary) 0%, var(--primary-glow) 100%) !important; color: #ffffff !important; width: 48px !important; height: 48px !important; border-radius: 12px !important; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(0, 139, 201, 0.15) !important;">
+                                <span class="connect pointer" id="<?= $value; ?>" style="color: #ffffff !important;">
+                                  <i class="fa fa-server" style="font-size: 20px;"></i>
                                 </span>
                               </div>
                             
-                              <div class="box-group-area">
-                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
-                                    <strong style="font-size: 15px; color: var(--text-main);"><?= explode('%', $data[$value][4])[1] ?: $value; ?></strong>
-                                    <span class="status-indicator" style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: bold; color: var(--text-muted);">
-                                        <span class="dot-pulse" style="width: 8px; height: 8px; border-radius: 50%; background: #9CA3AF; display: inline-block;"></span>
-                                        <span class="status-text">Checking...</span>
+                              <div class="box-group-area" style="flex: 1;">
+                                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 8px;">
+                                    <strong style="font-size: 16px; color: var(--text-main); font-weight: 800;"><?= explode('%', $data[$value][4])[1] ?: $value; ?></strong>
+                                    
+                                    <span class="status-indicator-pill" style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; border-radius: 20px; font-size: 11px; font-weight: 800; background: rgba(156, 163, 175, 0.08); color: #6b7280; transition: all 0.3s ease;">
+                                        <span class="dot-pulse" style="width: 7px; height: 7px; border-radius: 50%; background: #9CA3AF; display: inline-block;"></span>
+                                        <span class="status-text">Checking</span>
                                     </span>
                                 </div>
-                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 8px; text-align: left;">
-                                  Sesi: <span style="font-family: monospace; font-weight: bold;"><?= $value; ?></span>
+                                <div style="font-size: 12px; color: var(--text-muted); margin-bottom: 14px; text-align: left;">
+                                  Sesi: <span style="font-family: monospace; font-weight: bold; background: rgba(148, 163, 184, 0.08); padding: 2px 6px; border-radius: 6px; color: var(--text-main);"><?= $value; ?></span>
                                 </div>
                                 
-                                <!-- Metrics grid -->
-                                <div class="session-metrics" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-bottom: 12px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); padding: 8px 0;">
-                                    <div style="font-size: 11px; text-align: center;">
-                                        <span style="display: block; color: var(--text-muted); margin-bottom: 2px;">CPU Load</span>
-                                        <strong class="metric-cpu" style="color: var(--text-main);">-</strong>
+                                <!-- Metrics grid as mini cards -->
+                                <div class="session-metrics" style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-bottom: 18px;">
+                                    <div style="font-size: 11px; text-align: center; background: rgba(148, 163, 184, 0.04); border: 1px solid var(--border-color); padding: 10px 6px; border-radius: 10px;">
+                                        <span style="display: block; color: var(--text-muted); margin-bottom: 4px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">CPU Load</span>
+                                        <strong class="metric-cpu" style="color: var(--text-main); font-size: 13px;">-</strong>
                                     </div>
-                                    <div style="font-size: 11px; text-align: center; border-left: 1px solid var(--border-color); border-right: 1px solid var(--border-color);">
-                                        <span style="display: block; color: var(--text-muted); margin-bottom: 2px;">Active Users</span>
-                                        <strong class="metric-active" style="color: var(--text-main);">-</strong>
+                                    <div style="font-size: 11px; text-align: center; background: rgba(148, 163, 184, 0.04); border: 1px solid var(--border-color); padding: 10px 6px; border-radius: 10px;">
+                                        <span style="display: block; color: var(--text-muted); margin-bottom: 4px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Active Users</span>
+                                        <strong class="metric-active" style="color: var(--text-main); font-size: 13px;">-</strong>
                                     </div>
-                                    <div style="font-size: 11px; text-align: center;">
-                                        <span style="display: block; color: var(--text-muted); margin-bottom: 2px;">Uptime</span>
-                                        <strong class="metric-uptime" style="color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">-</strong>
+                                    <div style="font-size: 11px; text-align: center; background: rgba(148, 163, 184, 0.04); border: 1px solid var(--border-color); padding: 10px 6px; border-radius: 10px;">
+                                        <span style="display: block; color: var(--text-muted); margin-bottom: 4px; font-weight: 700; font-size: 10px; text-transform: uppercase; letter-spacing: 0.5px;">Uptime</span>
+                                        <strong class="metric-uptime" style="color: var(--text-main); font-size: 13px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block;">-</strong>
                                     </div>
                                 </div>
 
                                 <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; font-size: 12px; font-weight: bold; text-align: center;">
                                   <div>
-                                    <span class="connect pointer action-link-btn btn-open" id="<?= $value; ?>"><i class="fa fa-external-link"></i> <?= $_open ?></span>
+                                    <span class="connect pointer action-link-btn btn-open" id="<?= $value; ?>" style="width: 100%;"><i class="fa fa-external-link"></i> <?= $_open ?></span>
                                   </div>
                                   <div>
-                                    <a class="action-link-btn btn-edit" href="./admin.php?id=settings&session=<?= $value; ?>"><i class="fa fa-edit"></i> <?= $_edit ?></a>
+                                    <a class="action-link-btn btn-edit" href="./admin.php?id=settings&session=<?= $value; ?>" style="width: 100%;"><i class="fa fa-edit"></i> <?= $_edit ?></a>
                                   </div>
                                   <div>
-                                    <a class="action-link-btn btn-delete" href="javascript:void(0)" onclick="if(confirm('Are you sure to delete data <?= $value; ?>?')){loadpage('./admin.php?id=remove-session&session=<?= $value; ?>')}"><i class="fa fa-remove"></i> <?= $_delete ?></a>
+                                    <a class="action-link-btn btn-delete" href="javascript:void(0)" onclick="if(confirm('Are you sure to delete data <?= $value; ?>?')){loadpage('./admin.php?id=remove-session&session=<?= $value; ?>')}" style="width: 100%;"><i class="fa fa-remove"></i> <?= $_delete ?></a>
                                   </div>
                                 </div>
                               </div>
@@ -419,6 +420,7 @@ document.addEventListener("DOMContentLoaded", function() {
     // Perform status checking for each session card
     document.querySelectorAll('.session-card').forEach(function(card) {
         var sessionName = card.getAttribute('data-session');
+        var pill = card.querySelector('.status-indicator-pill');
         var dot = card.querySelector('.dot-pulse');
         var statusText = card.querySelector('.status-text');
         var metricCpu = card.querySelector('.metric-cpu');
@@ -433,18 +435,20 @@ document.addEventListener("DOMContentLoaded", function() {
             .then(data => {
                 dot.style.animation = "none";
                 if (data.status === "online") {
-                    dot.style.background = "#10B981"; // Emerald green
+                    pill.style.background = "rgba(16, 185, 129, 0.08)";
+                    pill.style.color = "#10B981";
+                    dot.style.background = "#10B981";
                     statusText.innerText = "Online";
-                    statusText.style.color = "#10B981";
                     
                     metricCpu.innerText = data.cpu;
                     metricActive.innerText = data.active_users + " / " + data.total_users;
                     metricUptime.innerText = data.uptime;
                     metricUptime.title = data.uptime;
                 } else {
-                    dot.style.background = "#EF4444"; // Red
+                    pill.style.background = "rgba(239, 68, 68, 0.08)";
+                    pill.style.color = "#EF4444";
+                    dot.style.background = "#EF4444";
                     statusText.innerText = "Offline";
-                    statusText.style.color = "#EF4444";
                     
                     metricCpu.innerText = "Offline";
                     metricActive.innerText = "Offline";
@@ -453,9 +457,10 @@ document.addEventListener("DOMContentLoaded", function() {
             })
             .catch(err => {
                 dot.style.animation = "none";
+                pill.style.background = "rgba(239, 68, 68, 0.08)";
+                pill.style.color = "#EF4444";
                 dot.style.background = "#EF4444";
                 statusText.innerText = "Offline";
-                statusText.style.color = "#EF4444";
                 
                 metricCpu.innerText = "Error";
                 metricActive.innerText = "Error";
