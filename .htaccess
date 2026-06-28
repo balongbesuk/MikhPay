@@ -12,7 +12,10 @@ Options -Indexes
     </IfModule>
 </FilesMatch>
 
-# Prevent search engine indexing via HTTP headers
+# Prevent search engine indexing and add security headers
 <IfModule mod_headers.c>
     Header set X-Robots-Tag "noindex, nofollow, noarchive"
+    Header set X-Content-Type-Options "nosniff"
+    Header set X-Frame-Options "SAMEORIGIN"
+    Header set X-XSS-Protection "1; mode=block"
 </IfModule>

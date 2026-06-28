@@ -29,6 +29,7 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 ### Keamanan
 - **Proteksi Berkas Transaksi via PHP Encapsulation**: Mengubah ekstensi penyimpanan berkas transaksi dari `.json` menjadi `.php` (`trans-*.php`) yang dilindungi header `403 Forbidden` di baris pertama. Ini mencegah unduhan langsung berkas transaksi berisi kode voucher secara ilegal pada web server Nginx/Apache.
 - **Pencegahan Directory Listing Nginx**: Menambahkan berkas `index.php` berproteksi 403 di dalam direktori sensitif (`voucher/`, `data/`, dan `logs/`) untuk menutup celah keamanan perayapan folder (*folder traversal*).
+- **HTTP Security Headers di .htaccess**: Menambahkan header keamanan standar industri (`X-Content-Type-Options: nosniff`, `X-Frame-Options: SAMEORIGIN`, dan `X-XSS-Protection: 1; mode=block`) untuk mencegah serangan Clickjacking, MIME sniffing, dan Cross-Site Scripting (XSS).
 
 
 ## [MikhPay v2.0] - 2026-06-25
