@@ -2,7 +2,7 @@
 
 Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 
-## [MikhPay v2.0] - 2026-06-27
+### [MikhPay v2.0] - 2026-06-29
 
 ### Ditambahkan
 - **Sistem QRIS Dinamis Mandiri**: Merombak total metode pembayaran dengan menghilangkan dependensi ke pihak ketiga (Midtrans), digantikan dengan mesin pembuat QRIS dinamis mandiri (berjalan secara offline/lokal) yang secara otomatis menyisipkan kode nominal unik (1-99) dan meregenerasi checksum CRC16 pada kode QR statis GoPay pengguna. 
@@ -19,8 +19,10 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 - **Endpoint Pembacaan Log Asinkron (admin_get_logs.php)**: Menambahkan API khusus untuk mem-parsing dan mengambil baris log aktivitas sistem terbaru sebagai fallback log viewer.
 - **WebSocket Broadcast pada Logging Internal**: Mengintegrasikan trigger penyiar log asinkron pada fungsi `writeAppLog()` agar log baru langsung terkirim ke channel dasbor admin saat kejadian berlangsung.
 - **Pengaturan Kontak Portal Dinamis**: Menambahkan opsi pengaturan dinamis untuk Email Resmi Support, Alamat Kantor, dan Jam Operasional pada formulir Pengaturan Portal di dasbor admin. Data ini akan langsung dirender secara dinamis di halaman depan portal pelanggan (*frontpage.php*) menggantikan data statis (hardcoded) sebelumnya.
-- **Integrasi Form Kontak ke Telegram Bot**: Menghubungkan formulir kontak pesan/keluhan pelanggan pada halaman depan (*frontpage.php*) ke Telegram Bot admin secara *real-time* via AJAX. Ketika pelanggan mengirimkan keluhan, admin akan langsung menerima notifikasi pesan berisi nama, email, dan detail keluhan di aplikasi Telegram
+- **Integrasi Form Kontak ke Telegram Bot**: Hubungkan formulir keluhan pelanggan di halaman depan (*frontpage.php*) ke Telegram Bot admin secara *real-time* via AJAX.
 - **Submenu Sidebar Webhook Queue (Sidebar Only)**: Merestrukturisasi navigasi halaman Antrean Webhook (`pending_transactions.php`) dengan memindahkan 5 tab navigasi horizontal halaman ke dalam bentuk submenu dropdown pada sidebar admin, didukung inisialisasi tab berbasis parameter URL `tab` untuk navigasi yang lebih bersih dan bebas redundansi.
+- **Desain Ulang Kartu Vouchers Dashboard**: Merombak total daftar profil voucher (`userbyprofile.php`) dengan layout CSS Grid responsif (`.voucher-grid-container`), avatar ikon tiket melingkar (`.voucher-avatar`), teks hitung item tebal, dan tombol aksi mini pill (Open & Generate) yang diwarnai mengikuti aksen.
+- **Sub-Tab di Settings & Backup**: Memisahkan formulir pengaturan dan pencadangan yang awalnya panjang bercampur menjadi 3 sub-tab interaktif berbasis JavaScript: *Portal Pelanggan*, *Telegram & Retensi*, dan *Backup Data*.
 
 ### Dihapus
 - **Midtrans Payment Gateway**: Menghapus total seluruh integrasi SDK Snap JavaScript, antarmuka checkout Midtrans UI overlay, pemanggil webhook (`notification.php`), serta konfigurasi kredensial *server key* Midtrans dari dalam basis kode proyek.
@@ -30,6 +32,8 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 - **Skema Warna Aksen Dinamis & Konversi PHP-RGB**: Mengintegrasikan logika PHP-RGB dinamis pada [headhtml.php](file:///d:/mikhmonv3ws/Mikhmon%20Server/mikhmon/include/headhtml.php) untuk meng-override variabel CSS tema utama (`--primary`, `--primary-dim`, `--primary-glow`, `--primary-hover`, `--border-hover`, `--info`, `--welcome-bg`) secara global di seluruh admin panel dengan tingkat kompatibilitas peramban yang tinggi (WebView Android ramah). Warna aksen otomatis diikuti oleh sidebar, tombol, serta gradien banner.
 - **Rombak Kartu Metrik & Pendapatan Dashboard Sesi**: Menyelaraskan desain 3 kartu data (System Resources, Storage & Memory, dan Income) di halaman depan dashboard sesi dengan struktur rounded-card premium (radius 20px), bayangan melayang (hover lift `translateY(-3px)` + scaling ikon `1.08`), progress bar tebal mengikuti warna aksen, serta ikon rounded-square (52×52px) yang seragam.
 - **Mekanisme POST-Redirect-GET (PRG) untuk Warna Aksen**: Menambahkan interceptor POST di bagian awal `admin.php` sebelum output HTML dirender untuk aksi penyimpanan pengaturan portal. Sistem melakukan HTTP Redirect instan setelah save berhasil agar warna aksen baru langsung dimuat di sidebar, menu aktif, dan tombol tanpa perlu refresh manual.
+- **Overhaul Halaman Pengaturan Admin & Daftar Router**: Merombak halaman pengaturan admin (`sessions.php`) dengan tata letak kartu grid responsif (`.router-grid-container`) untuk daftar router, visual indikator status online/offline, metrik kinerja detail, serta menyematkan tombol toggle password bermata interaktif.
+- **Overhaul Halaman Quick Print**: Merombak formulir Quick Print (`listquickprint.php`) ke tata letak berbasis CSS Grid dengan tinggi field input `48px`, border radius `12px`, penataan tombol aksi di bagian bawah, serta merapikan tabel daftar paket quick print menggunakan shadow dan tombol aksi mini.
 
 ### Diperbaiki
 - **Status Expired Transaksi Usang**: Memperbaiki logika penentuan status pada tabel Riwayat Transaksi (`pending_transactions.php`) di mana transaksi berstatus `pending` yang umurnya telah melebihi batas waktu pembayaran (5 menit/300 detik) kini secara otomatis di-render sebagai status **Expired** (badge abu-abu) dan dapat disaring dengan tepat menggunakan dropdown filter.
@@ -41,6 +45,8 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 - **Pembersihan PHP Warning (`qris_verify.php`)**: Menghapus pemanggilan file non-eksisten `include/functions.php` yang memicu peringatan PHP. Peringatan tersebut sebelumnya mengotori respons API sehingga peramban gagal melakukan *parsing* JSON (*SyntaxError*). Pembuatan username acak dialihkan menggunakan fungsi bawaan `randNLC` jika tersedia.
 - **Pemasangan Script `qrious.min.js` (`frontpage.php`)**: Memperbaiki masalah QR Code auto-login voucher yang kosong (putih polos) di halaman struk sukses karena library *qrious* tidak dimuat.
 - **Pengecekan Status Router Real-Time di Halaman Sukses**: Memperbaiki status router yang keliru tampil "Offline" pada halaman struk voucher sukses dengan tetap menjalankan fungsi cek koneksi MikroTik secara *real-time*.
+- **Resolusi Latar Belakang Abu-Abu Sub-Tab**: Mengatasi bug visual di mana panel sub-tab pengaturan (`pending_transactions.php`) mewarisi latar belakang abu-abu pekat bawaan body dengan memaksa elemen card, card-body, dan sub-tab menggunakan variabel latar belakang tema (`var(--bg-card)`).
+- **Bug Stuck Loading Vouchers**: Memperbaiki syntax error berupa kurung kurawal penutup `}` yang hilang di bagian akhir `userbyprofile.php` yang menyebabkan peramban mengalami *stuck loading* saat mengakses halaman daftar voucher.
 - **Penyelarasan Versi Admin Dashboard**: Memperbarui teks penanda versi hardcoded pada banner utama dashboard admin (`settings/pending_transactions.php`) agar sesuai dengan rilis MikhPay v2.0 terbaru.
 - **Optimalisasi Pop-up QRIS Seluler**: Mengubah desain overlay pop-up modal QRIS menjadi berbasis *block layout* dengan *auto margin* dan *overflow scrolling* agar tidak terpotong di layar HP ber-viewport kecil (CNA).
 - **Resolusi Konflik Transaksi NAT (Satu IP Publik)**: Mengubah parameter pendeteksi transaksi aktif unik dari basis alamat IP menjadi basis Browser Session ID (`session_id()`). Perbaikan ini mencegah perangkat berbeda (seperti PC dan HP) di bawah jaringan Wi-Fi lokal yang sama saling menimpa pesanan QRIS yang sama.
