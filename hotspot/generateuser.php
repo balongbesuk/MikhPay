@@ -302,6 +302,135 @@ date_default_timezone_set($_SESSION['timezone']);
 	    min-width: 250px !important;
 	    box-sizing: border-box !important;
 	}
+	
+	/* Modern Action Buttons Style */
+	.btn-modern-action {
+	    display: inline-flex !important;
+	    align-items: center !important;
+	    justify-content: center !important;
+	    height: 40px !important;
+	    padding: 0 18px !important;
+	    border-radius: 10px !important;
+	    font-size: 13.5px !important;
+	    font-weight: 700 !important;
+	    gap: 8px !important;
+	    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+	    border: 1px solid transparent !important;
+	    cursor: pointer !important;
+	    text-decoration: none !important;
+	    box-shadow: 0 2px 6px rgba(0,0,0,0.02) !important;
+	}
+	
+	.btn-modern-action.btn-close {
+	    background: rgba(239, 68, 68, 0.08) !important;
+	    color: #ef4444 !important;
+	    border-color: rgba(239, 68, 68, 0.15) !important;
+	}
+	.btn-modern-action.btn-close:hover {
+	    background: #ef4444 !important;
+	    color: #ffffff !important;
+	}
+	
+	.btn-modern-action.btn-list {
+	    background: rgba(236, 72, 153, 0.08) !important;
+	    color: #ec4899 !important;
+	    border-color: rgba(236, 72, 153, 0.15) !important;
+	}
+	.btn-modern-action.btn-list:hover {
+	    background: #ec4899 !important;
+	    color: #ffffff !important;
+	}
+	
+	.btn-modern-action.btn-submit {
+	    background: var(--primary) !important;
+	    color: #ffffff !important;
+	    box-shadow: 0 4px 12px rgba(0, 139, 201, 0.2) !important;
+	}
+	.btn-modern-action.btn-submit:hover {
+	    transform: translateY(-1px);
+	    box-shadow: 0 6px 16px rgba(0, 139, 201, 0.3) !important;
+	}
+	
+	.btn-modern-action.btn-print {
+	    background: #1e293b !important;
+	    color: #ffffff !important;
+	}
+	.btn-modern-action.btn-print:hover {
+	    background: #0f172a !important;
+	    transform: translateY(-1px);
+	}
+	
+	.btn-modern-action.btn-qr {
+	    background: #ef4444 !important;
+	    color: #ffffff !important;
+	}
+	.btn-modern-action.btn-qr:hover {
+	    background: #dc2626 !important;
+	    transform: translateY(-1px);
+	}
+	
+	.btn-modern-action.btn-small {
+	    background: #0284c7 !important;
+	    color: #ffffff !important;
+	}
+	.btn-modern-action.btn-small:hover {
+	    background: #0369a1 !important;
+	    transform: translateY(-1px);
+	}
+
+	/* Form Table Modern Overhaul */
+	.card-body table.table {
+	    width: 100% !important;
+	    border-collapse: collapse !important;
+	    margin-top: 10px !important;
+	}
+	.card-body table.table tr {
+	    border-bottom: 1px solid var(--border-color) !important;
+	}
+	.card-body table.table tr:last-child {
+	    border-bottom: none !important;
+	}
+	.card-body table.table td {
+	    padding: 16px 8px !important;
+	    border: none !important;
+	    font-size: 14px !important;
+	    color: var(--text-main) !important;
+	}
+	.card-body table.table td:first-child {
+	    font-weight: 700 !important;
+	    color: var(--text-muted) !important;
+	    width: 25% !important;
+	    vertical-align: middle !important;
+	}
+	.card-body table.table td select.form-control, 
+	.card-body table.table td input.form-control {
+	    width: 100% !important;
+	    height: 46px !important;
+	    border: 1px solid var(--border-color) !important;
+	    border-radius: 10px !important;
+	    background: var(--input-bg, #ffffff) !important;
+	    color: var(--text-main) !important;
+	    padding: 0 16px !important;
+	    font-size: 14px !important;
+	    outline: none !important;
+	    transition: all 0.2s ease !important;
+	    box-sizing: border-box !important;
+	}
+	.card-body table.table td select.form-control:focus, 
+	.card-body table.table td input.form-control:focus {
+	    border-color: var(--primary) !important;
+	    box-shadow: 0 0 0 3px var(--primary-glow) !important;
+	}
+	#GetValidPrice b {
+	    display: inline-block;
+	    background: var(--primary-glow) !important;
+	    color: var(--primary) !important;
+	    padding: 8px 16px !important;
+	    border-radius: 8px !important;
+	    font-size: 12.5px !important;
+	    font-weight: 700 !important;
+	    margin-top: 8px !important;
+	}
 	</style>
 <div class="gen-col-left">
 <div class="card" style="box-shadow: var(--shadow-card); border-radius: var(--radius); border: 1px solid var(--border-color); margin: 0 !important;">
@@ -310,17 +439,17 @@ date_default_timezone_set($_SESSION['timezone']);
 	</div>
 	<div class="card-body" style="padding: 24px !important;">
 <form autocomplete="off" method="post" action="">
-	<div style="margin-bottom: 20px; display: flex; gap: 8px; flex-wrap: wrap;">
+	<div style="margin-bottom: 24px; display: flex; gap: 8px; flex-wrap: wrap;">
 		<?php if ($_SESSION['ubp'] != "") {
-		echo "    <a class='btn bg-warning' href='./?hotspot=users&profile=" . $_SESSION['ubp'] . "&session=" . $session . "'> <i class='fa fa-close'></i> ".$_close."</a>";
+		echo "    <a class='btn-modern-action btn-close' href='./?hotspot=users&profile=" . $_SESSION['ubp'] . "&session=" . $session . "'> <i class='fa fa-close'></i> ".$_close."</a>";
 	} elseif ($_SESSION['vcr'] = "active") {
-		echo "    <a class='btn bg-warning' href='./?hotspot=users-by-profile&session=" . $session . "'> <i class='fa fa-close'></i> ".$_close."</a>";
+		echo "    <a class='btn-modern-action btn-close' href='./?hotspot=users-by-profile&session=" . $session . "'> <i class='fa fa-close'></i> ".$_close."</a>";
 	} else {
-		echo "    <a class='btn bg-warning' href='./?hotspot=users&profile=all&session=" . $session . "'> <i class='fa fa-close'></i> ".$_close."</a>";
+		echo "    <a class='btn-modern-action btn-close' href='./?hotspot=users&profile=all&session=" . $session . "'> <i class='fa fa-close'></i> ".$_close."</a>";
 	}
 
 	?>
-	<a class="btn bg-pink" title="Open User List by Profile 
+	<a class="btn-modern-action btn-list" title="Open User List by Profile 
 <?php if ($_SESSION['ubp'] == "") {
 	echo "all";
 } else {
@@ -331,10 +460,10 @@ date_default_timezone_set($_SESSION['timezone']);
 } else {
 	echo $uprofile;
 } ?>&session=<?= $session; ?>"> <i class="fa fa-users"></i> <?= $_user_list ?></a>
-    <button type="submit" name="save" onclick="loader()" class="btn bg-primary" title="Generate User"> <i class="fa fa-save"></i> <?= $_generate ?></button>
-    <a class="btn bg-secondary" title="Print Default" href="./voucher/print.php?id=<?= $urlprint; ?>&qr=no&session=<?= $session; ?>" target="_blank"> <i class="fa fa-print"></i> <?= $_print ?></a>
-    <a class="btn bg-danger" title="Print QR" href="./voucher/print.php?id=<?= $urlprint; ?>&qr=yes&session=<?= $session; ?>" target="_blank"> <i class="fa fa-qrcode"></i> <?= $_print_qr ?></a>
-    <a class="btn bg-info" title="Print Small" href="./voucher/print.php?id=<?= $urlprint; ?>&small=yes&session=<?= $session; ?>" target="_blank"> <i class="fa fa-print"></i> <?= $_print_small ?></a>
+    <button type="submit" name="save" onclick="loader()" class="btn-modern-action btn-submit" title="Generate User"> <i class="fa fa-save"></i> <?= $_generate ?></button>
+    <a class="btn-modern-action btn-print" title="Print Default" href="./voucher/print.php?id=<?= $urlprint; ?>&qr=no&session=<?= $session; ?>" target="_blank"> <i class="fa fa-print"></i> <?= $_print ?></a>
+    <a class="btn-modern-action btn-qr" title="Print QR" href="./voucher/print.php?id=<?= $urlprint; ?>&qr=yes&session=<?= $session; ?>" target="_blank"> <i class="fa fa-qrcode"></i> <?= $_print_qr ?></a>
+    <a class="btn-modern-action btn-small" title="Print Small" href="./voucher/print.php?id=<?= $urlprint; ?>&small=yes&session=<?= $session; ?>" target="_blank"> <i class="fa fa-print"></i> <?= $_print_small ?></a>
 </div>
 <table class="table">
   <tr>
