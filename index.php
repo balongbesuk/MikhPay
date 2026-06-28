@@ -531,6 +531,32 @@ elseif ($ppp == "edit-profile") {
     // Safe AJAX loader: only update DOM when response is valid & non-empty
     function safeLoad(targetSel, url, fragmentSel, callback) {
         setSyncStatus("syncing");
+        
+        // Simpan posisi scroll target, window, dan elemen scrollable di dalam target
+        var scrolls = [];
+        $(targetSel).find('*').each(function() {
+            if (this.scrollTop > 0 || this.scrollLeft > 0) {
+                var selector = '';
+                if (this.id) {
+                    selector = '#' + this.id;
+                } else if (this.className) {
+                    selector = '.' + $.trim(this.className).split(/\s+/).join('.');
+                } else {
+                    selector = this.tagName.toLowerCase();
+                }
+                scrolls.push({
+                    selector: selector,
+                    top: this.scrollTop,
+                    left: this.scrollLeft
+                });
+            }
+        });
+        
+        var targetTop = $(targetSel).scrollTop();
+        var targetLeft = $(targetSel).scrollLeft();
+        var windowTop = $(window).scrollTop();
+        var windowLeft = $(window).scrollLeft();
+
         $.ajax({
             url: url,
             dataType: "html",
@@ -551,6 +577,20 @@ elseif ($ppp == "edit-profile") {
                 } else {
                     $(targetSel).html(data);
                 }
+                
+                // Kembalikan posisi scroll target dan window
+                $(targetSel).scrollTop(targetTop);
+                $(targetSel).scrollLeft(targetLeft);
+                $(window).scrollTop(windowTop);
+                $(window).scrollLeft(windowLeft);
+                
+                // Kembalikan posisi scroll elemen-elemen di dalamnya (misal .overflow)
+                scrolls.forEach(function(s) {
+                    if (s.selector) {
+                        $(targetSel).find(s.selector).scrollTop(s.top).scrollLeft(s.left);
+                    }
+                });
+
                 if (typeof callback === "function") callback();
                 setSyncStatus("connected");
             },
