@@ -25,6 +25,9 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 ### Dihapus
 - **Midtrans Payment Gateway**: Menghapus total seluruh integrasi SDK Snap JavaScript, antarmuka checkout Midtrans UI overlay, pemanggil webhook (`notification.php`), serta konfigurasi kredensial *server key* Midtrans dari dalam basis kode proyek.
 
+### Diubah
+- **Redesain Modern Welcome Banner**: Merombak total tampilan banner sambutan (`.dash-welcome`) pada halaman MikhPay Billing dengan desain modern bernuansa gradien violet-indigo, efek glassmorphic capsule pada indikator status bot Telegram, badge pencapaian lunas/antrean bernuansa blur transparan, serta penggantian judul menjadi **MikhPay Billing Manager** lengkap dengan ikon kartu kredit.
+
 ### Diperbaiki
 - **Status Expired Transaksi Usang**: Memperbaiki logika penentuan status pada tabel Riwayat Transaksi (`pending_transactions.php`) di mana transaksi berstatus `pending` yang umurnya telah melebihi batas waktu pembayaran (5 menit/300 detik) kini secara otomatis di-render sebagai status **Expired** (badge abu-abu) dan dapat disaring dengan tepat menggunakan dropdown filter.
 - **Perbaikan MIME Type di Windows**: Menambahkan arahan `AddType` pada `.htaccess` untuk memetakan berkas `.js` ke `application/javascript` secara eksplisit. Perbaikan ini mencegah pemblokiran pemuatan pustaka jQuery oleh browser akibat kebijakan `X-Content-Type-Options: nosniff` pada web server lokal Windows (seperti Mikhmon Server/Apache).
