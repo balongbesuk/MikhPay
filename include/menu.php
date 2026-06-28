@@ -173,7 +173,7 @@ if($idleto != "disable"){
 
 <div id="navbar" class="navbar">
   <div class="navbar-left">
-    <a id="brand" class="text-center" href="javascript:void(0)">MIKHMON</a>
+    <a id="brand" class="text-center" href="javascript:void(0)">MikhPay</a>
 
 <a id="openNav" class="navbar-hover" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
 <a id="closeNav" class="navbar-hover" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
@@ -256,7 +256,7 @@ include('./info.php');
 
 <div id="navbar" class="navbar">
   <div class="navbar-left">
-    <a id="brand" class="text-center" href="./?session=<?= $session; ?>">MIKHMON</a>
+    <a id="brand" class="text-center" href="./?session=<?= $session; ?>">MikhPay</a>
 
 <a id="openNav" class="navbar-hover" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
 <a id="closeNav" class="navbar-hover" href="javascript:void(0)"><i class="fa fa-bars"></i></a>
@@ -338,7 +338,7 @@ include('./info.php');
   </div>
   <!--system-->
   <div class="dropdown-btn <?= $sysmenu; ?>"><i class=" fa fa-gear"></i> <?= $_system ?>
-    <i class="fa fa-caret-down"></i> &nbsp;
+    <i class="fa fa-caret-down"></i>
   </div>
   <div class="dropdown-container <?= $schmenu; ?>">
     <a href="./?system=scheduler&session=<?= $session; ?>" class="<?= $ssch; ?>"> <i class="fa fa-clock-o "></i> <?= $_system_scheduler ?> </a>
@@ -353,7 +353,7 @@ include('./info.php');
   <a href="./?report=selling&idbl=<?= strtolower(date("M")) . date("Y"); ?>&session=<?= $session; ?>" class="menu <?= $sselling; ?>"><i class="nav-icon fa fa-money"></i> <?= $_report ?></a>
   <!--settings-->
   <div class="dropdown-btn <?= $ssett; ?>"><i class=" fa fa-gear"></i> <?= $_settings ?> 
-    <i class="fa fa-caret-down"></i> &nbsp;
+    <i class="fa fa-caret-down"></i>
   </div>
   <div class="dropdown-container <?= $settmenu; ?>">
   <a href="./admin.php?id=settings&session=<?= $session; ?>" class="menu "> <i class="fa fa-gear "></i> <?= $_session_settings ?> </a>
