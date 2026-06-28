@@ -180,7 +180,7 @@ if($idleto != "disable"){
 <a id="cpage" class="navbar-left" href="javascript:void(0)"><?= $mpage; ?></a>
 </div>
  <div class="navbar-right">
-  <a id="logout" href="./admin.php?id=logout" ><i class="fa fa-sign-out mr-1"></i> <?= $_logout ?></a>
+  <a title="Idle Timeout" style="<?= $didleto; ?>"><span style="width:70px;" class="pd-5 radius-3"><i class="fa fa-clock-o mr-1"></i>  <span class="mr-1" id="timer"></span></span></a>
   <a href="javascript:void(0)" title="Toggle Theme" class="theme-toggle-btn navbar-hover" style="float: right; padding: 14px 16px; color: #f2f2f2; display: inline-block; text-align: center; transition: 0.3s;">
     <i class="fa <?= ($theme === 'dark') ? 'fa-sun-o' : 'fa-moon-o' ?>" style="font-size: 16px;"></i>
   </a>
@@ -198,7 +198,7 @@ if($idleto != "disable"){
       }
     ?>
   </select>
-  <a title="Idle Timeout" style="<?= $didleto; ?>"><span style="width:70px;" class="pd-5 radius-3"><i class="fa fa-clock-o mr-1"></i>  <span class="mr-1" id="timer"></span></span></a>
+  <a id="logout" href="./admin.php?id=logout" ><i class="fa fa-sign-out mr-1"></i> <?= $_logout ?></a>
 </div>
 </div>
 
@@ -263,7 +263,7 @@ include('./info.php');
 <a id="cpage" class="navbar-left" href="javascript:void(0)"><?= $mpage; ?></a>
 </div>
  <div class="navbar-right">
-  <a id="logout" href="./?hotspot=logout&session=<?= $session; ?>" ><i class="fa fa-sign-out mr-1"></i> <?= $_logout ?></a>
+  <a title="Idle Timeout" style="<?= $didleto; ?>"><span style="width:70px;" class="pd-5 radius-3"><i class="fa fa-clock-o mr-1"></i>  <span class="mr-1" id="timer"></span></span></a>
   <a href="javascript:void(0)" title="Toggle Theme" class="theme-toggle-btn navbar-hover" style="float: right; padding: 14px 16px; color: #f2f2f2; display: inline-block; text-align: center; transition: 0.3s;">
     <i class="fa <?= ($theme === 'dark') ? 'fa-sun-o' : 'fa-moon-o' ?>" style="font-size: 16px;"></i>
   </a>
@@ -285,7 +285,7 @@ include('./info.php');
       ?>
     
   </select>
-  <a title="Idle Timeout" style="<?= $didleto; ?>"><span style="width:70px;" class="pd-5 radius-3"><i class="fa fa-clock-o mr-1"></i>  <span class="mr-1" id="timer"></span></span></a>
+  <a id="logout" href="./?hotspot=logout&session=<?= $session; ?>" ><i class="fa fa-sign-out mr-1"></i> <?= $_logout ?></a>
 </div>
 </div>
 
