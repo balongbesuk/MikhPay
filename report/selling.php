@@ -209,32 +209,112 @@ $(document).ready(function(){
   });
 });
 </script>
+<style>
+.filter-row-flex {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    gap: 16px !important;
+    flex-wrap: wrap !important;
+    margin-bottom: 20px !important;
+    width: 100% !important;
+}
+.filter-inputs-group {
+    display: flex !important;
+    gap: 8px !important;
+    flex: 1 1 auto !important;
+    min-width: 300px !important;
+    flex-wrap: wrap !important;
+}
+.filter-dates-group {
+    display: flex !important;
+    gap: 8px !important;
+    align-items: center !important;
+    flex-wrap: wrap !important;
+}
+.filter-control-modern {
+    height: 38px !important;
+    border: 1px solid var(--border-color) !important;
+    border-radius: 8px !important;
+    background: var(--bg-card, #ffffff) !important;
+    color: var(--text-main) !important;
+    padding: 0 12px !important;
+    font-size: 13px !important;
+    outline: none !important;
+    transition: all 0.2s ease !important;
+    box-sizing: border-box !important;
+}
+.filter-control-modern:focus {
+    border-color: var(--primary) !important;
+    box-shadow: 0 0 0 3px var(--primary-glow) !important;
+}
+.btn-modern-filter-action {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    height: 38px !important;
+    padding: 0 14px !important;
+    border-radius: 8px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    gap: 6px !important;
+    transition: all 0.2s ease !important;
+    border: none !important;
+    cursor: pointer !important;
+    text-decoration: none !important;
+    box-sizing: border-box !important;
+}
+.btn-modern-filter-action.btn-accent {
+    background: var(--primary) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(0, 139, 201, 0.15) !important;
+}
+.btn-modern-filter-action.btn-accent:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+.btn-modern-filter-action.btn-danger {
+    background: var(--danger) !important;
+    color: #ffffff !important;
+    box-shadow: 0 2px 6px rgba(239, 68, 68, 0.15) !important;
+}
+.btn-modern-filter-action.btn-danger:hover {
+    opacity: 0.95;
+    transform: translateY(-1px);
+}
+.btn-modern-filter-action.btn-secondary {
+    background: rgba(148, 163, 184, 0.08) !important;
+    color: #475569 !important;
+    border: 1px solid rgba(148, 163, 184, 0.15) !important;
+}
+.btn-modern-filter-action.btn-secondary:hover {
+    background: rgba(148, 163, 184, 0.15) !important;
+    color: #1e293b !important;
+}
+</style>
+
 <div class="row">
 <div class="col-12">
-<div class="card">
+<div class="card" style="box-shadow: var(--shadow-card); border-radius: var(--radius); border: 1px solid var(--border-color);">
 <div class="card-header">
 	<h3><i class=" fa fa-money"></i> <?= $_selling_report ?> <?= ucfirst($idhr) . ucfirst(substr($idbl,0,3).' '.substr($idbl,3,5));	if ($prefix != "") {echo " prefix [" . $prefix . "]";} ?> <small id="loader" style="display: none;" ><i><i class='fa fa-circle-o-notch fa-spin'></i> <?= $_processing ?> </i></small></h3>
 </div>
-<div class="card-body">
-<div class="row">
-	<div class="row">
-	<div class="col-12">
-		<div style="padding-bottom: 5px; padding-top: 5px;">
-		  <input id="filterTable" type="text" class="form-control" style="float:left; margin-top: 6px; max-width: 150px;" placeholder="<?= $_search ?>">&nbsp;
-		  <button name="help" class="btn bg-primary" onclick="location.href='#help';" title="Help"><i class="fa fa-question"></i> <?= $_help ?></button>
-		  <button class="btn bg-primary" onclick="exportTableToCSV('report-mikhmon-<?= $filedownload . $fprefix; ?>.csv')" title="Download selling report"><i class="fa fa-download"></i> CSV</button>
-			<button class="btn bg-primary" onclick="location.href='./?report=selling&session=<?= $session; ?>';" title="Reload all data"><i class="fa fa-search"></i> <?= $_all ?></button>
-			<?php if(!empty($idbl)){echo '<button name="resume" id="openResume" class="btn bg-primary"title="Resume Report"><i class="fa fa-area-chart"></i> '.$_resume.'</button>';}else{
-				echo '<a class="btn bg-primary" href="./?report=selling&idbl='.$idbl2.'&session='.$session.'" title="Show '.ucfirst(substr($idbl2,0,3).' '.substr($idbl2,3,5)).'"><i class="fa fa-search"></i> '.ucfirst(substr($idbl2,0,3).' '.substr($idbl2,3,5)).'</a>';}?>
-		  <button name="print" class="btn bg-primary" onclick="window.open('./report/print.php?<?= explode("?report=selling&",$url)[1] ?>','_blank');" title="Print"><i class="fa fa-print"></i> <?= $_print ?></button>
-		  <button style="display: <?= $shd; ?>;" name="remdata" class="btn bg-danger" onclick="location.href='#remdata';" title="Delete Data <?= $filedownload; ?>"><i class="fa fa-trash"></i> <?= $_delete_data.' '. $filedownload; ?></button>
-		  <button  id="remSelected" style="display: none;" class="btn bg-red" onclick="MikhmonRemoveReportSelected()"><i class="fa fa-trash"></i> <span id="selected"></span> <?= $_selected ?></button>
+<div class="card-body" style="padding: 24px !important;">
+	<div class="filter-row-flex">
+		<div class="filter-inputs-group">	   
+		  <input id="filterTable" type="text" class="filter-control-modern" style="flex: 1; min-width: 120px;" placeholder="<?= $_search ?>">
+		  <button name="help" class="btn-modern-filter-action btn-secondary" onclick="location.href='#help';" title="Help"><i class="fa fa-question"></i> <?= $_help ?></button>
+		  <button class="btn-modern-filter-action btn-secondary" onclick="exportTableToCSV('report-mikhmon-<?= $filedownload . $fprefix; ?>.csv')" title="Download selling report"><i class="fa fa-download"></i> CSV</button>
+		  <button class="btn-modern-filter-action btn-secondary" onclick="location.href='./?report=selling&session=<?= $session; ?>';" title="Reload all data"><i class="fa fa-search"></i> <?= $_all ?></button>
+			<?php if(!empty($idbl)){echo '<button name="resume" id="openResume" class="btn-modern-filter-action btn-secondary" title="Resume Report"><i class="fa fa-area-chart"></i> '.$_resume.'</button>';}else{
+				echo '<a class="btn-modern-filter-action btn-secondary" href="./?report=selling&idbl='.$idbl2.'&session='.$session.'" title="Show '.ucfirst(substr($idbl2,0,3).' '.substr($idbl2,3,5)).'"><i class="fa fa-search"></i> '.ucfirst(substr($idbl2,0,3).' '.substr($idbl2,3,5)).'</a>';}?>
+		  <button name="print" class="btn-modern-filter-action btn-secondary" onclick="window.open('./report/print.php?<?= explode("?report=selling&",$url)[1] ?>','_blank');" title="Print"><i class="fa fa-print"></i> <?= $_print ?></button>
+		  <button style="display: <?= $shd; ?>;" name="remdata" class="btn-modern-filter-action btn-danger" onclick="location.href='#remdata';" title="Delete Data <?= $filedownload; ?>"><i class="fa fa-trash"></i> <?= $_delete_data.' '. $filedownload; ?></button>
+		  <button id="remSelected" style="display: none;" class="btn-modern-filter-action btn-danger" onclick="MikhmonRemoveReportSelected()"><i class="fa fa-trash"></i> <span id="selected"></span> <?= $_selected ?></button>
 		</div>
-	</div>
-	</div>
-		<div class="input-group mr-b-10">
-			<div class="input-group-1 col-box-2">
-			<select style="padding:5px;" class="group-item group-item-l" title="<?= $_days ?>" id="D">
+		
+		<div class="filter-dates-group">  
+			<select class="filter-control-modern" style="width: 75px;" title="<?= $_days ?>" id="D">
         			<?php
 										$day = explode("/", $idhr)[1];
 										if ($day != "") {
@@ -252,9 +332,8 @@ $(document).ready(function(){
 										}
 										?>
     		</select>
-			</div>
-			<div class="input-group-2 col-box-4">
-			<select style="padding:5px;" class="group-item group-item-md" title="Month" id="M">
+			
+			<select class="filter-control-modern" style="width: 120px;" title="Month" id="M">
         			<?php
 										$idbls = array(1 => "jan", "feb", "mar", "apr", "may", "jun", "jul", "aug", "sep", "oct", "nov", "dec");
 										$idblf = array(1 => "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December");
@@ -275,9 +354,8 @@ $(document).ready(function(){
 										}
 										?>
     		</select>
-			</div>
-			<div class="input-group-2 col-box-3">
-			<select style="padding:5px;" class="group-item group-item-md" title="Year" id="Y">
+			
+			<select class="filter-control-modern" style="width: 90px;" title="Year" id="Y">
         			<?php
 										$year = explode("/", $idhr)[2];
 										$year1 = substr($idbl, 3, 4);
@@ -297,12 +375,10 @@ $(document).ready(function(){
 										}
 										?>
     		</select>
-			</div>
-            <div class="input-group-2 col-box-3">
-				<div style="padding:3.5px;"  class="group-item group-item-r text-center pointer" onclick="filterR(); loader();"><i class="fa fa-search"></i> Filter</div>
-			</div>
+            
+			<button class="btn-modern-filter-action btn-accent" onclick="filterR(); loader();" title="Filter"><i class="fa fa-search"></i> Filter</button>
+			
 			<script type="text/javascript">
-				
 				function filterR(){
 					var D = document.getElementById('D').value;
 					var M = document.getElementById('M').value;
@@ -314,10 +390,10 @@ $(document).ready(function(){
 					}else if(D === ""){
 						window.location='./?report=selling&idbl='+M+Y+'&prefix='+X+'&session=<?= $session; ?>';
 					}
-					
 				}
 			</script>
 		</div>
+	</div>
 		  <div class="overflow box-bordered" style="max-height: 70vh">
 			<table id="dataTable" class="table table-bordered table-hover text-nowrap">
 				<thead class="thead-light">
