@@ -1248,9 +1248,15 @@ uasort($profileSales, function($a, $b) {
                         box-shadow: 0 4px 12px rgba(0, 139, 201, 0.15) !important;
                     }
                     
+                    #tab-settings .card,
+                    #tab-settings .card-body {
+                        background-color: var(--bg-card, #ffffff) !important;
+                    }
+
                     .subtab-panel {
                         display: none;
                         width: 100%;
+                        background: var(--bg-card, #ffffff) !important;
                     }
                     .subtab-panel.active {
                         display: block;
@@ -1266,6 +1272,7 @@ uasort($profileSales, function($a, $b) {
                         border-bottom: 1px solid var(--primary-glow) !important;
                         padding-bottom: 8px !important;
                         text-align: left !important;
+                        background: var(--bg-card, #ffffff) !important;
                     }
 
                     .btn-modern-settings {
