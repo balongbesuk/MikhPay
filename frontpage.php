@@ -325,7 +325,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                     $tData = readTransactionFile($file);
                     if ($tData && isset($tData['status']) && $tData['status'] === 'pending'
                         && isset($tData['session_id']) && $tData['session_id'] === $current_session_id
-                        && ($now - $tData['created_at']) < 900) {
+                        && ($now - $tData['created_at']) < 300) {
                         $found_existing = $tData;
                         break;
                     }
