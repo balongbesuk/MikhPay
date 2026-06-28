@@ -600,10 +600,63 @@ uasort($profileSales, function($a, $b) {
     70% { box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
     100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
 }
+
+/* Toast Notifications */
+.toast-container {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 10000;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.toast-notification {
+    background: #1e293b;
+    color: #ffffff;
+    padding: 14px 18px;
+    border-radius: 12px;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.3);
+    border-left: 4px solid #10b981;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 280px;
+    max-width: 360px;
+    animation: toastSlideIn 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    text-align: left;
+}
+@keyframes toastSlideIn {
+    from { transform: translateX(120%); opacity: 0; }
+    to { transform: translateX(0); opacity: 1; }
+}
+.toast-notification.fade-out {
+    animation: toastSlideOut 0.3s forwards;
+}
+@keyframes toastSlideOut {
+    from { transform: translateX(0); opacity: 1; }
+    to { transform: translateX(120%); opacity: 0; }
+}
+.toast-content {
+    flex: 1;
+}
+.toast-title {
+    font-weight: 700;
+    font-size: 13px;
+    margin-bottom: 2px;
+    color: #ffffff;
+}
+.toast-desc {
+    font-size: 11px;
+    color: #94a3b8;
+    line-height: 1.4;
+}
 </style>
 
 <div class="row">
     <div class="col-12">
+        <div id="toastContainer" class="toast-container"></div>
         
         <!-- Welcome Status Banner -->
         <div class="dash-welcome">
@@ -1157,6 +1210,10 @@ uasort($profileSales, function($a, $b) {
     <input type="hidden" name="action" value="test_telegram" />
 </form>
 
+<?php if (!empty($ws_app_key)): ?>
+    <script src="https://js.pusher.com/8.0/pusher.min.js"></script>
+<?php endif; ?>
+
 <script>
 var salesChartInstance = null;
 var profileChartInstance = null;
@@ -1338,7 +1395,7 @@ function filterHistoryTable() {
     });
 }
 
-// Restore active tab on load
+// Restore active tab and initialize real-time features on load
 document.addEventListener("DOMContentLoaded", function() {
     var activeTab = localStorage.getItem('mikhtrans_active_tab');
     if (activeTab && document.getElementById(activeTab)) {
@@ -1347,5 +1404,224 @@ document.addEventListener("DOMContentLoaded", function() {
             openTab(activeTab, btn);
         }
     }
+
+    // Initialize Real-time Dashboard Updates
+    initDashboardRealtimeFeatures();
 });
+
+// Play audio chime using Web Audio API (Synthesized client-side)
+function playChimeSound() {
+    try {
+        var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        var now = audioCtx.currentTime;
+        
+        // Tone 1: D5 (587.33 Hz)
+        var osc1 = audioCtx.createOscillator();
+        var gain1 = audioCtx.createGain();
+        osc1.type = 'sine';
+        osc1.frequency.setValueAtTime(587.33, now);
+        gain1.gain.setValueAtTime(0.2, now);
+        gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+        osc1.connect(gain1);
+        gain1.connect(audioCtx.destination);
+        osc1.start(now);
+        osc1.stop(now + 0.35);
+        
+        // Tone 2: A5 (880.00 Hz) - played slightly later
+        var osc2 = audioCtx.createOscillator();
+        var gain2 = audioCtx.createGain();
+        osc2.type = 'sine';
+        osc2.frequency.setValueAtTime(880.00, now + 0.08);
+        gain2.gain.setValueAtTime(0.2, now + 0.08);
+        gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.43);
+        osc2.connect(gain2);
+        gain2.connect(audioCtx.destination);
+        osc2.start(now + 0.08);
+        osc2.stop(now + 0.43);
+    } catch (e) {
+        console.warn("Web Audio API blocked or not supported: ", e);
+    }
+}
+
+// Show Toast Notification
+function showToastNotification(title, message) {
+    var container = document.getElementById("toastContainer");
+    if (!container) return;
+    
+    var toast = document.createElement("div");
+    toast.className = "toast-notification";
+    toast.innerHTML = `
+        <i class="fa fa-bell" style="color: #10b981; font-size: 20px;"></i>
+        <div class="toast-content">
+            <div class="toast-title">${title}</div>
+            <div class="toast-desc">${message}</div>
+        </div>
+    `;
+    
+    container.appendChild(toast);
+    
+    // Play sound notification
+    playChimeSound();
+    
+    // Auto-remove toast after 6 seconds
+    setTimeout(function() {
+        toast.classList.add("fade-out");
+        toast.addEventListener("animationend", function() {
+            toast.remove();
+        });
+    }, 6000);
+}
+
+// Update UI dashboard statistics
+function updateDashboardStats(data) {
+    if (!data) return;
+    
+    // Welcome status banner stats update
+    var welcomeBadges = document.querySelector('.dash-welcome-badges');
+    if (welcomeBadges) {
+        // Pending Queue count
+        var antreanEl = Array.from(welcomeBadges.querySelectorAll('.welcome-badge')).find(el => el.innerHTML.includes('Antrean') || el.innerHTML.includes('Queue'));
+        if (antreanEl) {
+            var label = antreanEl.innerHTML.includes('Antrean') ? 'Antrean' : 'Queue';
+            antreanEl.innerHTML = `<i class="fa fa-clock-o"></i> ${label}: ${data.pending_count}`;
+        }
+        // Success count
+        var suksesEl = Array.from(welcomeBadges.querySelectorAll('.welcome-badge')).find(el => el.innerHTML.includes('Sukses') || el.innerHTML.includes('Success'));
+        if (suksesEl) {
+            var label = suksesEl.innerHTML.includes('Sukses') ? 'Sukses' : 'Success';
+            suksesEl.innerHTML = `<i class="fa fa-check-circle"></i> ${label}: ${data.success_count}`;
+        }
+        // Revenue count
+        var revenueEl = Array.from(welcomeBadges.querySelectorAll('.welcome-badge')).find(el => el.innerHTML.includes('Rp'));
+        if (revenueEl) {
+            revenueEl.innerHTML = `<i class="fa fa-money"></i> Rp ${data.total_revenue.toLocaleString('id-ID')}`;
+        }
+    }
+    
+    // Tab Analytics stats area update
+    var statArea = document.querySelector('#tab-analytics');
+    if (statArea) {
+        var statVals = statArea.querySelectorAll('.stat-main-val');
+        if (statVals.length >= 3) {
+            statVals[0].textContent = `Rp ${data.total_revenue.toLocaleString('id-ID')}`;
+            statVals[1].textContent = data.success_count;
+            statVals[2].textContent = data.pending_count;
+        }
+    }
+    
+    // Tab Headers Queue Count update
+    var pendingTabBtn = Array.from(document.querySelectorAll('.tab-header-btn')).find(b => b.innerHTML.includes('Antrean Tertunda') || b.innerHTML.includes('Pending Queue'));
+    if (pendingTabBtn) {
+        var label = pendingTabBtn.innerHTML.includes('Antrean/Queue') ? 'Antrean/Queue' : (pendingTabBtn.innerHTML.includes('Antrean Tertunda') ? 'Antrean Tertunda' : 'Pending Queue');
+        pendingTabBtn.innerHTML = `<i class="fa fa-clock-o"></i> ${label} (${data.pending_count})`;
+    }
+}
+
+// Global configurations for updates
+var AdminWSConfig = {
+    enabled: <?= !empty($ws_app_key) ? 'true' : 'false' ?>,
+    key: "<?= htmlspecialchars($ws_app_key) ?>",
+    cluster: "<?= htmlspecialchars($ws_cluster) ?>",
+    host: "<?= htmlspecialchars($ws_host) ?>",
+    port: "<?= htmlspecialchars($ws_port) ?>",
+    scheme: "<?= htmlspecialchars($ws_scheme) ?>",
+    lastCheckTime: Math.floor(Date.now() / 1000)
+};
+
+// Initialize features on load
+function initDashboardRealtimeFeatures() {
+    // Define helper to trigger UI reload if viewing pending or history queue
+    function reloadQueueUiIfSafe() {
+        var activeTab = localStorage.getItem('mikhtrans_active_tab') || 'tab-pending';
+        var isEditing = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
+        if ((activeTab === 'tab-pending' || activeTab === 'tab-history') && !isEditing) {
+            setTimeout(function() {
+                window.location.reload();
+            }, 2500);
+        }
+    }
+
+    if (AdminWSConfig.enabled && typeof Pusher !== 'undefined') {
+        // Mode WebSocket: Pusher / Soketi
+        var pusherConfig = {};
+        if (AdminWSConfig.host) {
+            var portVal = AdminWSConfig.port ? parseInt(AdminWSConfig.port, 10) : 6001;
+            var isSecure = AdminWSConfig.scheme === 'https' || AdminWSConfig.scheme === 'wss';
+            pusherConfig = {
+                wsHost: AdminWSConfig.host,
+                wsPort: portVal,
+                wssPort: portVal,
+                forceTLS: isSecure,
+                disableStats: true,
+                enabledTransports: ['ws', 'wss']
+            };
+        } else {
+            pusherConfig = {
+                cluster: AdminWSConfig.cluster
+            };
+        }
+        
+        try {
+            var pusher = new Pusher(AdminWSConfig.key, pusherConfig);
+            var channel = pusher.subscribe('admin-events');
+            
+            channel.bind('new-payment', function(data) {
+                // Tampilkan notifikasi toast dan suara bel
+                showToastNotification(
+                    "Pemasukan Baru!",
+                    `Paket <b>${data.profile}</b> seharga <b>Rp ${data.price.toLocaleString('id-ID')}</b> baru saja dibayar.`
+                );
+                
+                // Update dashboard statistics
+                if (data.total_revenue && data.success_count) {
+                    updateDashboardStats({
+                        total_revenue: data.total_revenue,
+                        success_count: data.success_count,
+                        pending_count: data.pending_count
+                    });
+                }
+                
+                reloadQueueUiIfSafe();
+            });
+            
+            console.log("WebSocket Dashboard Listener connected.");
+        } catch (e) {
+            console.error("Failed to connect WebSocket on admin panel. Falling back to HTTP polling...", e);
+            startAdminHttpPolling();
+        }
+    } else {
+        // Fallback Mode: HTTP Polling (Setiap 15 detik)
+        startAdminHttpPolling();
+    }
+    
+    function startAdminHttpPolling() {
+        console.log("HTTP Polling Dashboard Listener started (15s intervals).");
+        setInterval(function() {
+            fetch(`process/admin_check_updates.php?last_check_time=${AdminWSConfig.lastCheckTime}`)
+                .then(r => r.json())
+                .then(data => {
+                    if (data.status === 'success') {
+                        // Perbarui data timestamp pengecekan
+                        AdminWSConfig.lastCheckTime = data.server_time;
+                        
+                        // Perbarui dashboard stats
+                        updateDashboardStats(data);
+                        
+                        // Cek jika ada pembayaran baru
+                        if (data.new_payments && data.new_payments.length > 0) {
+                            data.new_payments.forEach(function(pay) {
+                                showToastNotification(
+                                    "Pemasukan Baru!",
+                                    `Paket <b>${pay.profile}</b> seharga <b>Rp ${pay.price.toLocaleString('id-ID')}</b> baru saja dibayar.`
+                                );
+                            });
+                            
+                            reloadQueueUiIfSafe();
+                        }
+                    }
+                })
+                .catch(e => console.error("Error checking dashboard updates: ", e));
+        }, 15000);
+    }
+}
 </script>

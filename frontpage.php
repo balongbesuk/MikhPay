@@ -87,7 +87,28 @@ if (isset($_GET['cancel_order'])) {
     exit;
 }
 
-// QRIS helper functions (empty, handled by lib/qris.php)
+// Endpoint Polling Pengecekan Status Keaktifan Router (Client-side fetch)
+if (isset($_GET['check_router'])) {
+    header('Content-Type: application/json');
+    $sess = isset($_GET['session']) ? preg_replace('/[^a-zA-Z0-9\-]/', '', $_GET['session']) : '';
+    $online = false;
+    if (!empty($sess) && isset($data[$sess])) {
+        include_once(__DIR__ . '/lib/routeros_api.class.php');
+        $iphost = explode('!', $data[$sess][1])[1];
+        $userhost = explode('@|@', $data[$sess][2])[1];
+        $passwdhost = explode('#|#', $data[$sess][3])[1];
+        
+        $API = new RouterosAPI();
+        $API->debug = false;
+        $API->timeout = 2; // Fast timeout of 2 seconds
+        if (@$API->connect($iphost, $userhost, decrypt($passwdhost))) {
+            $online = true;
+            $API->disconnect();
+        }
+    }
+    echo json_encode(['online' => $online]);
+    exit;
+}
 
 // Endpoint Polling Pengecekan Status Pembayaran (Client-side fetch)
 if (isset($_GET['check_order'])) {

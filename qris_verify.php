@@ -126,8 +126,30 @@ if ($found_order_id) {
         file_put_contents($dir . "trans-" . $found_order_id . ".json", json_encode($trans));
     }
     
-    // Jika integrasi WebSocket diaktifkan, push notifikasi langsung ke browser pelanggan
+    // Jika integrasi WebSocket diaktifkan, push notifikasi langsung ke browser pelanggan & admin
     if (!empty($ws_app_key)) {
+        // Hitung statistik terbaru untuk di-push ke dashboard admin
+        $total_revenue = 0;
+        $success_count = 0;
+        $pending_count = 0;
+        if (is_dir($dir)) {
+            $all_files = array_merge(glob($dir . 'trans-*.json'), glob($dir . 'trans-*.php'));
+            foreach ($all_files as $file) {
+                $tData = readTransactionFile($file);
+                if ($tData) {
+                    $st = isset($tData['status']) ? $tData['status'] : 'pending';
+                    $pr = isset($tData['price']) ? (float)$tData['price'] : 0.0;
+                    if ($st === 'settlement' || $st === 'capture') {
+                        $total_revenue += $pr;
+                        $success_count++;
+                    } elseif ($st === 'paid_pending_generate') {
+                        $pending_count++;
+                    }
+                }
+            }
+        }
+
+        // 1. Kirim ke channel pelanggan (order individual)
         triggerWebSocketPaidEvent(
             $ws_app_id, 
             $ws_app_key, 
@@ -138,6 +160,24 @@ if ($found_order_id) {
             [
                 'status' => 'success',
                 'order_id' => $found_order_id
+            ]
+        );
+
+        // 2. Kirim ke channel admin (global events)
+        triggerWebSocketPaidEvent(
+            $ws_app_id, 
+            $ws_app_key, 
+            $ws_app_secret, 
+            $ws_cluster, 
+            'admin-events', 
+            'new-payment', 
+            [
+                'order_id' => $found_order_id,
+                'profile' => $trans['profile'],
+                'price' => $trans['price'],
+                'total_revenue' => $total_revenue,
+                'success_count' => $success_count,
+                'pending_count' => $pending_count
             ]
         );
     }

@@ -274,4 +274,58 @@ document.addEventListener("DOMContentLoaded", function() {
             historyContainerEl.style.display = 'block';
         }
     }
+
+    // 4. Real-time Router Connectivity Check (15s polling interval)
+    initRouterStatusChecker();
 });
+
+// Real-time Router Connectivity Checker
+function initRouterStatusChecker() {
+    if (typeof FrontpageConfig === 'undefined' || !FrontpageConfig.session) return;
+    
+    var isChecking = false;
+    
+    function checkRouter() {
+        if (isChecking) return;
+        isChecking = true;
+        
+        fetch("index.php?check_router=1&session=" + encodeURIComponent(FrontpageConfig.session))
+            .then(function(r) { return r.json(); })
+            .then(function(data) {
+                isChecking = false;
+                var buyButtons = document.querySelectorAll(".btn-buy-voucher");
+                
+                if (data.online) {
+                    buyButtons.forEach(function(btn) {
+                        if (btn.getAttribute("data-blocked-by-offline") === "true") {
+                            btn.removeAttribute("disabled");
+                            btn.removeAttribute("data-blocked-by-offline");
+                            btn.innerHTML = '<i class="fa fa-shopping-cart"></i> Beli Sekarang';
+                            btn.style.backgroundColor = "";
+                            btn.style.cursor = "";
+                        }
+                    });
+                } else {
+                    buyButtons.forEach(function(btn) {
+                        if (!btn.hasAttribute("disabled") || btn.getAttribute("data-blocked-by-offline") === "true") {
+                            btn.setAttribute("disabled", "true");
+                            btn.setAttribute("data-blocked-by-offline", "true");
+                            btn.innerHTML = '<i class="fa fa-ban"></i> Offline';
+                            btn.style.backgroundColor = "#94a3b8";
+                            btn.style.cursor = "not-allowed";
+                        }
+                    });
+                }
+            })
+            .catch(function(e) {
+                isChecking = false;
+                console.error("Error checking router connectivity:", e);
+            });
+    }
+    
+    // Check immediately on load
+    checkRouter();
+    
+    // Check every 15 seconds
+    setInterval(checkRouter, 15000);
+}
