@@ -81,22 +81,133 @@ if (!isset($_SESSION["mikhmon"])) {
     x.type = 'password';
     }}
 </script>
-<div class="row">
-<div class="col-8">
-<div class="card box-bordered">
+<div class="gen-row-flex">
+	<style>
+	.gen-row-flex {
+	    display: flex !important;
+	    gap: 24px !important;
+	    width: 100% !important;
+	    flex-wrap: wrap !important;
+	    box-sizing: border-box !important;
+	}
+	.gen-col-left {
+	    flex: 1 1 calc(66.666% - 12px) !important;
+	    min-width: 400px !important;
+	    box-sizing: border-box !important;
+	}
+	.gen-col-right {
+	    flex: 1 1 calc(33.333% - 12px) !important;
+	    min-width: 250px !important;
+	    box-sizing: border-box !important;
+	}
+	
+	/* Modern Action Buttons Style */
+	.btn-modern-action {
+	    display: inline-flex !important;
+	    align-items: center !important;
+	    justify-content: center !important;
+	    height: 40px !important;
+	    padding: 0 18px !important;
+	    border-radius: 10px !important;
+	    font-size: 13.5px !important;
+	    font-weight: 700 !important;
+	    gap: 8px !important;
+	    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1) !important;
+	    border: 1px solid transparent !important;
+	    cursor: pointer !important;
+	    text-decoration: none !important;
+	    box-shadow: 0 2px 6px rgba(0,0,0,0.02) !important;
+	}
+	
+	.btn-modern-action.btn-close {
+	    background: rgba(239, 68, 68, 0.08) !important;
+	    color: #ef4444 !important;
+	    border-color: rgba(239, 68, 68, 0.15) !important;
+	}
+	.btn-modern-action.btn-close:hover {
+	    background: #ef4444 !important;
+	    color: #ffffff !important;
+	}
+	
+	.btn-modern-action.btn-submit {
+	    background: var(--primary) !important;
+	    color: #ffffff !important;
+	    box-shadow: 0 4px 12px rgba(0, 139, 201, 0.2) !important;
+	}
+	.btn-modern-action.btn-submit:hover {
+	    transform: translateY(-1px);
+	    box-shadow: 0 6px 16px rgba(0, 139, 201, 0.3) !important;
+	}
+
+	/* Form Table Modern Overhaul */
+	.card-body table.table {
+	    width: 100% !important;
+	    border-collapse: collapse !important;
+	    margin-top: 10px !important;
+	}
+	.card-body table.table tr {
+	    border-bottom: 1px solid var(--border-color) !important;
+	}
+	.card-body table.table tr:last-child {
+	    border-bottom: none !important;
+	}
+	.card-body table.table td {
+	    padding: 16px 8px !important;
+	    border: none !important;
+	    font-size: 14px !important;
+	    color: var(--text-main) !important;
+	}
+	.card-body table.table td:first-child {
+	    font-weight: 700 !important;
+	    color: var(--text-muted) !important;
+	    width: 25% !important;
+	    vertical-align: middle !important;
+	}
+	.card-body table.table td select.form-control, 
+	.card-body table.table td input.form-control {
+	    width: 100% !important;
+	    height: 46px !important;
+	    border: 1px solid var(--border-color) !important;
+	    border-radius: 10px !important;
+	    background: var(--input-bg, #ffffff) !important;
+	    color: var(--text-main) !important;
+	    padding: 0 16px !important;
+	    font-size: 14px !important;
+	    outline: none !important;
+	    transition: all 0.2s ease !important;
+	    box-sizing: border-box !important;
+	}
+	.card-body table.table td select.form-control:focus, 
+	.card-body table.table td input.form-control:focus {
+	    border-color: var(--primary) !important;
+	    box-shadow: 0 0 0 3px var(--primary-glow) !important;
+	}
+	#GetValidPrice b {
+	    display: inline-block;
+	    background: var(--primary-glow) !important;
+	    color: var(--primary) !important;
+	    padding: 8px 16px !important;
+	    border-radius: 8px !important;
+	    font-size: 12.5px !important;
+	    font-weight: 700 !important;
+	    margin-top: 8px !important;
+	}
+	</style>
+<div class="gen-col-left">
+<div class="card" style="box-shadow: var(--shadow-card); border-radius: var(--radius); border: 1px solid var(--border-color); margin: 0 !important;">
   <div class="card-header">
   <h3><i class="fa fa-user-plus"></i> <?= $_add_user ?> <small id="loader" style="display: none;" ><i><i class='fa fa-circle-o-notch fa-spin'></i> <?= $_processing ?> </i></small></h3> 
   </div>
-  <div class="card-body">
+  <div class="card-body" style="padding: 24px !important;">
 <form autocomplete="off" method="post" action="">  
-  <div>
+  <div style="margin-bottom: 24px; display: flex; gap: 8px; flex-wrap: wrap;">
   <?php if ($_SESSION['ubp'] != "") {
-    echo "    <a class='btn bg-warning' href='./?hotspot=users&profile=" . $_SESSION['ubp'] . "&session=" . $session . "'> <i class='fa fa-close'></i> ".$_close."</a>";
+    echo "    <a class='btn-modern-action btn-close' href='./?hotspot=users&profile=" . $_SESSION['ubp'] . "&session=" . $session . "'> <i class='fa fa-close'></i> ".$_close."</a>";
   } else {
-    echo "    <a class='btn bg-warning' href='./?hotspot=users&profile=all&session=" . $session . "'> <i class='fa fa-close'></i> ".$_close."</a>";
+    echo "    <a class='btn-modern-action btn-close' href='./?hotspot=users&profile=all&session=" . $session . "'> <i class='fa fa-close'></i> ".$_close."</a>";
   }
   ?>
-    <button type="submit" onclick="loader()" class="btn bg-primary" name="save"><i class="fa fa-save"></i> <?= $_save ?></button>
+    <button type="submit" onclick="loader()" class="btn-modern-action btn-submit" name="save"><i class="fa fa-save"></i> <?= $_save ?></button>
   </div>
 
 <table class="table">
@@ -114,16 +225,16 @@ if (!isset($_SESSION["mikhmon"])) {
 		</td>
 	</tr>
   <tr>
-    <td class="align-middle"><?= $_name ?></td><td><input class="form-control" type="text" autocomplete="off" name="name" value="" required="1" autofocus></td>
+    <td class="align-middle"><?= $_name ?></td><td><input class="form-control" type="text" autocomplete="off" name="name" value="" required="1" autofocus style="height: 46px !important;"></td>
   </tr>
   <tr>
     <td class="align-middle"><?= $_password ?></td><td>
-        <div class="input-group">
-          <div class="input-group-11 col-box-10">
-            <input class="group-item group-item-l" id="passUser" type="password" name="pass" autocomplete="new-password" value="" required="1">
+        <div class="input-group" style="display: flex; width: 100%;">
+          <div class="input-group-11 col-box-10" style="flex: 1; float: none; position: relative;">
+            <input class="group-item group-item-l form-control" id="passUser" type="password" name="pass" autocomplete="new-password" value="" required="1" style="border-radius: 10px 0 0 10px !important; width: 100% !important; height: 46px !important;">
           </div>
-            <div class="input-group-1 col-box-2">
-              <div class="group-item group-item-r pd-2p5 text-center">
+            <div class="input-group-1 col-box-2" style="width: 48px; float: none;">
+              <div class="group-item group-item-r pd-2p5 text-center align-middle" style="border-radius: 0 10px 10px 0 !important; height: 46px; border: 1px solid var(--border-color, #c1c1c1); background: var(--background-alt, #F5F6F7); display: flex; align-items: center; justify-content: center; box-sizing: border-box;">
               <input title="Show/Hide Password" type="checkbox" onclick="PassUser()">
             </div>
             </div>
@@ -142,16 +253,16 @@ if (!isset($_SESSION["mikhmon"])) {
 		</td>
 	</tr>
 	<tr>
-    <td class="align-middle"><?= $_time_limit ?></td><td><input class="form-control" type="text"  autocomplete="off" name="timelimit" value=""></td>
+    <td class="align-middle"><?= $_time_limit ?></td><td><input class="form-control" type="text"  autocomplete="off" name="timelimit" value="" style="height: 46px !important;"></td>
   </tr>
   <tr>
     <td class="align-middle"><?= $_data_limit ?></td><td>
-      <div class="input-group">
-        <div class="input-group-10 col-box-9">
-          <input class="group-item group-item-l" type="number" min="0" max="9999" name="datalimit" value="<?= $udatalimit; ?>">
+      <div class="input-group" style="display: flex; width: 100%;">
+        <div class="input-group-10 col-box-9" style="flex: 1; float: none;">
+          <input class="group-item group-item-l" type="number" min="0" max="9999" name="datalimit" value="<?= $udatalimit; ?>" style="border-radius: 10px 0 0 10px !important; width: 100% !important; height: 46px !important;">
         </div>
-          <div class="input-group-2 col-box-3">
-              <select style="padding:4.2px;" class="group-item group-item-r" name="mbgb" required="1">
+          <div class="input-group-2 col-box-3" style="width: 70px; float: none;">
+              <select style="padding:4.2px; height: 46px !important; border-radius: 0 10px 10px 0 !important; border-left: none !important; width: 100% !important;" class="group-item group-item-r form-control" name="mbgb" required="1">
 				        <option value=1048576>MB</option>
 				        <option value=1073741824>GB</option>
 			        </select>
@@ -160,7 +271,7 @@ if (!isset($_SESSION["mikhmon"])) {
     </td>
   </tr>
   <tr>
-    <td class="align-middle"><?= $_comment ?></td><td><input class="form-control" type="text" title="No special characters" id="comment" autocomplete="off" name="comment" value=""></td>
+    <td class="align-middle"><?= $_comment ?></td><td><input class="form-control" type="text" title="No special characters" id="comment" autocomplete="off" name="comment" value="" style="height: 46px !important;"></td>
   </tr>
   <tr >
     <td  colspan="4" class="align-middle"  id="GetValidPrice"></td>
@@ -170,19 +281,19 @@ if (!isset($_SESSION["mikhmon"])) {
 </div>
 </div>
 </div>
-<div class="col-4">
-  <div class="card">
+<div class="gen-col-right">
+  <div class="card" style="box-shadow: var(--shadow-card); border-radius: var(--radius); border: 1px solid var(--border-color); margin: 0 !important;">
     <div class="card-header">
       <h3><i class="fa fa-book"></i> <?= $_readme ?></h3>
     </div>
-    <div class="card-body">
-<table>
+    <div class="card-body" style="padding: 24px !important;">
+<table style="width: 100%; border-collapse: collapse;">
    <tr>
-    <td colspan="2">
-    <p style="padding:0px 5px;">
+    <td colspan="2" style="padding: 0 !important;">
+    <p style="padding: 0; margin-bottom: 12px; color: var(--text-main); font-size: 14px; line-height: 1.5;">
       <?= $_format_time_limit ?>
     </p>
-    <p style="padding:0px 5px;">
+    <p style="padding: 0; color: var(--text-main); font-size: 14px; line-height: 1.5;">
       <?= $_details_add_user ?>
     </p>
     </td>
