@@ -19,6 +19,7 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 - **Endpoint Pembacaan Log Asinkron (admin_get_logs.php)**: Menambahkan API khusus untuk mem-parsing dan mengambil baris log aktivitas sistem terbaru sebagai fallback log viewer.
 - **WebSocket Broadcast pada Logging Internal**: Mengintegrasikan trigger penyiar log asinkron pada fungsi `writeAppLog()` agar log baru langsung terkirim ke channel dasbor admin saat kejadian berlangsung.
 - **Pengaturan Kontak Portal Dinamis**: Menambahkan opsi pengaturan dinamis untuk Email Resmi Support, Alamat Kantor, dan Jam Operasional pada formulir Pengaturan Portal di dasbor admin. Data ini akan langsung dirender secara dinamis di halaman depan portal pelanggan (*frontpage.php*) menggantikan data statis (hardcoded) sebelumnya.
+- **Integrasi Form Kontak ke Telegram Bot**: Menghubungkan formulir kontak pesan/keluhan pelanggan pada halaman depan (*frontpage.php*) ke Telegram Bot admin secara *real-time* via AJAX. Ketika pelanggan mengirimkan keluhan, admin akan langsung menerima notifikasi pesan berisi nama, email, dan detail keluhan di aplikasi Telegram.
 
 ### Dihapus
 - **Midtrans Payment Gateway**: Menghapus total seluruh integrasi SDK Snap JavaScript, antarmuka checkout Midtrans UI overlay, pemanggil webhook (`notification.php`), serta konfigurasi kredensial *server key* Midtrans dari dalam basis kode proyek.
