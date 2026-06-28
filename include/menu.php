@@ -215,7 +215,7 @@ if($idleto != "disable"){
 <?php 
 } ?>  
   <a href="./admin.php?id=sessions" class="menu <?= $ssesslist; ?>"><i class="fa fa-gear"></i> <?= $_admin_settings ?></a>
-  <div class="dropdown-btn <?= ($id == 'pending-transactions') ? 'active' : ''; ?>"><i class="fa fa-exchange"></i> <?= ($langid == 'id') ? 'Antrean Webhook' : 'Webhook Queue' ?>
+  <div class="dropdown-btn <?= ($id == 'pending-transactions') ? 'active' : ''; ?>"><i class="fa fa-credit-card"></i> MikhPay Billing
     <i class="fa fa-caret-down"></i>
   </div>
   <div class="dropdown-container <?= ($id == 'pending-transactions') ? 'menu-open' : ''; ?>">
