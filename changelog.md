@@ -15,6 +15,9 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 - **Toast Notification & Audio Lonceng Real-Time di Dashboard Admin**: Menambahkan notifikasi visual melayang (*Toast*) dan suara lonceng asinkron yang disintesis secara lokal menggunakan Web Audio API saat ada transaksi sukses baru.
 - **Kunci Otomatis Pembelian saat Router Offline**: Mengaktifkan pengecekan berkala (interval 15 detik) dari peramban pelanggan ke API MikroTik. Tombol beli akan otomatis terkunci (*disabled/Offline*) saat router mati, dan aktif kembali jika router online.
 - **Endpoint Polling Pembaruan Dashboard (admin_check_updates.php)**: Menambahkan endpoint asinkron bagi dashboard admin untuk mengecek transaksi sukses baru secara berkala sebagai fallback otomatis jika WebSocket dinonaktifkan.
+- **Live Activity Feed & Real-Time Logs Panel**: Menambahkan panel konsol terminal log interaktif pada dashboard admin untuk memantau pemesanan voucher, status pembayaran, dan kegagalan/error router secara *real-time*.
+- **Endpoint Pembacaan Log Asinkron (admin_get_logs.php)**: Menambahkan API khusus untuk mem-parsing dan mengambil baris log aktivitas sistem terbaru sebagai fallback log viewer.
+- **WebSocket Broadcast pada Logging Internal**: Mengintegrasikan trigger penyiar log asinkron pada fungsi `writeAppLog()` agar log baru langsung terkirim ke channel dasbor admin saat kejadian berlangsung.
 
 ### Dihapus
 - **Midtrans Payment Gateway**: Menghapus total seluruh integrasi SDK Snap JavaScript, antarmuka checkout Midtrans UI overlay, pemanggil webhook (`notification.php`), serta konfigurasi kredensial *server key* Midtrans dari dalam basis kode proyek.
