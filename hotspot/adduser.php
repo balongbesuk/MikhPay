@@ -427,16 +427,14 @@ if (!isset($_SESSION["mikhmon"])) {
         <div class="readme-info-alert">
           <div class="readme-info-alert-icon"><i class="fa fa-info-circle"></i></div>
           <div class="readme-info-alert-content">
-            <h4><?= $_format_time_limit ?></h4>
-            <p>[wdhm] Example : 30d = 30days, 12h = 12hours, 4w3d = 31days.</p>
+            <p style="margin: 0 !important; font-size: 13px !important; line-height: 1.5 !important; color: var(--text-main) !important;"><?= $_format_time_limit ?></p>
           </div>
         </div>
         
         <div class="readme-info-alert" style="background: rgba(16, 185, 129, 0.05) !important; border-color: rgba(16, 185, 129, 0.15) !important;">
           <div class="readme-info-alert-icon" style="color: #10b981 !important;"><i class="fa fa-check-circle"></i></div>
           <div class="readme-info-alert-content">
-            <h4 style="color: #10b981 !important;"><?= $_details_add_user ?></h4>
-            <p>Add User with Time Limit. Should Time Limit &lt; Validity.</p>
+            <p style="margin: 0 !important; font-size: 13px !important; line-height: 1.5 !important; color: var(--text-main) !important;"><?= $_details_add_user ?></p>
           </div>
         </div>
       </div>
