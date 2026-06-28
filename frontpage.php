@@ -1394,19 +1394,8 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 updateTimer();
                 var timerInterval = setInterval(updateTimer, 1000);
                 
-                // Polling transaksi
-                var checkInterval = setInterval(function() {
-                    fetch("frontpage.php?check_order=" + orderId)
-                        .then(r => r.json())
-                        .then(data => {
-                            if (data.status === 'success' || data.status === 'paid_pending_generate') {
-                                clearInterval(checkInterval);
-                                clearInterval(timerInterval);
-                                window.location.href = "frontpage.php?show_voucher=1&order_id=" + orderId + "&session=<?= urlencode($selected_session) ?>";
-                            }
-                        })
-                        .catch(e => console.error(e));
-                }, 3000);
+                // Inisialisasi koneksi WebSocket dengan fallback Polling otomatis
+                initWebSocketConnection(orderId);
             });
         </script>
     <?php endif; ?>
