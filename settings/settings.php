@@ -90,6 +90,19 @@ if (!isset($_SESSION["mikhmon"])) {
   if ($currency == "") {
     $currency = "Rp";
   }
+  
+  // Sanitize variables for HTML attributes
+  $s_session = htmlspecialchars($session, ENT_QUOTES, 'UTF-8');
+  $s_iphost = htmlspecialchars($iphost, ENT_QUOTES, 'UTF-8');
+  $s_userhost = htmlspecialchars($userhost, ENT_QUOTES, 'UTF-8');
+  $s_passwdhost = htmlspecialchars(decrypt($passwdhost), ENT_QUOTES, 'UTF-8');
+  $s_hotspotname = htmlspecialchars($hotspotname, ENT_QUOTES, 'UTF-8');
+  $s_dnsname = htmlspecialchars($dnsname, ENT_QUOTES, 'UTF-8');
+  $s_currency = htmlspecialchars($currency, ENT_QUOTES, 'UTF-8');
+  $s_areload = htmlspecialchars($areload, ENT_QUOTES, 'UTF-8');
+  $s_idleto = htmlspecialchars($idleto, ENT_QUOTES, 'UTF-8');
+  $s_iface = htmlspecialchars($iface, ENT_QUOTES, 'UTF-8');
+  $s_livereport = htmlspecialchars($livereport, ENT_QUOTES, 'UTF-8');
 }
 ?>
 <script>
@@ -300,7 +313,7 @@ if (!isset($_SESSION["mikhmon"])) {
                 <div class="card-body" style="padding: 20px !important;">
                   <div class="form-field-group" style="margin-bottom: 0 !important;">
                     <label for="sessname"><?= $_session_name ?></label>
-                    <input class="form-control" id="sessname" type="text" name="sessname" placeholder="Masukkan nama sesi" value="<?php if (explode("-",$session)[0] == "new") { echo ""; } else { echo $session; } ?>" required="1"/>
+                    <input class="form-control" id="sessname" type="text" name="sessname" placeholder="Masukkan nama sesi" value="<?php if (explode("-",$session)[0] == "new") { echo ""; } else { echo $s_session; } ?>" required="1"/>
                   </div>
                 </div>
               </div>
@@ -314,18 +327,18 @@ if (!isset($_SESSION["mikhmon"])) {
                    
                    <div class="form-field-group">
                      <label for="ipmik">IP MikroTik / IP Cloud</label>
-                     <input class="form-control" id="ipmik" type="text" name="ipmik" placeholder="Contoh: 192.168.1.1 atau cloud.mikrotik.com" value="<?= $iphost; ?>" required="1"/>
+                     <input class="form-control" id="ipmik" type="text" name="ipmik" placeholder="Contoh: 192.168.1.1 atau cloud.mikrotik.com" value="<?= $s_iphost; ?>" required="1"/>
                    </div>
                    
                    <div class="form-field-group">
                      <label for="usermk">Username</label>
-                     <input class="form-control" id="usermk" type="text" name="usermik" placeholder="Username Mikrotik" value="<?= $userhost; ?>" required="1"/>
+                     <input class="form-control" id="usermk" type="text" name="usermik" placeholder="Username Mikrotik" value="<?= $s_userhost; ?>" required="1"/>
                    </div>
 
                    <div class="form-field-group">
                      <label for="passmk">Password</label>
                      <div class="modern-password-wrapper">
-                       <input class="form-control" id="passmk" type="password" name="passmik" placeholder="Password Mikrotik" value="<?= decrypt($passwdhost); ?>" required="1"/>
+                       <input class="form-control" id="passmk" type="password" name="passmik" placeholder="Password Mikrotik" value="<?= $s_passwdhost; ?>" required="1"/>
                        <button type="button" class="password-toggle-btn" onclick="togglePass();" title="Tampilkan Password">
                          <i id="pass-icon" class="fa fa-eye"></i>
                        </button>
@@ -356,23 +369,23 @@ if (!isset($_SESSION["mikhmon"])) {
               
               <div class="form-field-group">
                 <label for="hotspotname"><?= $_hotspot_name ?></label>
-                <input class="form-control" type="text" name="hotspotname" placeholder="Nama Hotspot Anda" value="<?= $hotspotname; ?>" required="1" id="hotspotname"/>
+                <input class="form-control" type="text" name="hotspotname" placeholder="Nama Hotspot Anda" value="<?= $s_hotspotname; ?>" required="1" id="hotspotname"/>
               </div>
 
               <div class="form-field-group">
                 <label for="dnsname"><?= $_dns_name ?></label>
-                <input class="form-control" type="text" name="dnsname" placeholder="Contoh: mywifi.id" value="<?= $dnsname; ?>" required="1" id="dnsname"/>
+                <input class="form-control" type="text" name="dnsname" placeholder="Contoh: mywifi.id" value="<?= $s_dnsname; ?>" required="1" id="dnsname"/>
               </div>
 
               <div class="form-field-group">
                 <label for="currency"><?= $_currency ?></label>
-                <input class="form-control" type="text" name="currency" placeholder="Mata uang (Contoh: Rp)" value="<?= $currency; ?>" required="1" id="currency"/>
+                <input class="form-control" type="text" name="currency" placeholder="Mata uang (Contoh: Rp)" value="<?= $s_currency; ?>" required="1" id="currency"/>
               </div>
 
               <div class="form-field-group">
                 <label for="areload"><?= $_auto_reload ?></label>
                 <div class="modern-input-group-wrapper">
-                  <input class="form-control" type="number" min="10" max="3600" name="areload" placeholder="10" value="<?= $areload; ?>" required="1" id="areload"/>
+                  <input class="form-control" type="number" min="10" max="3600" name="areload" placeholder="10" value="<?= $s_areload; ?>" required="1" id="areload"/>
                   <span class="modern-input-group-addon"><?= $_sec ?></span>
                 </div>
               </div>
@@ -381,7 +394,7 @@ if (!isset($_SESSION["mikhmon"])) {
                 <label for="idleto"><?= $_idle_timeout ?></label>
                 <div class="modern-input-group-wrapper">
                   <select class="form-control" name="idleto" required="1" id="idleto">
-                    <option value="<?= $idleto; ?>"><?= $idleto; ?></option>
+                    <option value="<?= $s_idleto; ?>"><?= $s_idleto; ?></option>
                     <option value="5">5</option>
                     <option value="10">10</option>
                     <option value="30">30</option>
@@ -394,14 +407,14 @@ if (!isset($_SESSION["mikhmon"])) {
 
               <div class="form-field-group">
                 <label for="iface"><?= $_traffic_interface ?></label>
-                <input class="form-control" type="number" min="1" max="99" name="iface" placeholder="1" value="<?= $iface; ?>" required="1" id="iface"/>
+                <input class="form-control" type="number" min="1" max="99" name="iface" placeholder="1" value="<?= $s_iface; ?>" required="1" id="iface"/>
               </div>
 
               <?php if (!empty($livereport)): ?>
               <div class="form-field-group" style="margin-bottom: 0 !important;">
                 <label for="livereport"><?= $_live_report ?></label>
                 <select class="form-control" name="livereport" id="livereport">
-                  <option value="<?= $livereport; ?>"><?= ucfirst($livereport); ?></option>
+                  <option value="<?= $s_livereport; ?>"><?= ucfirst($s_livereport); ?></option>
                   <option value="enable">Enable</option>
                   <option value="disable">Disable</option>
                 </select>
