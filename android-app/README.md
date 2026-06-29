@@ -19,7 +19,7 @@ This replaces the need for third-party automation tools like MacroDroid, providi
 ## Whitelisted Packages (Common Defaults)
 
 Here are the package names for popular payment and banking apps in Indonesia:
-- **GoBiz (GoPay Merchant)**: `com.sg.gobiz`
+- **GoPay Merchant**: `com.gojek.gopaymerchant`
 - **Dana**: `com.dana`
 - **OVO**: `com.ovo.id`
 - **Shopee Partner**: `com.shopee.partner`
