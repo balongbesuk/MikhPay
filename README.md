@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="img/logo.png" alt="MikhPay Logo" width="100%" style="border-radius: 24px;" />
+  <img src="img/logo.png" alt="MikhPay Logo" width="300" style="border-radius: 24px;" />
 </p>
 
 # MikhPay - Modernized with REST API & QRIS Mandiri
