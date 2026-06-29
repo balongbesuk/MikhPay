@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">MikhPay Forwarder</string>
+    <string name="service_name">MikhPay Notification Listener</string>
+</resources>

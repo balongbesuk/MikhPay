@@ -28,3 +28,14 @@ Thumbs.db
 # Ignore example configuration templates and utility scripts
 /include/config.php.example
 /replace.ps1
+
+# Ignore Android App build artifacts and local properties
+android-app/.gradle/
+android-app/.idea/
+android-app/local.properties
+android-app/app/build/
+android-app/build/
+android-app/captures/
+android-app/.externalNativeBuild/
+android-app/.cxx/
+android-app/**/build/
