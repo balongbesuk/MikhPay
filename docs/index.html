@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<!-- saved from url=(0020)http://172.16.11.91/ -->
+<html lang="id"><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+    
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MikhPay - Layanan Internet Wifi Voucher</title>
+    <!-- SEO Meta Tags -->
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <meta name="description" content="Layanan internet hotspot instan berkecepatan tinggi dengan sistem voucher otomatis via QRIS dan E-Wallet. Cepat, stabil, dan tanpa kontrak bulanan.">
+    <meta name="keywords" content="hotspot, voucher hotspot, internet murah, qris hotspot, mikhmon qris">
+    
+    <!-- Modern Typography & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- QR Code Script is loaded dynamically when needed -->
+
+    <link rel="stylesheet" href="./index_files/frontpage.css">
+    <style>
+        :root {
+            --primary: #10966b;
+            --primary-glow: #10966b26;
+        }
+        .loading-overlay {
+            background: rgba(15, 23, 42, 0.7) !important;
+            backdrop-filter: blur(12px) !important;
+            -webkit-backdrop-filter: blur(12px) !important;
+            display: none;
+            padding: 20px 10px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 9999;
+            overflow-y: auto;
+            box-sizing: border-box;
+        }
+        .qris-modal-card {
+            background: #ffffff;
+            border-radius: 24px;
+            padding: 20px 16px;
+            width: 100%;
+            max-width: 360px;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            text-align: center;
+            animation: qrisModalFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+            color: #1e293b;
+            box-sizing: border-box;
+            margin: 20px auto;
+        }
+        @keyframes qrisModalFade {
+            from { opacity: 0; transform: scale(0.95) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        .qris-header-title {
+            font-size: 20px;
+            font-weight: 800;
+            color: #0f172a;
+            margin: 0 0 6px 0;
+            letter-spacing: -0.5px;
+        }
+        .qris-header-desc {
+            font-size: 13px;
+            color: #64748b;
+            margin: 0 0 16px 0;
+        }
+        .timer-badge {
+            background: #fef2f2;
+            border: 1px solid #fca5a5;
+            color: #ef4444;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 20px;
+            animation: timerPulse 2s infinite;
+        }
+        @keyframes timerPulse {
+            0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.2); }
+            70% { transform: scale(1.02); box-shadow: 0 0 0 6px rgba(239, 68, 68, 0); }
+            100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+        }
+        .qris-qr-container {
+            background: #ffffff;
+            padding: 12px;
+            border-radius: 20px;
+            border: 1px solid #e2e8f0;
+            display: inline-block;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+        }
+        .btn-download-qris-new {
+            background: #10b981;
+            color: white;
+            border: none;
+            padding: 10px 18px;
+            border-radius: 12px;
+            font-weight: 700;
+            cursor: pointer;
+            font-size: 13px;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
+            margin-top: 10px;
+            text-decoration: none;
+        }
+        .btn-download-qris-new:hover {
+            background: #059669;
+            transform: translateY(-1px);
+            box-shadow: 0 6px 16px rgba(16, 185, 129, 0.3);
+        }
+        .qris-total-amount {
+            font-size: 26px;
+            color: #10b981;
+            font-weight: 800;
+            margin: 0 0 4px 0;
+            letter-spacing: -0.5px;
+        }
+        .qris-warning-text {
+            color: #ef4444;
+            font-size: 13px;
+            margin: 0 0 16px 0;
+            font-weight: 700;
+        }
+        .qris-info-box {
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 14px;
+            padding: 12px;
+            font-size: 11px;
+            line-height: 1.5;
+            color: #475569;
+            text-align: left;
+            margin-bottom: 20px;
+        }
+        .qris-info-box i {
+            color: #3b82f6;
+            font-size: 14px;
+            float: left;
+            margin-right: 8px;
+            margin-top: 2px;
+        }
+        .btn-cancel-qris-new {
+            background: transparent;
+            border: 1px solid #cbd5e1;
+            color: #64748b;
+            padding: 10px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.2s;
+            width: 100%;
+            display: block;
+            box-sizing: border-box;
+            text-decoration: none;
+        }
+        .btn-cancel-qris-new:hover {
+            background: #f1f5f9;
+            color: #334155;
+            border-color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Translucent Navigation Bar -->
+    <header class="nav-header">
+        <div class="wrapper">
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <a href="http://172.16.11.91/#" class="logo">
+                                            <i class="fa fa-wifi"></i>
+                                        MikhPay                </a>
+                <span class="status-indicator-dot online" title="MikhPay Server: Online"></span>
+            </div>
+            <nav class="menu-links">
+                <a href="http://172.16.11.91/#home">Home</a>
+                <a href="http://172.16.11.91/#paket">Paket Internet</a>
+                <a href="http://172.16.11.91/#panduan">Cara Beli</a>
+                <a href="http://172.16.11.91/#syarat">Syarat &amp; Kebijakan</a>
+                <a href="http://172.16.11.91/#kontak">Kontak</a>
+            </nav>
+            <a href="http://172.16.11.91/admin.php?id=login" class="btn-admin">
+                <i class="fa fa-user-shield"></i>
+            </a>
+        </div>
+    </header>
+
+    <div id="home"></div>
+
+    <!-- Hero Section -->
+    <section class="hero wrapper">
+        <span class="status-badge status-online">
+            <i class="fa fa-circle-check"></i>
+            Status Router: Online        </span>
+        <h1>Internet Hotspot Cepat &amp; Stabil<br>Tanpa Kontrak Bulanan</h1>
+        <p>Mulai dari Rp 2.000 saja. Pilih paket yang sesuai kebutuhan Anda, bayar instan menggunakan QRIS atau E-Wallet, dan langsung terhubung ke internet!</p>
+        <div class="cta-group">
+            <a href="http://172.16.11.91/#paket" class="btn-primary-action">Beli Voucher</a>
+            <a href="http://172.16.11.91/#panduan" class="btn-secondary-action">Cara Penggunaan</a>
+        </div>
+
+            </section>
+
+    <!-- Products Catalog Section -->
+    <section class="products wrapper" id="paket">
+                <div class="section-header">
+            <h2>Pilihan Paket Voucher</h2>
+            <p>Pilih paket internet terbaik untuk menemani aktivitas harian Anda</p>
+        </div>
+
+        <!-- Checkout Stepper Tracker -->
+        <div class="checkout-stepper">
+            <div class="step active">
+                <div class="step-num">1</div>
+                <span class="step-label">Pilih Paket</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step ">
+                <div class="step-num">2</div>
+                <span class="step-label">Pembayaran</span>
+            </div>
+            <div class="step-line"></div>
+            <div class="step ">
+                <div class="step-num">3</div>
+                <span class="step-label">Hubungkan</span>
+            </div>
+        </div>
+
+        
+        <!-- Container Riwayat Pembelian (Dinamis via JS) -->
+        <div id="voucherHistoryContainer" class="history-card" style="display: block; margin-bottom: 24px;">
+            <div class="history-card-header">
+                <h3><i class="fa fa-history"></i> Voucher Terakhir Anda</h3>
+                <button type="button" onclick="clearVoucherHistory()" class="btn-clear-history">
+                    <i class="fa fa-trash-can"></i> Hapus Riwayat
+                </button>
+            </div>
+            <div class="history-card-body" id="voucherHistoryList">
+                <div class="history-item">
+                    <div class="history-item-info">
+                        <div class="history-item-title">
+                            <span class="history-item-profile">Paket 4-Jam</span>
+                            <span class="history-badge-validity">4h</span>
+                        </div>
+                        <div class="history-item-meta">
+                            ID: <span class="history-monospace">MK-Hotspot-4Jam-1782575461</span> · 27/6/2026, 22.53.35
+                        </div>
+                    </div>
+                    <div class="history-item-actions">
+                        <div class="history-item-code">mtbrk</div>
+                        <button type="button" class="history-btn-copy" onclick="copyHistoryCode(&#39;mtbrk&#39;, this)">
+                            <i class="fa-regular fa-copy"></i> Salin
+                        </button>
+                        <a href="http://mywifi.id/login?username=mtbrk&amp;password=mtbrk" class="history-btn-connect" style="text-decoration: none;"><i class="fa fa-wifi"></i> Hubungkan</a>
+                    </div>
+                </div>
+                </div>
+        </div>
+
+                    <!-- Layout Switcher Buttons -->
+            <div id="demo-catalog-container">
+            <div class="layout-toggle-container">
+                <button type="button" id="btnGridView" class="layout-toggle active">
+                    <i class="fa fa-th"></i> Grid View
+                </button>
+                <button type="button" id="btnCarouselView" class="layout-toggle">
+                    <i class="fa fa-columns"></i> Carousel View
+                </button>
+            </div>
+            <!-- Grid / Carousel Produk -->
+            <div class="products-wrapper products-grid">
+                                    <!-- List paket dinamis dari router yang sedang online -->
+                                            <div class="product-card">
+                            <div class="card-top">
+                                <div class="plan-icon">
+                                    <i class="fa fa-wifi"></i>
+                                </div>
+                                <h3 class="plan-title">4-Jam</h3>
+                                <p class="plan-description">Voucher internet kecepatan tinggi berbayar untuk 1 perangkat.</p>
+                                
+                                <div class="plan-meta">
+                                    <span><i class="fa-regular fa-clock"></i> Aktif: 4h</span>
+                                                                            <span><i class="fa-solid fa-gauge-high"></i> Speed: 5M/5M</span>
+                                                                    </div>
+                            </div>
+                            <div>
+                                <div class="plan-price-wrapper">
+                                    <div class="plan-price-label">Harga</div>
+                                    <div class="plan-price">
+                                        Rp 2.000                                    </div>
+                                </div>
+                                <form method="POST" action="http://172.16.11.91/#paket" onsubmit="return handleCheckoutSubmit(this)">
+                                    <input type="hidden" name="_csrf_token" value="219fe5585371607d2624b5c3eab5483ec4ff998065fdd28f17a76304344c28b9">                                    <input type="hidden" name="buy_profile" value="4-Jam">
+                                    <button type="submit" class="btn-buy-voucher">
+                                        <i class="fa fa-shopping-cart"></i> Beli Sekarang
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                                            <div class="product-card">
+                            <div class="card-top">
+                                <div class="plan-icon">
+                                    <i class="fa fa-wifi"></i>
+                                </div>
+                                <h3 class="plan-title">8-Jam</h3>
+                                <p class="plan-description">Voucher internet kecepatan tinggi berbayar untuk 1 perangkat.</p>
+                                
+                                <div class="plan-meta">
+                                    <span><i class="fa-regular fa-clock"></i> Aktif: 8h</span>
+                                                                            <span><i class="fa-solid fa-gauge-high"></i> Speed: 5M/5M</span>
+                                                                    </div>
+                            </div>
+                            <div>
+                                <div class="plan-price-wrapper">
+                                    <div class="plan-price-label">Harga</div>
+                                    <div class="plan-price">
+                                        Rp 3.000                                    </div>
+                                </div>
+                                <form method="POST" action="http://172.16.11.91/#paket" onsubmit="return handleCheckoutSubmit(this)">
+                                    <input type="hidden" name="_csrf_token" value="219fe5585371607d2624b5c3eab5483ec4ff998065fdd28f17a76304344c28b9">                                    <input type="hidden" name="buy_profile" value="8-Jam">
+                                    <button type="submit" class="btn-buy-voucher">
+                                        <i class="fa fa-shopping-cart"></i> Beli Sekarang
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                                            <div class="product-card">
+                            <div class="card-top">
+                                <div class="plan-icon">
+                                    <i class="fa fa-wifi"></i>
+                                </div>
+                                <h3 class="plan-title">1-Hari</h3>
+                                <p class="plan-description">Voucher internet kecepatan tinggi berbayar untuk 1 perangkat.</p>
+                                
+                                <div class="plan-meta">
+                                    <span><i class="fa-regular fa-clock"></i> Aktif: 1d</span>
+                                                                            <span><i class="fa-solid fa-gauge-high"></i> Speed: 5M/5M</span>
+                                                                    </div>
+                            </div>
+                            <div>
+                                <div class="plan-price-wrapper">
+                                    <div class="plan-price-label">Harga</div>
+                                    <div class="plan-price">
+                                        Rp 5.000                                    </div>
+                                </div>
+                                <form method="POST" action="http://172.16.11.91/#paket" onsubmit="return handleCheckoutSubmit(this)">
+                                    <input type="hidden" name="_csrf_token" value="219fe5585371607d2624b5c3eab5483ec4ff998065fdd28f17a76304344c28b9">                                    <input type="hidden" name="buy_profile" value="1-Hari">
+                                    <button type="submit" class="btn-buy-voucher">
+                                        <i class="fa fa-shopping-cart"></i> Beli Sekarang
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                                            <div class="product-card">
+                            <div class="card-top">
+                                <div class="plan-icon">
+                                    <i class="fa fa-wifi"></i>
+                                </div>
+                                <h3 class="plan-title">1-Minggu</h3>
+                                <p class="plan-description">Voucher internet kecepatan tinggi berbayar untuk 1 perangkat.</p>
+                                
+                                <div class="plan-meta">
+                                    <span><i class="fa-regular fa-clock"></i> Aktif: 7d</span>
+                                                                            <span><i class="fa-solid fa-gauge-high"></i> Speed: 5M/5M</span>
+                                                                    </div>
+                            </div>
+                            <div>
+                                <div class="plan-price-wrapper">
+                                    <div class="plan-price-label">Harga</div>
+                                    <div class="plan-price">
+                                        Rp 20.000                                    </div>
+                                </div>
+                                <form method="POST" action="http://172.16.11.91/#paket" onsubmit="return handleCheckoutSubmit(this)">
+                                    <input type="hidden" name="_csrf_token" value="219fe5585371607d2624b5c3eab5483ec4ff998065fdd28f17a76304344c28b9">                                    <input type="hidden" name="buy_profile" value="1-Minggu">
+                                    <button type="submit" class="btn-buy-voucher">
+                                        <i class="fa fa-shopping-cart"></i> Beli Sekarang
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                                            <div class="product-card">
+                            <div class="card-top">
+                                <div class="plan-icon">
+                                    <i class="fa fa-wifi"></i>
+                                </div>
+                                <h3 class="plan-title">2-Minggu</h3>
+                                <p class="plan-description">Voucher internet kecepatan tinggi berbayar untuk 1 perangkat.</p>
+                                
+                                <div class="plan-meta">
+                                    <span><i class="fa-regular fa-clock"></i> Aktif: 14d</span>
+                                                                            <span><i class="fa-solid fa-gauge-high"></i> Speed: 5M/5M</span>
+                                                                    </div>
+                            </div>
+                            <div>
+                                <div class="plan-price-wrapper">
+                                    <div class="plan-price-label">Harga</div>
+                                    <div class="plan-price">
+                                        Rp 35.000                                    </div>
+                                </div>
+                                <form method="POST" action="http://172.16.11.91/#paket" onsubmit="return handleCheckoutSubmit(this)">
+                                    <input type="hidden" name="_csrf_token" value="219fe5585371607d2624b5c3eab5483ec4ff998065fdd28f17a76304344c28b9">                                    <input type="hidden" name="buy_profile" value="2-Minggu">
+                                    <button type="submit" class="btn-buy-voucher">
+                                        <i class="fa fa-shopping-cart"></i> Beli Sekarang
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                                            <div class="product-card">
+                            <div class="card-top">
+                                <div class="plan-icon">
+                                    <i class="fa fa-wifi"></i>
+                                </div>
+                                <h3 class="plan-title">1-Bulan</h3>
+                                <p class="plan-description">Voucher internet kecepatan tinggi berbayar untuk 1 perangkat.</p>
+                                
+                                <div class="plan-meta">
+                                    <span><i class="fa-regular fa-clock"></i> Aktif: 30d</span>
+                                                                            <span><i class="fa-solid fa-gauge-high"></i> Speed: 5M/5M</span>
+                                                                    </div>
+                            </div>
+                            <div>
+                                <div class="plan-price-wrapper">
+                                    <div class="plan-price-label">Harga</div>
+                                    <div class="plan-price">
+                                        Rp 50.000                                    </div>
+                                </div>
+                                <form method="POST" action="http://172.16.11.91/#paket" onsubmit="return handleCheckoutSubmit(this)">
+                                    <input type="hidden" name="_csrf_token" value="219fe5585371607d2624b5c3eab5483ec4ff998065fdd28f17a76304344c28b9">                                    <input type="hidden" name="buy_profile" value="1-Bulan">
+                                    <button type="submit" class="btn-buy-voucher">
+                                        <i class="fa fa-shopping-cart"></i> Beli Sekarang
+                                    </button>
+                                </form>
+                            </div>
+                        </div>
+                                                </div>
+            </div> <!-- End demo-catalog-container -->
+            <div id="demo-receipt-container" style="display: none;"></div>
+            </section>
+
+    <!-- How it Works Section -->
+    <section class="how-it-works" id="panduan">
+        <div class="wrapper">
+            <div class="section-header">
+                <h2>Langkah Mudah Menggunakan Hotspot</h2>
+                <p>Ikuti 3 tahapan praktis berikut untuk memulai akses internet cepat Anda</p>
+            </div>
+            
+            <div class="steps-container">
+                <div class="step-card">
+                    <div class="step-number">1</div>
+                    <h3>Pilih Paket Internet</h3>
+                    <p>Pilih paket voucher yang paling cocok dengan kebutuhan durasi dan kecepatan internet Anda di atas.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">2</div>
+                    <h3>Lakukan Pembayaran</h3>
+                    <p>Klik tombol beli, lakukan pembayaran instan secara aman melalui QRIS (Gopay, OVO, Dana, LinkAja) atau transfer e-wallet.</p>
+                </div>
+                <div class="step-card">
+                    <div class="step-number">3</div>
+                    <h3>Masukkan Kode Voucher</h3>
+                    <p>Setelah pembayaran selesai, kode voucher akan otomatis muncul di layar Anda. Masukkan kode tersebut di halaman login hotspot kami.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Terms & Policies Section -->
+    <section class="compliance-docs wrapper" id="syarat">
+        <div class="section-header">
+            <h2>Syarat, Ketentuan &amp; Kebijakan</h2>
+            <p>Harap luangkan waktu untuk membaca informasi kebijakan layanan kami secara transparan</p>
+        </div>
+
+        <div class="tabs-header">
+            <button class="tab-btn active" onclick="switchTab(&#39;syarat-ketentuan&#39;)">Syarat &amp; Ketentuan</button>
+            <button class="tab-btn" onclick="switchTab(&#39;kebijakan-pengembalian&#39;)">Kebijakan Pengembalian Dana</button>
+        </div>
+
+        <!-- Syarat & Ketentuan Content -->
+        <div class="tab-content active" id="syarat-ketentuan">
+            <h3>Syarat &amp; Ketentuan Layanan</h3>
+            <p>Selamat datang di layanan MikhPay Hotspot. Dengan membeli dan menggunakan voucher kami, Anda menyetujui seluruh ketentuan berikut:</p>
+            <ol>
+                <li><strong>Penggunaan Voucher:</strong> Setiap voucher hotspot hanya berlaku untuk 1 (satu) perangkat dalam satu satuan waktu akses, kecuali dinyatakan lain pada jenis paket.</li>
+                <li><strong>Masa Berlaku Voucher:</strong> Masa aktif voucher dimulai sejak pengguna pertama kali melakukan koneksi (login) ke jaringan hotspot kami.</li>
+                <li><strong>Batas Tanggung Jawab:</strong> Kami berupaya memberikan konektivitas terbaik. Namun, kami tidak bertanggung jawab atas gangguan sinyal yang disebabkan oleh faktor geografis, interferensi perangkat pengguna, atau kendala teknis tak terduga di luar jangkauan infrastruktur kami.</li>
+                <li><strong>Larangan Penggunaan:</strong> Pengguna dilarang menggunakan layanan internet hotspot kami untuk aktivitas ilegal, penyebaran konten berhak cipta secara tidak sah, peretasan, spamming, serta tindakan kriminal siber lainnya yang melanggar hukum Negara Republik Indonesia.</li>
+                <li><strong>Perubahan Layanan:</strong> MikhPay Hotspot berhak menyesuaikan tarif, alokasi bandwidth, dan kebijakan operasional hotspot sewaktu-waktu demi menjaga kualitas layanan yang optimal bagi semua pelanggan.</li>
+            </ol>
+        </div>
+
+        <!-- Kebijakan Pengembalian Dana Content -->
+        <div class="tab-content" id="kebijakan-pengembalian">
+            <h3>Kebijakan Pengembalian Dana &amp; Layanan</h3>
+            <p>Kepuasan Anda adalah komitmen utama kami. Berikut adalah rincian kebijakan pengembalian dana (refund) atas layanan kami:</p>
+            <ol>
+                <li><strong>Kriteria Pengembalian Dana:</strong> Pelanggan berhak mengajukan pengembalian dana penuh jika sistem hotspot mengalami gangguan total (down time) berkelanjutan lebih dari 24 jam berturut-turut yang disebabkan langsung oleh kendala server atau infrastruktur kami.</li>
+                <li><strong>Pembatalan Transaksi:</strong> Transaksi pembayaran yang telah berhasil diproses tidak dapat dibatalkan atau dikembalikan apabila kode voucher telah aktif atau digunakan oleh pembeli.</li>
+                <li><strong>Prosedur Pengajuan:</strong> Untuk mengajukan pengembalian dana, silakan kirimkan bukti mutasi pembayaran yang sah dan tangkapan layar kendala ke kontak bisnis resmi kami.</li>
+                <li><strong>Waktu Proses:</strong> Dana pengembalian yang disetujui akan ditransfer kembali ke rekening bank atau e-wallet asal pelanggan dalam kurun waktu maksimal 3 (tiga) hari kerja sejak pengajuan disetujui.</li>
+            </ol>
+        </div>
+    </section>
+
+    <!-- Contact Section -->
+    <section class="contact" id="kontak">
+        <div class="wrapper">
+            <div class="section-header">
+                <h2>Hubungi Kontak Bisnis Kami</h2>
+                <p>Ada kendala koneksi atau pertanyaan seputar voucher? Tim support kami siap membantu Anda</p>
+            </div>
+
+            <div class="contact-grid">
+                <div class="contact-info-card">
+                    <div class="contact-item">
+                        <i class="fa fa-envelope"></i>
+                        <div class="contact-item-text">
+                            <h4>Email Resmi Support</h4>
+                            <p>support@mikhpay.my.id</p>
+                        </div>
+                    </div>
+                    
+                                        <div class="contact-item">
+                        <i class="fa-brands fa-whatsapp" style="color: #25D366; font-size: 20px;"></i>
+                        <div class="contact-item-text">
+                            <h4>WhatsApp / Telepon</h4>
+                            <p>+62 812 3456 7890</p>
+                        </div>
+                    </div>
+                                        
+                    
+                    <div class="contact-item">
+                        <i class="fa fa-location-dot"></i>
+                        <div class="contact-item-text">
+                            <h4>Alamat Kantor</h4>
+                            <p>MikhPay Hotspot Area, Jl. Raya Jombang No. 123, Jombang, 61471, Indonesia</p>
+                        </div>
+                    </div>
+                    <div class="contact-item">
+                        <i class="fa fa-clock"></i>
+                        <div class="contact-item-text">
+                            <h4>Jam Operasional Support</h4>
+                            <p>Setiap Hari: 08.00 WIB - 22.00 WIB</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Message Form -->
+                <form class="contact-form" id="customerContactForm">
+                    <input type="hidden" name="_csrf_token" value="219fe5585371607d2624b5c3eab5483ec4ff998065fdd28f17a76304344c28b9">                    <div class="form-group">
+                        <label for="c_name">Nama Lengkap</label>
+                        <input type="text" id="c_name" name="c_name" required="" placeholder="Masukkan nama Anda">
+                    </div>
+                    <div class="form-group">
+                        <label for="c_email">Alamat Email</label>
+                        <input type="email" id="c_email" name="c_email" required="" placeholder="name@example.com">
+                    </div>
+                    <div class="form-group">
+                        <label for="c_msg">Pesan / Keluhan</label>
+                        <textarea id="c_msg" name="c_msg" rows="4" required="" placeholder="Tuliskan keluhan atau pertanyaan Anda di sini..."></textarea>
+                    </div>
+                    <button type="submit" class="btn-submit">Kirim Pesan</button>
+                </form>
+            </div>
+        </div>
+    </section>
+
+    <!-- Translucent Footer -->
+    <footer>
+        <div class="wrapper">
+            <div class="footer-links">
+                <a href="http://172.16.11.91/#home">Beranda</a>
+                <a href="http://172.16.11.91/#paket">Beli Voucher</a>
+                <a href="http://172.16.11.91/#syarat">Syarat &amp; Ketentuan</a>
+                <a href="http://172.16.11.91/#kontak">Hubungi Kami</a>
+                <a href="http://172.16.11.91/admin.php?id=login">Admin Portal</a>
+            </div>
+            <p>© 2026 MikhPay Hotspot. All Rights Reserved. Seluruh transaksi diproses dalam Rupiah (IDR).</p>
+            <p style="font-size: 11px; color: var(--text-muted); padding-bottom: 60px;">Diintegrasikan dengan sistem billing otomatis MikhPay.</p>
+        </div>
+    </footer>
+
+    <!-- Fixed Bottom Navigation Bar for Mobile -->
+    <nav class="bottom-nav">
+        <a href="http://172.16.11.91/#home" class="nav-item active">
+            <i class="fa fa-home"></i>
+            <span>Beranda</span>
+        </a>
+        <a href="http://172.16.11.91/#paket" class="nav-item">
+            <i class="fa fa-ticket-alt"></i>
+            <span>Beli Voucher</span>
+        </a>
+        <a href="http://172.16.11.91/#syarat" class="nav-item">
+            <i class="fa fa-file-shield"></i>
+            <span>Kebijakan</span>
+        </a>
+        <a href="http://172.16.11.91/#kontak" class="nav-item">
+            <i class="fa fa-comments"></i>
+            <span>Kontak</span>
+        </a>
+    </nav>
+
+    <!-- QRIS Transaction Overlay (MOCK DEMO) -->
+    <div class="loading-overlay" id="loadingPayment">
+        <div class="qris-modal-card">
+            <h3 class="qris-header-title">Selesaikan Pembayaran (DEMO)</h3>
+            <p class="qris-header-desc">Scan QRIS untuk simulasi pembelian</p>
+            
+            <div class="timer-badge">
+                <i class="fa fa-clock"></i> Bayar sebelum: <span id="countdownTimer">05:00</span>
+            </div>
+            
+            <div class="qris-qr-container" style="width: 100%; max-width: 280px; box-sizing: border-box; display: inline-flex; flex-direction: column; align-items: center;">
+                <img id="qrisImage" src="https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=00020101021226590016ID1020220816008540110303000520455135204551353033605802ID5914MikhPay%20Hotspot6007Jombang61056147162070703A016304" style="width: 200px; height: 200px; padding: 10px; background: white; border-radius: 12px;" alt="QRIS QR Code">
+                <button type="button" class="btn-download-qris-new" style="width: 100%; justify-content: center; box-sizing: border-box;" onclick="alert('Demo: QRIS berhasil diunduh!')">
+                    <i class="fa fa-download"></i> Simpan QRIS ke Galeri
+                </button>
+                <div class="qris-helper-tip" style="font-size: 11px; color: #64748b; margin-top: 8px; font-style: italic; line-height: 1.4; text-align: center;">
+                    * Menyimulasikan pembayaran sukses otomatis dalam <b>10 detik</b>.
+                </div>
+            </div>
+            
+            <div class="qris-total-amount" id="qrisTotalAmount">
+                Rp 2.000
+            </div>
+            <div class="qris-warning-text">
+                (Mohon transfer TEPAT hingga 3 digit terakhir!)
+            </div>
+            
+            <div class="qris-info-box">
+                <i class="fa fa-info-circle"></i> Angka unik sebesar <b id="qrisUniqueCode">Rp 43</b> ditambahkan sebagai verifikasi otomatis oleh sistem. Jaminan 100% uang Anda tetap utuh untuk aktivasi voucher.
+            </div>
+            
+            <div style="font-size: 11px; color: #94a3b8; margin-bottom: 20px;" id="qrisOrderId">
+                Order ID: MK-Hotspot-4Jam-DEMO12345
+            </div>
+            
+            <button type="button" onclick="cancelMockOrder()" class="btn-cancel-qris-new">Batalkan Pesanan</button>
+        </div>
+    </div>
+    
+    <!-- Global Config and Javascript Controller -->
+    <script>
+        var FrontpageConfig = {
+            session: "Hotspot",
+            ws: {
+                enabled: true,
+                key: "edb51b163b2b6e5bbbb4",
+                cluster: "ap1",
+                host: "",
+                port: "",
+                scheme: ""
+            }
+        };
+    </script>
+    
+    <!-- Load Pusher script if WebSocket is enabled -->
+            <script src="./index_files/pusher.min.js.download"></script>
+    
+    <script src="./index_files/jquery.min.js.download"></script>
+    <script src="./index_files/frontpage.js.download"></script>
+    <!-- View Switcher Controller -->
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            var btnGrid = document.getElementById("btnGridView");
+            var btnCarousel = document.getElementById("btnCarouselView");
+            var wrapper = document.querySelector(".products-wrapper");
+
+            if (btnGrid && btnCarousel && wrapper) {
+                function setGrid() {
+                    wrapper.className = "products-wrapper products-grid";
+                    btnGrid.classList.add("active");
+                    btnCarousel.classList.remove("active");
+                    localStorage.setItem("mikhmon_vcr_layout", "grid");
+                }
+                function setCarousel() {
+                    wrapper.className = "products-wrapper products-carousel";
+                    btnCarousel.classList.add("active");
+                    btnGrid.classList.remove("active");
+                    localStorage.setItem("mikhmon_vcr_layout", "carousel");
+                }
+
+                btnGrid.addEventListener("click", setGrid);
+                btnCarousel.addEventListener("click", setCarousel);
+
+                // Initialize layout (default carousel on mobile, grid on desktop)
+                var stored = localStorage.getItem("mikhmon_vcr_layout");
+                if (stored === "grid") {
+                    setGrid();
+                } else if (stored === "carousel") {
+                    setCarousel();
+                } else {
+                    if (window.innerWidth <= 768) {
+                        setCarousel();
+                    } else {
+                        setGrid();
+                    }
+                }
+            }
+        });
+
+        // AJAX handler untuk Formulir Kontak & Keluhan Pelanggan ke Telegram Admin
+        $(document).ready(function() {
+            $('#customerContactForm').on('submit', function(e) {
+                e.preventDefault();
+                
+                var $form = $(this);
+                var $submitBtn = $form.find('.btn-submit');
+                var originalBtnText = $submitBtn.text();
+                
+                $submitBtn.prop('disabled', true).text('Mengirim...');
+                
+                $.ajax({
+                    url: window.location.href,
+                    type: 'POST',
+                    data: {
+                        action: 'submit_contact',
+                        csrf_token: $form.find('input[name="csrf_token"]').val(),
+                        c_name: $('#c_name').val(),
+                        c_email: $('#c_email').val(),
+                        c_msg: $('#c_msg').val()
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        $submitBtn.prop('disabled', false).text(originalBtnText);
+                        if (response.status === 'success') {
+                            alert(response.message);
+                            $form[0].reset();
+                        } else {
+                            alert(response.message);
+                        }
+                    },
+                    error: function() {
+                        $submitBtn.prop('disabled', false).text(originalBtnText);
+                        alert('Terjadi kesalahan koneksi saat mengirim pesan.');
+                    }
+                });
+            });
+        });
+
+        // ==========================================
+        // MOCK INTERACTION CODE FOR GITHUB PAGES DEMO
+        // ==========================================
+        var mockTimerInterval = null;
+        var mockPaymentTimeout = null;
+        var activeMockOrder = null;
+
+        // Custom handleCheckoutSubmit to override frontpage.js in the demo docs
+        window.handleCheckoutSubmit = function(form) {
+            var $form = $(form);
+            var buyProfile = $form.find('input[name="buy_profile"]').val();
+            
+            // Find price of the selected product
+            var $card = $form.closest('.product-card');
+            var priceText = $card.find('.plan-price').text().replace(/[^0-9]/g, '');
+            var basePrice = parseInt(priceText) || 2000;
+            var validityText = $card.find('.plan-meta span:first-child').text().replace('Aktif:', '').trim();
+            
+            // Generate mock unique code (1-99)
+            var uniqueCode = Math.floor(Math.random() * 99) + 1;
+            var totalAmount = basePrice + uniqueCode;
+            var orderId = "MK-Hotspot-" + buyProfile.replace(/\s+/g, '') + "-DEMO" + Math.floor(10000 + Math.random() * 90000);
+            
+            activeMockOrder = {
+                order_id: orderId,
+                profile: buyProfile,
+                price: totalAmount,
+                base_price: basePrice,
+                validity: validityText
+            };
+            
+            // Show QRIS Overlay Modal
+            $('#qrisTotalAmount').text('Rp ' + totalAmount.toLocaleString('id-ID'));
+            $('#qrisUniqueCode').text('Rp ' + uniqueCode);
+            $('#qrisOrderId').text('Order ID: ' + orderId);
+            
+            // Update stepper step 1 to completed, step 2 to active
+            updateStepper(2);
+            
+            // Show the modal
+            $('#loadingPayment').fadeIn();
+            
+            // Countdown timer (5 minutes)
+            var timeRemaining = 300; // seconds
+            clearInterval(mockTimerInterval);
+            mockTimerInterval = setInterval(function() {
+                timeRemaining--;
+                if (timeRemaining <= 0) {
+                    clearInterval(mockTimerInterval);
+                    cancelMockOrder();
+                    return;
+                }
+                var minutes = Math.floor(timeRemaining / 60);
+                var seconds = timeRemaining % 60;
+                $('#countdownTimer').text(
+                    (minutes < 10 ? '0' : '') + minutes + ':' + (seconds < 10 ? '0' : '') + seconds
+                );
+            }, 1000);
+            
+            // Simulate Payment Verification in 10 seconds!
+            clearTimeout(mockPaymentTimeout);
+            mockPaymentTimeout = setTimeout(function() {
+                simulatePaymentSuccess();
+            }, 10000);
+            
+            return false; // prevent actual form submit
+        };
+
+        window.cancelMockOrder = function() {
+            clearInterval(mockTimerInterval);
+            clearTimeout(mockPaymentTimeout);
+            $('#loadingPayment').fadeOut();
+            updateStepper(1);
+            activeMockOrder = null;
+        };
+
+        function updateStepper(step) {
+            var $steps = $('.checkout-stepper .step');
+            $steps.removeClass('active completed');
+            
+            if (step === 1) {
+                $steps.eq(0).addClass('active').find('.step-num').text('1');
+                $steps.eq(1).find('.step-num').text('2');
+                $steps.eq(2).find('.step-num').text('3');
+            } else if (step === 2) {
+                $steps.eq(0).addClass('completed').find('.step-num').html('<i class="fa fa-check"></i>');
+                $steps.eq(1).addClass('active').find('.step-num').text('2');
+                $steps.eq(2).find('.step-num').text('3');
+            } else if (step === 3) {
+                $steps.eq(0).addClass('completed').find('.step-num').html('<i class="fa fa-check"></i>');
+                $steps.eq(1).addClass('completed').find('.step-num').html('<i class="fa fa-check"></i>');
+                $steps.eq(2).addClass('active').find('.step-num').text('3');
+            }
+        }
+
+        function simulatePaymentSuccess() {
+            clearInterval(mockTimerInterval);
+            $('#loadingPayment').fadeOut();
+            updateStepper(3);
+            
+            if (!activeMockOrder) return;
+            
+            // Random voucher code
+            var charSet = 'abcdefghijklmnopqrstuvwxyz';
+            var voucherCode = '';
+            for (var i = 0; i < 5; i++) {
+                voucherCode += charSet.charAt(Math.floor(Math.random() * charSet.length));
+            }
+            
+            // Render receipt card
+            var receiptHtml = `
+                <div class="receipt-card" style="display: block; animation: qrisModalFade 0.4s cubic-bezier(0.16, 1, 0.3, 1);">
+                    <div class="success-icon" style="background: rgba(16, 185, 129, 0.1); color: #10b981; width: 64px; height: 64px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 32px; margin: 0 auto 20px auto;">
+                        <i class="fa fa-check"></i>
+                    </div>
+                    <div class="receipt-title" style="font-size: 24px; font-weight: 800; color: #0f172a; margin-bottom: 8px;">Pembayaran Berhasil! (DEMO)</div>
+                    <div class="receipt-subtitle" style="font-size: 14px; color: #64748b; margin-bottom: 24px;">Voucher internet Anda telah berhasil diterbitkan secara otomatis</div>
+
+                    <div class="voucher-box" style="display: flex; align-items: center; justify-content: space-around; gap: 20px; flex-wrap: wrap; text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 20px; margin-bottom: 24px;">
+                        <div style="flex: 1; min-width: 180px;">
+                            <div class="voucher-code-label" style="font-size: 12px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Kode Voucher</div>
+                            <div class="voucher-code" id="voucherCode" style="font-size: 32px; font-weight: 800; color: var(--primary); font-family: monospace; letter-spacing: 1px; margin-bottom: 8px;">${voucherCode}</div>
+                            <div style="font-size: 11px; color: #64748b; line-height: 1.4;">
+                                Gunakan kode ini pada halaman login Hotspot Anda untuk terhubung ke internet.
+                            </div>
+                        </div>
+                        <div class="voucher-qrcode-container" style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; margin: 0 auto;">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=http://mywifi.id/login?username=${voucherCode}" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 6px; width: 120px; height: 120px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);" alt="QR Code">
+                            <span style="font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">Pindai QR untuk Masuk Otomatis</span>
+                        </div>
+                    </div>
+
+                    <div class="receipt-info-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 20px; margin-bottom: 24px; text-align: left;">
+                        <div class="receipt-info-item" style="display: flex; flex-direction: column; gap: 4px;">
+                            <span style="font-size: 11px; color: #94a3b8;">Nama Paket</span>
+                            <strong style="font-size: 15px; color: #0f172a;">${activeMockOrder.profile}</strong>
+                        </div>
+                        <div class="receipt-info-item" style="display: flex; flex-direction: column; gap: 4px;">
+                            <span style="font-size: 11px; color: #94a3b8;">Masa Aktif</span>
+                            <strong style="font-size: 15px; color: #0f172a;">${activeMockOrder.validity}</strong>
+                        </div>
+                        <div class="receipt-info-item" style="display: flex; flex-direction: column; gap: 4px;">
+                            <span style="font-size: 11px; color: #94a3b8;">Total Bayar</span>
+                            <strong style="font-size: 15px; color: #0f172a;">Rp ${activeMockOrder.price.toLocaleString('id-ID')}</strong>
+                        </div>
+                        <div class="receipt-info-item" style="display: flex; flex-direction: column; gap: 4px;">
+                            <span style="font-size: 11px; color: #94a3b8;">Status</span>
+                            <strong style="font-size: 15px; color: #10b981;">Lunas / Aktif</strong>
+                        </div>
+                    </div>
+
+                    <div class="receipt-actions" style="display: flex; flex-direction: column; width: 100%; gap: 12px;">
+                        <a href="#" onclick="alert('Demo: Anda otomatis terhubung ke hotspot!'); return false;" class="btn-connect btn-connect-pulse" style="display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; padding: 14px; border-radius: 12px; font-weight: 700; text-decoration: none; text-align: center; box-shadow: 0 4px 14px var(--primary-glow);">Hubungkan Sekarang</a>
+                        <div style="display: flex; gap: 12px; width: 100%;">
+                            <button type="button" class="btn-copy" onclick="copyMockCode('${voucherCode}')" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: 600; cursor: pointer;">Salin Kode</button>
+                            <button type="button" class="btn-done" onclick="resetDemoCatalog()" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: #f1f5f9; color: #475569; font-weight: 600; cursor: pointer;">Selesai</button>
+                        </div>
+                    </div>
+                </div>
+                <div id="copyToast" class="toast-copy" style="position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%) translateY(100px); background: white; border: 1px solid #e2e8f0; padding: 12px 24px; border-radius: 50px; display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); transition: all 0.3s; z-index: 10000; opacity: 0;">
+                    <i class="fa fa-circle-check" style="color: #10b981; font-size: 16px;"></i>
+                    <span>Kode voucher berhasil disalin!</span>
+                </div>
+            `;
+            
+            $('#demo-catalog-container').hide();
+            $('#demo-receipt-container').html(receiptHtml).fadeIn();
+        }
+
+        window.copyMockCode = function(code) {
+            navigator.clipboard.writeText(code).then(function() {
+                var $toast = $('#copyToast');
+                if ($toast.length) {
+                    $toast.css({ 'opacity': '1', 'transform': 'translateX(-50%) translateY(0)' });
+                    setTimeout(function() {
+                        $toast.css({ 'opacity': '0', 'transform': 'translateX(-50%) translateY(100px)' });
+                    }, 3000);
+                }
+            }, function() {
+                alert("Kode voucher: " + code);
+            });
+        };
+
+        window.resetDemoCatalog = function() {
+            $('#demo-receipt-container').hide().empty();
+            $('#demo-catalog-container').fadeIn();
+            updateStepper(1);
+            activeMockOrder = null;
+        };
+    </script>
+
+
+</body></html>
