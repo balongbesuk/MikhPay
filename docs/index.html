@@ -749,6 +749,15 @@
         // ==========================================
         // MOCK INTERACTION CODE FOR GITHUB PAGES DEMO
         // ==========================================
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.toString()
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
         var mockTimerInterval = null;
         var mockPaymentTimeout = null;
         var activeMockOrder = null;
@@ -867,13 +876,13 @@
                     <div class="voucher-box" style="display: flex; align-items: center; justify-content: space-around; gap: 20px; flex-wrap: wrap; text-align: left; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 20px; margin-bottom: 24px;">
                         <div style="flex: 1; min-width: 180px;">
                             <div class="voucher-code-label" style="font-size: 12px; font-weight: 600; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Kode Voucher</div>
-                            <div class="voucher-code" id="voucherCode" style="font-size: 32px; font-weight: 800; color: var(--primary); font-family: monospace; letter-spacing: 1px; margin-bottom: 8px;">${voucherCode}</div>
+                            <div class="voucher-code" id="voucherCode" style="font-size: 32px; font-weight: 800; color: var(--primary); font-family: monospace; letter-spacing: 1px; margin-bottom: 8px;">${escapeHtml(voucherCode)}</div>
                             <div style="font-size: 11px; color: #64748b; line-height: 1.4;">
                                 Gunakan kode ini pada halaman login Hotspot Anda untuk terhubung ke internet.
                             </div>
                         </div>
                         <div class="voucher-qrcode-container" style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; margin: 0 auto;">
-                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=http://mywifi.id/login?username=${voucherCode}" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 6px; width: 120px; height: 120px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);" alt="QR Code">
+                            <img src="https://api.qrserver.com/v1/create-qr-code/?size=120x120&data=http://mywifi.id/login?username=${escapeHtml(voucherCode)}" style="background: white; border: 1px solid #e2e8f0; border-radius: 12px; padding: 6px; width: 120px; height: 120px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);" alt="QR Code">
                             <span style="font-size: 10px; color: #94a3b8; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">Pindai QR untuk Masuk Otomatis</span>
                         </div>
                     </div>
@@ -881,15 +890,15 @@
                     <div class="receipt-info-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 20px; padding: 20px; margin-bottom: 24px; text-align: left;">
                         <div class="receipt-info-item" style="display: flex; flex-direction: column; gap: 4px;">
                             <span style="font-size: 11px; color: #94a3b8;">Nama Paket</span>
-                            <strong style="font-size: 15px; color: #0f172a;">${activeMockOrder.profile}</strong>
+                            <strong style="font-size: 15px; color: #0f172a;">${escapeHtml(activeMockOrder.profile)}</strong>
                         </div>
                         <div class="receipt-info-item" style="display: flex; flex-direction: column; gap: 4px;">
                             <span style="font-size: 11px; color: #94a3b8;">Masa Aktif</span>
-                            <strong style="font-size: 15px; color: #0f172a;">${activeMockOrder.validity}</strong>
+                            <strong style="font-size: 15px; color: #0f172a;">${escapeHtml(activeMockOrder.validity)}</strong>
                         </div>
                         <div class="receipt-info-item" style="display: flex; flex-direction: column; gap: 4px;">
                             <span style="font-size: 11px; color: #94a3b8;">Total Bayar</span>
-                            <strong style="font-size: 15px; color: #0f172a;">Rp ${activeMockOrder.price.toLocaleString('id-ID')}</strong>
+                            <strong style="font-size: 15px; color: #0f172a;">Rp ${escapeHtml(activeMockOrder.price.toLocaleString('id-ID'))}</strong>
                         </div>
                         <div class="receipt-info-item" style="display: flex; flex-direction: column; gap: 4px;">
                             <span style="font-size: 11px; color: #94a3b8;">Status</span>
@@ -900,7 +909,7 @@
                     <div class="receipt-actions" style="display: flex; flex-direction: column; width: 100%; gap: 12px;">
                         <a href="#" onclick="alert('Demo: Anda otomatis terhubung ke hotspot!'); return false;" class="btn-connect btn-connect-pulse" style="display: flex; align-items: center; justify-content: center; background: var(--primary); color: white; padding: 14px; border-radius: 12px; font-weight: 700; text-decoration: none; text-align: center; box-shadow: 0 4px 14px var(--primary-glow);">Hubungkan Sekarang</a>
                         <div style="display: flex; gap: 12px; width: 100%;">
-                            <button type="button" class="btn-copy" onclick="copyMockCode('${voucherCode}')" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: 600; cursor: pointer;">Salin Kode</button>
+                            <button type="button" class="btn-copy" onclick="copyMockCode('${escapeHtml(voucherCode)}')" style="flex: 1; padding: 12px; border-radius: 12px; border: 1px solid #cbd5e1; background: white; color: #475569; font-weight: 600; cursor: pointer;">Salin Kode</button>
                             <button type="button" class="btn-done" onclick="resetDemoCatalog()" style="flex: 1; padding: 12px; border-radius: 12px; border: none; background: #f1f5f9; color: #475569; font-weight: 600; cursor: pointer;">Selesai</button>
                         </div>
                     </div>
