@@ -109,5 +109,28 @@ Karena aplikasi ini dikompilasi secara mandiri (*self-signed*) dan di-host di lu
 * **Solusi 2 (Salah Ketik URL)**: Periksa kembali penulisan URL Webhook. Pastikan tidak ada spasi di ujung teks, dan gunakan awalan protokol yang benar (`http://` atau `https://`).
 
 #### Q: Angka nominal transaksi tidak terbaca dari notifikasi pembayaran e-wallet.
-* **Solusi**: Struktur pesan notifikasi aplikasi e-wallet mungkin telah diperbarui. Silakan gunakan kolom **Custom Parsing Regex (Opsional)** untuk merancang pola pencarian nominal yang sesuai dengan format teks notifikasi terbaru Anda.
+* **Solusi**: Struktur pesan notifikasi aplikasi e-wallet mungkin telah diperbarui. Silakan gunakan kolom **Custom Parsing Regex (Opsional)** untuk menulis pola pencari nominal Anda sendiri. Sistem akan mencari kecocokan grup tangkapan pertama `(...)` dalam pola Regex Anda sebagai nominal bersih yang dikirim ke server.
+
+##### 💡 Contoh Pola Custom Regex & Hasil Ekstraksinya:
+
+1. **Pola Standar (Rp / IDR Bawaan)**:
+   * **Pola Regex**: `(?:Rp\.?|IDR)\s*([0-9]{1,3}(?:\.[0-9]{3})+|[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)`
+   * **Contoh Teks**: *"Uang masuk Rp 10.043 sukses"* atau *"Credit IDR 10,000"*
+   * **Hasil Ekstraksi**: `10043` atau `10000` *(Pembersih tanda pemisah titik/koma bekerja secara otomatis)*.
+
+2. **Mencari Nominal Setelah Kata Spesifik (Contoh: "sebesar [Nominal]")**:
+   * **Pola Regex**: `sebesar\s+([0-9.,]+)`
+   * **Contoh Teks**: *"Anda menerima transfer sebesar 25.050 dari Pelanggan"*
+   * **Hasil Ekstraksi**: `25050`.
+
+3. **Mencari Nominal Setelah Simbol/Kata Tertentu (Contoh: "Credit: [Nominal]")**:
+   * **Pola Regex**: `Credit:\s*([0-9.,]+)`
+   * **Contoh Teks**: *"Mutasi saldo masuk - Credit: 15,000"*
+   * **Hasil Ekstraksi**: `15000`.
+
+4. **Regex Sederhana Mengambil Angka Pemisah Ribuan (4-8 Digit)**:
+   * **Pola Regex**: `\b([0-9]{1,3}(?:\.[0-9]{3})+|[0-9]{1,3}(?:,[0-9]{3})+)\b`
+   * **Contoh Teks**: *"Terima transfer 5.025 dari GoPay"*
+   * **Hasil Ekstraksi**: `5025`.
+
 
