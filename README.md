@@ -83,13 +83,17 @@ Kredensial MikroTik, nama sesi, IP, user, password, dan dnsname diatur secara ot
 
 ## 📱 Aplikasi Android MikhPay-Forwarder (Alternatif Lebih Praktis)
 
-Sebagai alternatif pengganti MacroDroid yang lebih mudah dikonfigurasi dan ramah baterai, Anda dapat menggunakan aplikasi Android bawaan **MikhPay-Forwarder** yang berada di dalam repositori ini pada folder [android-app/](android-app/).
+Sebagai alternatif pengganti MacroDroid yang lebih mudah dikonfigurasi, andal, dan ramah baterai, Anda dapat menggunakan aplikasi Android bawaan **MikhPay-Forwarder** yang berada di dalam repositori ini pada folder [android-app/](android-app/).
 
 ### Fitur Aplikasi Android:
 - **Konfigurasi Instan**: Hanya perlu mengisi URL Webhook (`https://yourdomain.com/qris_verify.php`) dan Token API Anda.
 - **Sistem Latar Belakang Tangguh**: Menggunakan *NotificationListenerService* bawaan Android yang berjalan 24/7 di latar belakang dengan konsumsi daya sangat rendah.
-- **Auto-Parsing Nominal**: Membaca otomatis nominal pembayaran dari notifikasi (seperti GoPay Merchant, Dana, OVO, Shopee Partner, dll.) menggunakan pola regex pintar.
-- **Test Webhook**: Tombol uji koneksi langsung ke server Anda untuk memverifikasi kecocokan data.
+- **Mulai Otomatis (Auto-Start on Boot)**: Otomatis aktif kembali di latar belakang saat HP dinyalakan ulang (restart) tanpa intervensi manual.
+- **Abaikan Optimasi Baterai**: Satu ketukan tombol untuk menonaktifkan pembatasan daya baterai Android agar layanan tidak dibunuh oleh sistem HP secara sepihak.
+- **Auto-Parsing & Regex Kustom**: Mengekstrak nominal transfer secara cerdas dari notifikasi (seperti GoPay Merchant, Dana, OVO, Shopee Partner, dll.). Dilengkapi kolom pengatur Regex kustom langsung di aplikasi untuk format teks khusus.
+- **Panel Log Riwayat Lokal**: Menampilkan daftar 20 pengiriman notifikasi terakhir secara visual lengkap dengan status sukses/gagal dan respon server di halaman utama.
+- **Simulator Notifikasi Terintegrasi**: Tombol uji simulasi terintegrasi untuk memicu notifikasi masuk tiruan langsung dari aplikasi guna memverifikasi parser Regex dan Webhook secara end-to-end tanpa uang sungguhan.
+- **Respon Getar Sukses (Haptic Feedback)**: HP bergetar singkat setiap kali notifikasi pembayaran masuk berhasil terverifikasi dan diteruskan ke server MikhPay.
 
 *Panduan detail kompilasi dan cara penggunaan dapat Anda lihat di [README.md Aplikasi Android](android-app/README.md).*
 
