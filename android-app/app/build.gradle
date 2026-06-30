@@ -4,7 +4,7 @@ plugins {
 }
 
 android {
-    namespace 'com.mikhpay.forwarder'
+    namespace = 'com.mikhpay.forwarder'
     compileSdk 34
 
     defaultConfig {
@@ -29,7 +29,7 @@ android {
     buildTypes {
         release {
             minifyEnabled true
-            signingConfig signingConfigs.release
+            signingConfig = signingConfigs.release
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

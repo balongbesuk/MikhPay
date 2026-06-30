@@ -24,6 +24,7 @@ class MikhPayListenerService : NotificationListenerService() {
         val webhookUrl = sharedPref.getString("webhook_url", "") ?: ""
         val apiKey = sharedPref.getString("api_key", "") ?: ""
         val whitelistStr = sharedPref.getString("package_whitelist", "") ?: ""
+        val customRegexStr = sharedPref.getString("custom_regex", "") ?: ""
 
         if (webhookUrl.isEmpty()) {
             Log.w(TAG, "Webhook URL not configured, ignoring notification.")
@@ -49,9 +50,10 @@ class MikhPayListenerService : NotificationListenerService() {
         Log.d(TAG, "Processing notification from $packageName - Title: $title, Text: $text")
 
         // Parse Amount using Regular Expressions
-        val amount = extractAmount(title, text)
+        val amount = extractAmount(title, text, customRegexStr)
         if (amount == null) {
             Log.w(TAG, "Failed to parse monetary amount from notification.")
+            saveLog("FAILED", packageName, "-", "Gagal memproses nominal dari teks: \"$text\"")
             return
         }
 
@@ -69,8 +71,22 @@ class MikhPayListenerService : NotificationListenerService() {
      * Extracts numerical payment amount from notification text.
      * Supports formats like: Rp 10.045, Rp. 10.045, IDR 10,045, or raw 10.045 / 10045
      */
-    private fun extractAmount(title: String, body: String): String? {
+    private fun extractAmount(title: String, body: String, customRegexStr: String): String? {
         val fullText = "$title $body"
+
+        // Regex 0: Try custom regex first if configured by user
+        if (customRegexStr.isNotEmpty()) {
+            try {
+                val customRegex = Regex(customRegexStr, RegexOption.IGNORE_CASE)
+                val match = customRegex.find(fullText)
+                if (match != null) {
+                    val matchedVal = if (match.groupValues.size > 1) match.groupValues[1] else match.value
+                    return matchedVal.replace(".", "").replace(",", "").trim()
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Invalid custom Regex: ${e.message}")
+            }
+        }
 
         // Regex 1: Matches Rp/IDR prefix (e.g. Rp 10.045 or Rp. 10.045 or IDR 10,000)
         val rpRegex = Regex("""(?:Rp\.?|IDR)\s*([0-9]{1,3}(?:\.[0-9]{3})+|[0-9]{1,3}(?:,[0-9]{3})+|[0-9]+)""", RegexOption.IGNORE_CASE)
@@ -115,16 +131,59 @@ class MikhPayListenerService : NotificationListenerService() {
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
                 Log.e(TAG, "Failed to send webhook to $url: ${e.message}")
+                saveLog("FAILED", sender, amount, "Gagal koneksi ke server: ${e.message}")
             }
 
             override fun onResponse(call: Call, response: Response) {
                 val respBody = response.body?.string() ?: ""
                 if (response.isSuccessful) {
                     Log.i(TAG, "Webhook delivered successfully! Response: $respBody")
+                    saveLog("SUCCESS", sender, amount, "Berhasil terkirim. Respon: $respBody")
+                    triggerSuccessFeedback()
                 } else {
                     Log.e(TAG, "Webhook returned error code ${response.code}: $respBody")
+                    saveLog("ERROR", sender, amount, "Server menolak (${response.code}): $respBody")
                 }
             }
         })
+    }
+
+    private fun saveLog(status: String, sender: String, amount: String, message: String) {
+        val sharedPref = getSharedPreferences("MikhPaySettings", Context.MODE_PRIVATE)
+        val logsStr = sharedPref.getString("notification_logs", "[]") ?: "[]"
+        try {
+            val jsonArray = org.json.JSONArray(logsStr)
+            val log = JSONObject().apply {
+                put("timestamp", System.currentTimeMillis())
+                put("status", status)
+                put("sender", sender)
+                put("amount", amount)
+                put("message", message)
+            }
+            val newArray = org.json.JSONArray()
+            newArray.put(log)
+            for (i in 0 until minOf(jsonArray.length(), 19)) {
+                newArray.put(jsonArray.getJSONObject(i))
+            }
+            sharedPref.edit().putString("notification_logs", newArray.toString()).apply()
+        } catch (e: Exception) {
+            Log.e(TAG, "Failed to save log: ${e.message}")
+        }
+    }
+
+    private fun triggerSuccessFeedback() {
+        try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.S) {
+                val vibratorManager = getSystemService(Context.VIBRATOR_MANAGER_SERVICE) as android.os.VibratorManager
+                vibratorManager.defaultVibrator.vibrate(android.os.VibrationEffect.createOneShot(150, android.os.VibrationEffect.DEFAULT_AMPLITUDE))
+            } else {
+                @Suppress("DEPRECATION")
+                val vibrator = getSystemService(Context.VIBRATOR_SERVICE) as android.os.Vibrator
+                @Suppress("DEPRECATION")
+                vibrator.vibrate(150)
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Feedback trigger error: ${e.message}")
+        }
     }
 }
