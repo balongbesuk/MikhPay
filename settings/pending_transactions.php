@@ -43,10 +43,14 @@ function createBackupZip() {
         return false;
     }
     
-    // 1. Add .env (if exists)
+    // 1. Add .env & .env.php (if exist)
     $envFile = __DIR__ . '/../.env';
     if (file_exists($envFile)) {
         $zip->addFile($envFile, '.env');
+    }
+    $envPhpFile = __DIR__ . '/../.env.php';
+    if (file_exists($envPhpFile)) {
+        $zip->addFile($envPhpFile, '.env.php');
     }
     
     // 2. Add data/database.php
@@ -90,10 +94,14 @@ function createBackupTar() {
     
     $filesToArchive = array();
     
-    // Add .env
+    // Add .env & .env.php
     $envFile = __DIR__ . '/../.env';
     if (file_exists($envFile)) {
         $filesToArchive['.env'] = $envFile;
+    }
+    $envPhpFile = __DIR__ . '/../.env.php';
+    if (file_exists($envPhpFile)) {
+        $filesToArchive['.env.php'] = $envPhpFile;
     }
     
     // Add data/database.php
@@ -1522,7 +1530,7 @@ uasort($profileSales, function($a, $b) {
                             <div class="mt-info-box">
                                 <strong style="font-size: 14px;"><i class="fa fa-info-circle" style="color: var(--primary);"></i> Isi File Cadangan (Backup):</strong>
                                 <ul style="margin-top: 10px;">
-                                    <li style="margin-bottom: 6px;"><code>.env</code> — Berkas konfigurasi kredensial API & Kunci sistem.</li>
+                                    <li style="margin-bottom: 6px;"><code>.env</code> / <code>.env.php</code> — Berkas konfigurasi kredensial API & Kunci sistem.</li>
                                     <li style="margin-bottom: 6px;"><code>data/database.php</code> — Kredensial Admin & Informasi sesi router MikroTik.</li>
                                     <li style="margin-bottom: 6px;"><code>voucher/*.json</code> — Log transaksi logis & arsip voucher billing.</li>
                                 </ul>
