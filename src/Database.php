@@ -60,22 +60,25 @@ class Database {
             return;
         }
 
-        $fp = fopen($this->dbFile, 'rb');
+        @chmod($this->dbFile, 0666);
+        $fp = @fopen($this->dbFile, 'rb');
         if ($fp) {
-            if (flock($fp, LOCK_SH)) {
-                $content = '';
-                while (!feof($fp)) {
-                    $content .= fread($fp, 8192);
-                }
+            $locked = flock($fp, LOCK_SH);
+            $content = '';
+            while (!feof($fp)) {
+                $content .= fread($fp, 8192);
+            }
+            if ($locked) {
                 flock($fp, LOCK_UN);
-                // Strip the protective PHP opening header
-                $jsonContent = preg_replace('/^<\?php.*?\?>\s*/s', '', $content);
-                $decoded = json_decode($jsonContent, true);
-                if (is_array($decoded)) {
-                    $this->data = $decoded;
-                }
             }
             fclose($fp);
+            
+            // Strip the protective PHP opening header
+            $jsonContent = preg_replace('/^<\?php.*?\?>\s*/s', '', $content);
+            $decoded = json_decode($jsonContent, true);
+            if (is_array($decoded)) {
+                $this->data = $decoded;
+            }
         }
     }
 
@@ -83,16 +86,24 @@ class Database {
      * Menyimpan seluruh data ke file PHP/JSON dengan penguncian berkas (exclusive lock)
      */
     public function saveAll() {
-        $fp = fopen($this->dbFile, 'cb');
+        @chmod($this->dbFile, 0666);
+        $fp = @fopen($this->dbFile, 'cb');
         if ($fp) {
-            if (flock($fp, LOCK_EX)) {
-                ftruncate($fp, 0);
-                $prefix = "<?php header('HTTP/1.0 403 Forbidden'); exit; ?>\n";
-                fwrite($fp, $prefix . json_encode($this->data));
-                fflush($fp);
+            $locked = flock($fp, LOCK_EX);
+            ftruncate($fp, 0);
+            $prefix = "<?php header('HTTP/1.0 403 Forbidden'); exit; ?>\n";
+            fwrite($fp, $prefix . json_encode($this->data));
+            fflush($fp);
+            if ($locked) {
                 flock($fp, LOCK_UN);
             }
             fclose($fp);
+            return true;
+        } else {
+            if (function_exists('writeAppLog')) {
+                writeAppLog("DATABASE_ERROR", "Gagal membuka database file untuk ditulis: " . $this->dbFile);
+            }
+            return false;
         }
     }
 

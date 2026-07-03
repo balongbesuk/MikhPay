@@ -41,12 +41,6 @@ if (!isset($_SESSION["mikhmon"])) {
     }
     $dbSettings->set('quick_print_qr', $qrbt);
   
-    $gen = '<?php $qrbt="' . $qrbt . '";?>';
-    $key = './include/quickbt.php';
-    $handle = fopen($key, 'w') or die('Cannot open file:  ' . $key);
-    $data = $gen;
-    fwrite($handle, $data);
-    fclose($handle);
     echo "<script>window.location='./admin.php?id=sessions'</script>";
   }
 

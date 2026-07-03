@@ -38,6 +38,23 @@ Aplikasi ini dikembangkan dan dimodifikasi dari kode sumber asli [Mikhmon v3 ole
 
 ## 🛠️ Panduan Konfigurasi & Instalasi
 
+> [!IMPORTANT]
+> **PENTING UNTUK INSTALASI DI VPS/LINUX (aaPanel, cPanel, dll.)**:
+> Setelah Anda melakukan `git clone` atau mengunggah berkas ke VPS, folder-folder berikut wajib memiliki pemilik (**Owner**) **`www`** (atau user web server Anda) dan izin menulis (**Write Permission / 755 / 775**):
+> - **`data/`** (Penyimpanan database JSON & konfigurasi)
+> - **`voucher/`** (Penyimpanan data transaksi pembelian voucher pelanggan)
+> - **`logs/`** (Penyimpanan catatan error log sistem)
+> - **`include/`** (Penyimpanan file konfigurasi dinamis)
+>
+> Jika folder di atas masih dimiliki oleh **`root`** (biasanya karena proses upload/clone via root), Anda akan mengalami masalah: **gagal menyimpan tambah router**, **mengubah password loading berputar terus-menerus**, serta **status beli voucher error saat bayar QRIS** karena file transaksi gagal terbuat.
+>
+> **Solusi Cepat via Terminal SSH (sebagai root):**
+> ```bash
+> chown -R www:www data voucher logs include
+> chmod -R 755 data voucher logs include
+> ```
+> *(Ubah `www:www` sesuai user web server di panel Anda jika berbeda, misalnya `www-data`)*.
+
 ### 1. Buat Berkas Lingkungan Terproteksi (`.env.php`)
 Buat berkas baru bernama `.env.php` di root direktori MikhPay Anda (sejajar dengan `index.php`). Salin dan sesuaikan konfigurasi berikut:
 

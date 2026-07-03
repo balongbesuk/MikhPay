@@ -2,6 +2,14 @@
 
 Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 
+### [MikhPay v2.0.1] - 2026-07-03
+
+### Diperbaiki
+- **Dinamisasi quickbt.php**: Mengubah file `include/quickbt.php` agar membaca pengaturan `quick_print_qr` secara dinamis dari database JSON (`Database`), alih-alih ditulis ulang secara statis dari halaman admin settings yang sering kali memicu error perizinan menulis berkas (*file permission denied*) di server Nginx/VPS.
+- **Perbaikan Loading Loop di Admin Settings**: Menghapus penulisan file statis di `settings/sessions.php` sehingga penggantian password dan pengaturan admin tidak lagi tertahan di *infinite loading loop*.
+- **Ketahanan Database (src/Database.php)**: Menambahkan fungsi `@chmod` otomatis sebelum penulisan database untuk menghindari error tulis file di OS Windows/Linux, serta mengamankan mekanisme penguncian berkas (`flock`) agar tidak gagal secara senyap (*silent failure*) jika sistem operasi memblokir lock file.
+- **Panduan Instalasi & Izin Folder (README.md)**: Menambahkan petunjuk penting terkait kepemilikan owner (`www` atau `www-data`) dan hak akses tulis (`755`/`775`) pada folder `data/`, `voucher/`, `logs/`, dan `include/` saat melakukan instalasi pertama kali di VPS/Linux untuk mencegah transaksi gagal dibuat.
+
 ### [MikhPay v2.0] - 2026-06-29
 
 ### Ditambahkan
