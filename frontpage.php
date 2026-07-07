@@ -1594,6 +1594,156 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
             }
         });
 
+        /* Custom App Toast Notification Styles */
+        const style = document.createElement('style');
+        style.textContent = `
+            .app-toast-container {
+                position: fixed;
+                top: 24px;
+                left: 50%;
+                transform: translateX(-50%) translateY(-100px);
+                background: rgba(255, 255, 255, 0.95);
+                backdrop-filter: blur(12px);
+                -webkit-backdrop-filter: blur(12px);
+                border-radius: 16px;
+                box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08), 0 1px 3px rgba(0, 0, 0, 0.02);
+                border: 1px solid rgba(0, 0, 0, 0.06);
+                padding: 16px 20px;
+                display: flex;
+                align-items: center;
+                gap: 12px;
+                z-index: 999999;
+                max-width: 90%;
+                width: 360px;
+                box-sizing: border-box;
+                transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275), opacity 0.3s ease;
+                opacity: 0;
+                pointer-events: none;
+                overflow: hidden;
+            }
+            .app-toast-container.show {
+                transform: translateX(-50%) translateY(0);
+                opacity: 1;
+                pointer-events: auto;
+            }
+            .app-toast-icon {
+                font-size: 20px;
+                flex-shrink: 0;
+            }
+            .app-toast-icon.success { color: #10b981; }
+            .app-toast-icon.error { color: #ef4444; }
+            .app-toast-icon.info { color: #3b82f6; }
+            .app-toast-message {
+                font-size: 13px;
+                font-weight: 700;
+                color: #1e293b;
+                line-height: 1.5;
+                flex: 1;
+                text-align: left;
+            }
+            .app-toast-close {
+                background: none;
+                border: none;
+                color: #64748b;
+                cursor: pointer;
+                padding: 4px;
+                font-size: 14px;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                border-radius: 50%;
+                transition: background 0.2s, color 0.2s;
+                margin-left: 8px;
+            }
+            .app-toast-close:hover {
+                background: rgba(0, 0, 0, 0.05);
+                color: #0f172a;
+            }
+            .app-toast-progress {
+                position: absolute;
+                bottom: 0;
+                left: 0;
+                height: 3px;
+                width: 100%;
+            }
+            .app-toast-container.success .app-toast-progress { background: #10b981; }
+            .app-toast-container.error .app-toast-progress { background: #ef4444; }
+            .app-toast-container.info .app-toast-progress { background: #3b82f6; }
+        `;
+        document.head.appendChild(style);
+
+        // Toast Javascript helper
+        window.showAppNotification = function(message, type) {
+            var existingToast = document.querySelector('.app-toast-container');
+            if (existingToast) {
+                existingToast.remove();
+            }
+            
+            var toast = document.createElement('div');
+            toast.className = 'app-toast-container ' + type;
+            
+            var iconClass = 'fa-circle-check app-toast-icon success';
+            if (type === 'error') {
+                iconClass = 'fa-circle-xmark app-toast-icon error';
+            } else if (type === 'info') {
+                iconClass = 'fa-circle-info app-toast-icon info';
+            }
+            
+            toast.innerHTML = `
+                <i class="fa-solid ${iconClass}"></i>
+                <div class="app-toast-message">${message.replace(/\n/g, '<br>')}</div>
+                <button type="button" class="app-toast-close" onclick="closeAppToast(this.parentElement)">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+                <div class="app-toast-progress"></div>
+            `;
+            
+            document.body.appendChild(toast);
+            
+            var progressBar = toast.querySelector('.app-toast-progress');
+            progressBar.style.transition = 'width 4s linear';
+            progressBar.style.width = '100%';
+            
+            setTimeout(function() {
+                toast.classList.add('show');
+                setTimeout(function() {
+                    progressBar.style.width = '0%';
+                }, 50);
+            }, 10);
+            
+            var autoCloseTimeout = setTimeout(function() {
+                closeAppToast(toast);
+            }, 4000);
+            
+            toast.dataset.timeoutId = autoCloseTimeout;
+        };
+
+        window.closeAppToast = function(toast) {
+            if (!toast) return;
+            if (toast.dataset.timeoutId) {
+                clearTimeout(toast.dataset.timeoutId);
+            }
+            toast.classList.remove('show');
+            setTimeout(function() {
+                if (toast && toast.parentNode) {
+                    toast.remove();
+                }
+            }, 400);
+        };
+
+        // Override default window.alert
+        window.alert = function(message) {
+            if (!message) return;
+            var type = 'success';
+            var lowerMsg = message.toLowerCase();
+            if (lowerMsg.includes('gagal') || lowerMsg.includes('kesalahan') || lowerMsg.includes('habis') || lowerMsg.includes('tidak valid') || lowerMsg.includes('error')) {
+                type = 'error';
+            } else if (lowerMsg.includes('salin secara manual') || lowerMsg.includes('tangkapan layar') || lowerMsg.includes('username:')) {
+                type = 'info';
+            }
+            showAppNotification(message, type);
+        };
+
         // AJAX handler untuk Formulir Kontak & Keluhan Pelanggan ke Telegram Admin
         $(document).ready(function() {
             $('#customerContactForm').on('submit', function(e) {
