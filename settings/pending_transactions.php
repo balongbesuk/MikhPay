@@ -1014,7 +1014,7 @@ uasort($profileSales, function($a, $b) {
                                             <th>Sesi Router</th>
                                             <th>Paket / Profil</th>
                                             <th>Nominal</th>
-                                            <th>Username Voucher</th>
+                                            <th>Voucher (User / Pass)</th>
                                             <th style="text-align: center;">Status</th>
                                         </tr>
                                     </thead>
@@ -1044,7 +1044,13 @@ uasort($profileSales, function($a, $b) {
                                                 <td><span class="badge bg-grey"><?= htmlspecialchars($ht['session']) ?></span></td>
                                                 <td><?= htmlspecialchars($ht['profile']) ?></td>
                                                 <td>Rp <?= number_format($ht['price'], 0, ',', '.') ?></td>
-                                                <td style="font-family: monospace; font-weight: bold;"><?= isset($ht['username']) ? htmlspecialchars($ht['username']) : '-' ?></td>
+                                                <td style="font-family: monospace; font-weight: bold;">
+                                                    <?php if (isset($ht['username'])): ?>
+                                                        <?= htmlspecialchars($ht['username']) ?> / <?= htmlspecialchars(isset($ht['password']) ? $ht['password'] : $ht['username']) ?>
+                                                    <?php else: ?>
+                                                        -
+                                                    <?php endif; ?>
+                                                </td>
                                                 <td style="text-align: center;">
                                                     <span class="badge-status <?= $badgeClass ?>"><?= $badgeLabel ?></span>
                                                 </td>

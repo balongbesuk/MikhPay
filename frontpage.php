@@ -684,17 +684,54 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 <div class="receipt-title">Pembayaran Berhasil!</div>
                 <div class="receipt-subtitle">Voucher internet Anda telah berhasil diterbitkan</div>
 
-                <div class="voucher-box" style="display: flex; align-items: center; justify-content: space-around; gap: 20px; flex-wrap: wrap; text-align: left;">
-                    <div style="flex: 1; min-width: 180px;">
-                        <div class="voucher-code-label">Kode Voucher</div>
-                        <div class="voucher-code" id="voucherCode" style="margin-bottom: 4px;"><?= htmlspecialchars($success_voucher['username']) ?></div>
-                        <div style="font-size: 11px; color: var(--text-muted); line-height: 1.4;">
-                            Gunakan kode ini pada halaman login Hotspot Anda, atau gunakan QR Code di samping untuk terhubung secara otomatis.
+                <div class="voucher-box" style="text-align: left; padding: 20px; border-radius: 16px; background: rgba(99, 102, 241, 0.02); border: 1px dashed rgba(99, 102, 241, 0.2);">
+                    <!-- Login via Username & Password -->
+                    <div style="margin-bottom: 16px; border-bottom: 1px dashed var(--border-color); padding-bottom: 16px;">
+                        <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fa fa-user-lock" style="color: var(--primary);"></i> METODE 1: LOGIN VIA USERNAME & PASSWORD
+                        </div>
+                        <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                            <div>
+                                <div class="voucher-code-label" style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Username</div>
+                                <div class="voucher-code" id="voucherCode" style="margin-bottom: 0; font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: 1px;"><?= htmlspecialchars($success_voucher['username']) ?></div>
+                            </div>
+                            <div style="border-left: 1px solid var(--border-color); padding-left: 20px;">
+                                <div class="voucher-code-label" style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Password</div>
+                                <div class="voucher-code" id="voucherPassword" style="margin-bottom: 0; font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: 1px;"><?= htmlspecialchars($success_voucher['password']) ?></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="voucher-qrcode-container" style="display: flex; flex-direction: column; align-items: center; gap: 6px; flex-shrink: 0; margin: 0 auto;">
-                        <canvas id="voucherQrCanvas" style="background: white; border: 1px solid var(--border-color); border-radius: 12px; padding: 6px; width: 120px; height: 120px; box-shadow: 0 4px 10px rgba(0,0,0,0.03);"></canvas>
-                        <span style="font-size: 10px; color: var(--text-muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; text-align: center;">Pindai QR untuk Masuk Otomatis</span>
+
+                    <!-- Login via Voucher -->
+                    <div style="margin-bottom: 4px;">
+                        <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                            <i class="fa fa-ticket" style="color: var(--accent);"></i> METODE 2: LOGIN VIA KODE VOUCHER
+                        </div>
+                        <div>
+                            <div class="voucher-code-label" style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Kode Voucher</div>
+                            <div class="voucher-code" style="margin-bottom: 0; font-size: 24px; font-weight: 800; color: var(--accent); letter-spacing: 1px;"><?= htmlspecialchars($success_voucher['username']) ?></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Peringatan Wifi (PENTING) -->
+                <div style="background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 16px; padding: 14px 18px; margin: 20px 0; text-align: left; font-size: 12px; color: #B45309; line-height: 1.5; display: flex; align-items: flex-start; gap: 10px; box-shadow: 0 4px 6px -1px rgba(217, 119, 6, 0.05);">
+                    <i class="fa fa-triangle-exclamation" style="font-size: 18px; color: #D97706; margin-top: 1px; flex-shrink: 0;"></i>
+                    <div>
+                        <strong>PENTING!</strong> HP Anda harus sudah terhubung ke jaringan Wi-Fi Hotspot kami terlebih dahulu sebelum menekan tombol <b>Hubungkan Sekarang</b> atau memindai <b>QR Code</b> di bawah.
+                    </div>
+                </div>
+
+                <!-- QR Code Section -->
+                <div class="voucher-qrcode-section" style="background: rgba(0,0,0,0.01); border: 1px solid var(--border-color); border-radius: 20px; padding: 24px; text-align: center; margin-bottom: 28px;">
+                    <div style="display: flex; flex-direction: column; align-items: center; gap: 12px;">
+                        <canvas id="voucherQrCanvas" style="background: white; border: 1px solid var(--border-color); border-radius: 16px; padding: 10px; width: 160px; height: 160px; box-shadow: 0 10px 25px rgba(0,0,0,0.05);"></canvas>
+                        <div>
+                            <div style="font-size: 12px; font-weight: 800; color: var(--text-main); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px;">Pindai QR untuk Masuk Otomatis</div>
+                            <div style="font-size: 11px; color: var(--text-muted); max-width: 320px; margin: 0 auto; line-height: 1.4;">
+                                Arahkan kamera HP Anda ke QR Code di atas untuk login secara otomatis tanpa memasukkan kode voucher secara manual.
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -733,6 +770,29 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                         <button class="btn-copy" onclick="copyVoucherCode()">Salin Kode</button>
                         <a href="index.php?session=<?= urlencode($selected_session) ?>" class="btn-done">Selesai</a>
                     </div>
+                    <?php
+                    $wa_success_url = "";
+                    if (!empty($portal_support_wa)) {
+                        $clean_wa = preg_replace('/[^0-9]/', '', $portal_support_wa);
+                        if (strpos($clean_wa, '08') === 0) {
+                            $clean_wa = '62' . substr($clean_wa, 1);
+                        }
+                        $wa_msg = "Halo Admin, saya baru saja membeli voucher hotspot.\n\n"
+                                . "Detail Transaksi:\n"
+                                . "- Order ID: " . $show_voucher_id . "\n"
+                                . "- Username: " . $success_voucher['username'] . "\n"
+                                . "- Password: " . $success_voucher['password'] . "\n"
+                                . "- Paket: " . $success_voucher['profile'] . "\n"
+                                . "- Nominal: Rp " . number_format($success_voucher['price'], 0, ',', '.') . "\n\n"
+                                . "Saya ada pertanyaan atau butuh bantuan mengenai voucher ini. Terima kasih.";
+                        $wa_success_url = "https://api.whatsapp.com/send?phone=" . urlencode($clean_wa) . "&text=" . urlencode($wa_msg);
+                    }
+                    ?>
+                    <?php if (!empty($wa_success_url)): ?>
+                        <a href="<?= htmlspecialchars($wa_success_url) ?>" target="_blank" class="btn-wa-support" style="text-decoration: none; width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px;">
+                            <i class="fa-brands fa-whatsapp" style="font-size: 16px;"></i> Hubungi Support WhatsApp
+                        </a>
+                    <?php endif; ?>
                 </div>
             </div>
 
@@ -802,11 +862,14 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 var qr = new QRious({
                     element: document.getElementById('voucherQrCanvas'),
                     value: <?= json_encode($login_url ?: $success_voucher['username']) ?>,
-                    size: 150
+                    size: 250
                 });
 
                 function copyVoucherCode() {
-                    var codeText = document.getElementById("voucherCode").innerText.trim();
+                    var u = document.getElementById("voucherCode").innerText.trim();
+                    var pEl = document.getElementById("voucherPassword");
+                    var p = pEl ? pEl.innerText.trim() : u;
+                    var codeText = (u === p) ? u : "Username: " + u + "\nPassword: " + p;
                     copyTextToClipboard(codeText, function() {
                         var toast = document.getElementById("copyToast");
                         if (toast) {
@@ -816,7 +879,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                             }, 3000);
                         }
                     }, function() {
-                        alert("Kode voucher: " + codeText + "\n(Silakan salin secara manual)");
+                        alert("Username: " + u + "\nPassword: " + p + "\n(Silakan salin secara manual)");
                     });
                 }
             </script>

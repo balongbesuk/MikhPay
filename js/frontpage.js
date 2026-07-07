@@ -34,11 +34,24 @@ function fallbackCopyTextToClipboard(text, successCb, errorCb) {
 
 // Copy voucher code to clipboard (global fallback)
 function copyVoucherCode() {
-    var codeText = document.getElementById("voucherCode").innerText.trim();
+    var uEl = document.getElementById("voucherCode");
+    if (!uEl) return;
+    var u = uEl.innerText.trim();
+    var pEl = document.getElementById("voucherPassword");
+    var p = pEl ? pEl.innerText.trim() : u;
+    var codeText = (u === p) ? u : "Username: " + u + "\nPassword: " + p;
     copyTextToClipboard(codeText, function() {
-        alert("Kode voucher berhasil disalin!");
+        var toast = document.getElementById("copyToast");
+        if (toast) {
+            toast.classList.add("show");
+            setTimeout(function() {
+                toast.classList.remove("show");
+            }, 3000);
+        } else {
+            alert("Voucher berhasil disalin!");
+        }
     }, function() {
-        alert("Kode voucher: " + codeText + "\n(Silakan salin secara manual)");
+        alert("Username: " + u + "\nPassword: " + p + "\n(Silakan salin secara manual)");
     });
 }
 
@@ -74,8 +87,9 @@ function clearVoucherHistory() {
 }
 
 // Copy voucher from history list with button visual feedback
-function copyHistoryCode(code, btn) {
-    copyTextToClipboard(code, function() {
+function copyHistoryCode(username, password, btn) {
+    var codeText = (username === password) ? username : "Username: " + username + ", Password: " + password;
+    copyTextToClipboard(codeText, function() {
         var originalHTML = btn.innerHTML;
         btn.innerHTML = '<i class="fa fa-check" style="color: #219653;"></i> Tersalin';
         btn.style.borderColor = '#219653';
@@ -86,7 +100,7 @@ function copyHistoryCode(code, btn) {
             btn.style.color = '';
         }, 2000);
     }, function() {
-        alert("Gagal menyalin. Kode voucher: " + code);
+        alert("Gagal menyalin. Kode: " + codeText);
     });
 }
 
@@ -261,8 +275,15 @@ document.addEventListener("DOMContentLoaded", function() {
                         </div>
                     </div>
                     <div class="history-item-actions">
-                        <div class="history-item-code">${item.username}</div>
-                        <button type="button" class="history-btn-copy" onclick="copyHistoryCode('${item.username}', this)">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Username:</span>
+                            <span class="history-item-code" style="margin: 0; padding: 8px 12px; font-size: 12px; line-height: 1; font-weight: 700; border-radius: 8px; min-width: 80px; letter-spacing: 0.5px; background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main);">${item.username}</span>
+                        </div>
+                        <div style="display: flex; align-items: center; gap: 6px; margin-right: 4px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Password:</span>
+                            <span class="history-item-code" style="margin: 0; padding: 8px 12px; font-size: 12px; line-height: 1; font-weight: 700; border-radius: 8px; min-width: 80px; letter-spacing: 0.5px; background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main);">${item.password || item.username}</span>
+                        </div>
+                        <button type="button" class="history-btn-copy" onclick="copyHistoryCode('${item.username}', '${item.password || item.username}', this)">
                             <i class="fa-regular fa-copy"></i> Salin
                         </button>
                         ${loginButton}
