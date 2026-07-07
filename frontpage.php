@@ -1610,7 +1610,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                     type: 'POST',
                     data: {
                         action: 'submit_contact',
-                        csrf_token: $form.find('input[name="csrf_token"]').val(),
+                        _csrf_token: $form.find('input[name="_csrf_token"]').val(),
                         c_name: $('#c_name').val(),
                         c_email: $('#c_email').val(),
                         c_msg: $('#c_msg').val()
