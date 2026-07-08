@@ -144,12 +144,30 @@ table.voucher {
 	<body>
 
 <?php
+include_once('../src/Database.php');
+include_once('../src/Models/AppSettings.php');
+$settingsModel = new \App\Models\AppSettings();
 
-
+$template_type = '';
 if ($userp != "") {
-  include('./template-thermal.php');
+  $template_type = 'template_thermal';
 } else {
   if ($small == "yes") {
+    $template_type = 'template_small';
+  } else {
+    $template_type = 'template_default';
+  }
+}
+
+$custom_template = $settingsModel->get($template_type);
+
+if (!empty($custom_template)) {
+  eval("?>" . $custom_template);
+} else {
+  // Fallback to physical file
+  if ($template_type === 'template_thermal') {
+    include('./template-thermal.php');
+  } elseif ($template_type === 'template_small') {
     include('./template-small.php');
   } else {
     include('./template.php');

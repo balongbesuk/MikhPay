@@ -43,10 +43,33 @@ if (!isset($_SESSION["mikhmon"])) {
         $popupQR = "javascript:window.open('./voucher/vpreview.php?usermode=up&small=yes&qr=yes&session=" . $session . "','_blank','width=310,height=310')";
     }
     if (isset($_POST['save'])) {
-        $template = './voucher/' . $telplatet . '.php';
-        $handle = fopen($template, 'w') or die('Cannot open file:  ' . $template);
+        include_once('./src/Database.php');
+        include_once('./src/Models/AppSettings.php');
+        $settingsModel = new \App\Models\AppSettings();
+        
+        $template_key = '';
+        if ($telplatet === 'template') {
+            $template_key = 'template_default';
+        } elseif ($telplatet === 'template-thermal') {
+            $template_key = 'template_thermal';
+        } elseif ($telplatet === 'template-small') {
+            $template_key = 'template_small';
+        }
+        
         $data = ($_POST['editor']);
-        fwrite($handle, $data);
+        
+        // Save to Database Settings (Main Storage)
+        if (!empty($template_key)) {
+            $settingsModel->set($template_key, $data);
+        }
+        
+        // Silently try to save to physical file as a backup, without dying on failure
+        $template_file = './voucher/' . $telplatet . '.php';
+        $handle = @fopen($template_file, 'w');
+        if ($handle) {
+            @fwrite($handle, $data);
+            @fclose($handle);
+        }
     }
 }
 ?>
@@ -187,19 +210,28 @@ textarea{
                     </div>
                     
                     <textarea class="bg-dark" id="editorMikhmon" name="editor" style="width:100%" height="700">
-                        <?php if ($telplate == "default") {
-                            echo file_get_contents('./voucher/template.php');
+                        <?php
+                        include_once('./src/Database.php');
+                        include_once('./src/Models/AppSettings.php');
+                        $settingsModel = new \App\Models\AppSettings();
+                        
+                        if ($telplate == "default") {
+                            $db_val = $settingsModel->get('template_default');
+                            echo !empty($db_val) ? htmlspecialchars($db_val) : htmlspecialchars(file_get_contents('./voucher/template.php'));
                         } elseif ($telplate == "thermal") {
-                            echo file_get_contents('./voucher/template-thermal.php');
+                            $db_val = $settingsModel->get('template_thermal');
+                            echo !empty($db_val) ? htmlspecialchars($db_val) : htmlspecialchars(file_get_contents('./voucher/template-thermal.php'));
                         } elseif ($telplate == "small") {
-                            echo file_get_contents('./voucher/template-small.php');
+                            $db_val = $settingsModel->get('template_small');
+                            echo !empty($db_val) ? htmlspecialchars($db_val) : htmlspecialchars(file_get_contents('./voucher/template-small.php'));
                         } elseif ($telplate == "rdefault") {
-                            echo file_get_contents('./voucher/default.php');
+                            echo htmlspecialchars(file_get_contents('./voucher/default.php'));
                         } elseif ($telplate == "rthermal") {
-                            echo file_get_contents('./voucher/default-thermal.php');
+                            echo htmlspecialchars(file_get_contents('./voucher/default-thermal.php'));
                         } elseif ($telplate == "rsmall") {
-                            echo file_get_contents('./voucher/default-small.php');
-                        } ?>
+                            echo htmlspecialchars(file_get_contents('./voucher/default-small.php'));
+                        }
+                        ?>
                     </textarea>
                 </form>
             </div>
