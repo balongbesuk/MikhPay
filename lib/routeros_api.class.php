@@ -604,7 +604,11 @@ if(strlen($dtm) == "2" && substr($dtm, -1) == "s"){
     $format = $day." ".substr($dtm, 0,2).":".substr($dtm, 3,-4).":".substr($dtm, 6,-1);
 
 }else{
-    $format = $dtm;
+    if ($dtm == "" && !empty($day)) {
+        $format = $day . "00:00:00";
+    } else {
+        $format = $dtm;
+    }
 }
 return $format;
 }
