@@ -244,7 +244,7 @@ if (!isset($_SESSION["mikhmon"])) {
  
     <div class="filter-actions-group">
       <?php if ($comm != "") { ?>
-        <button class="btn-modern-filter-action btn-danger" onclick="if(confirm('Are you sure to delete username by comment (<?= $comm; ?>)?')){loadpage('./?remove-hotspot-user-by-comment=<?= $comm; ?>&session=<?= $session; ?>');loader();}else{}" title="Remove user by comment <?= $comm; ?>"><i class="fa fa-trash"></i> <?= $_by_comment ?></button>
+        <button class="btn-modern-filter-action btn-danger" onclick="if(confirm('Are you sure to delete username by comment (<?= addslashes($comm); ?>)?')){loadpage('./?remove-hotspot-user-by-comment=<?= urlencode($comm); ?>&session=<?= $session; ?>');loader();}else{}" title="Remove user by comment <?= htmlspecialchars($comm, ENT_QUOTES); ?>"><i class="fa fa-trash"></i> <?= $_by_comment ?></button>
       <?php } else if ($exp == "1") { ?>
         <button class="btn-modern-filter-action btn-danger" onclick="if(confirm('Are you sure to delete users?')){loadpage('./?remove-hotspot-user-expired=1&session=<?= $session; ?>');loader();}else{}" title="Remove user expired"><i class="fa fa-trash"></i> Expired Users</button>
       <?php } ?>
