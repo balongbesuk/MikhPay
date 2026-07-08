@@ -89,11 +89,18 @@ if (!isset($_SESSION["mikhmon"])) {
 		$_SESSION['ubp'] = $profile;
 		$commt = $user . "-" . rand(100, 999) . "-" . date("m.d.y") . "-" . $adcomment;
 		$gentemp = $commt . "|~" . $profile . "~" . $getvalid . "~" . $getprice . "!".$getsprice."~" . $timelimit . "~" . $datalimit . "~" . $getlock;
-		$gen = '<?php $genu="'.encrypt($gentemp).'";?>';
+		
+		// Store in session to prevent write-permission errors on the server
+		$_SESSION['genu'] = encrypt($gentemp);
+		
+		// Silently write to temp.php as a backup if writable, without interrupting the flow
 		$temp = './voucher/temp.php';
-		$handle = fopen($temp, 'w') or die('Cannot open file:  ' . $temp);
-		$data = $gen;
-		fwrite($handle, $data);
+		$handle = @fopen($temp, 'w');
+		if ($handle) {
+			$gen = '<?php $genu="'.encrypt($gentemp).'";?>';
+			@fwrite($handle, $gen);
+			@fclose($handle);
+		}
 
 		$a = array("1" => "", "", 1, 2, 2, 3, 3, 4);
 
@@ -212,7 +219,13 @@ if (!isset($_SESSION["mikhmon"])) {
 	}
 
 	$getprofile = $API->comm("/ip/hotspot/user/profile/print");
-	include_once('./voucher/temp.php');
+	
+	// Load from session or fallback to temp.php file if available
+	$genu = isset($_SESSION['genu']) ? $_SESSION['genu'] : '';
+	if (empty($genu) && file_exists('./voucher/temp.php')) {
+		include_once('./voucher/temp.php');
+	}
+	
 	$genuser = explode("-", decrypt($genu));
 	$genuser1 = explode("~", decrypt($genu));
 	$umode = $genuser[0];
