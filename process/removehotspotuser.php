@@ -29,30 +29,32 @@ if ($removehotspotusers != "") {
 			"?.id" => "$uids[$i]",
 		));
 
-		$name = $getuname[0]['name'];
+		$name = (is_array($getuname) && !empty($getuname)) ? $getuname[0]['name'] : '';
 
-		$getscr = $API->comm("/system/script/print", array(
-			"?name" => "$name",
-		));
-
-		$scr = isset($getscr[0]['.id']) ? $getscr[0]['.id'] : '';
-
-		$getsch = $API->comm("/system/scheduler/print", array(
-			"?name" => "$name",
-		));
-
-		$sch = isset($getsch[0]['.id']) ? $getsch[0]['.id'] : '';
-
-		if (!empty($scr)) {
-			$API->comm("/system/script/remove", array(
-				".id" => "$scr",
+		if (!empty($name)) {
+			$getscr = $API->comm("/system/script/print", array(
+				"?name" => "$name",
 			));
-		}
 
-		if (!empty($sch)) {
-			$API->comm("/system/scheduler/remove", array(
-				".id" => "$sch",
+			$scr = (is_array($getscr) && !empty($getscr)) ? $getscr[0]['.id'] : '';
+
+			$getsch = $API->comm("/system/scheduler/print", array(
+				"?name" => "$name",
 			));
+
+			$sch = (is_array($getsch) && !empty($getsch)) ? $getsch[0]['.id'] : '';
+
+			if (!empty($scr)) {
+				$API->comm("/system/script/remove", array(
+					".id" => "$scr",
+				));
+			}
+
+			if (!empty($sch)) {
+				$API->comm("/system/scheduler/remove", array(
+					".id" => "$sch",
+				));
+			}
 		}
 
 		$API->comm("/ip/hotspot/user/remove", array(
@@ -75,30 +77,32 @@ if ($removehotspotusers != "") {
 		"?.id" => "$removehotspotuser",
 	));
 
-	$name = $getuname[0]['name'];
+	$name = (is_array($getuname) && !empty($getuname)) ? $getuname[0]['name'] : '';
 
-	$getscr = $API->comm("/system/script/print", array(
-		"?name" => "$name",
-	));
-
-	$scr = isset($getscr[0]['.id']) ? $getscr[0]['.id'] : '';
-
-	$getsch = $API->comm("/system/scheduler/print", array(
-		"?name" => "$name",
-	));
-
-	$sch = isset($getsch[0]['.id']) ? $getsch[0]['.id'] : '';
-
-	if (!empty($scr)) {
-		$API->comm("/system/script/remove", array(
-			".id" => "$scr",
+	if (!empty($name)) {
+		$getscr = $API->comm("/system/script/print", array(
+			"?name" => "$name",
 		));
-	}
 
-	if (!empty($sch)) {
-		$API->comm("/system/scheduler/remove", array(
-			".id" => "$sch",
+		$scr = (is_array($getscr) && !empty($getscr)) ? $getscr[0]['.id'] : '';
+
+		$getsch = $API->comm("/system/scheduler/print", array(
+			"?name" => "$name",
 		));
+
+		$sch = (is_array($getsch) && !empty($getsch)) ? $getsch[0]['.id'] : '';
+
+		if (!empty($scr)) {
+			$API->comm("/system/script/remove", array(
+				".id" => "$scr",
+			));
+		}
+
+		if (!empty($sch)) {
+			$API->comm("/system/scheduler/remove", array(
+				".id" => "$sch",
+			));
+		}
 	}
 
 	$API->comm("/ip/hotspot/user/remove", array(

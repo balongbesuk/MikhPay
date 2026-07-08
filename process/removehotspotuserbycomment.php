@@ -19,22 +19,31 @@ session_start();
 // hide all error
 error_reporting(0);
 $getuser = $API->comm("/ip/hotspot/user/print", array(
-  "?comment" => "$removehotspotuserbycomment",
-  "?uptime" => "00:00:00"
+  "?comment" => "$removehotspotuserbycomment"
 ));
-$TotalReg = count($getuser);
 
-$_SESSION['ubp'] = $getuser[0]['profile'];
-$_SESSION['ubc'] = "";
+if (is_array($getuser)) {
+  $TotalReg = count($getuser);
+  $_SESSION['ubp'] = ($TotalReg > 0 && isset($getuser[0]['profile'])) ? $getuser[0]['profile'] : "";
+  $_SESSION['ubc'] = "";
 
-for ($i = 0; $i < $TotalReg; $i++) {
-  $userdetails = $getuser[$i];
-  $uid = $userdetails['.id'];
+  for ($i = 0; $i < $TotalReg; $i++) {
+    $userdetails = $getuser[$i];
+    $uid = $userdetails['.id'];
+    $uptime = isset($userdetails['uptime']) ? $userdetails['uptime'] : '';
 
-  $API->comm("/ip/hotspot/user/remove", array(
-    ".id" => "$uid",
-  ));
+    // Only delete unused vouchers (uptime is empty, "0s", or "00:00:00")
+    if (empty($uptime) || $uptime === "0s" || $uptime === "00:00:00") {
+      $API->comm("/ip/hotspot/user/remove", array(
+        ".id" => "$uid",
+      ));
+    }
+  }
+} else {
+  $_SESSION['ubp'] = "";
+  $_SESSION['ubc'] = "";
 }
+
 if ($_SESSION['ubp'] != "") {
   echo "<script>window.location='./?hotspot=users&profile=" . $_SESSION['ubp'] . "&session=" . $session . "'</script>";
 } else {
