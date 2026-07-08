@@ -204,8 +204,9 @@ if (!isset($_SESSION["mikhmon"])) {
         $ocomment=  explode(",",$acomment);
         $comments=array_count_values($ocomment) ;
         foreach ($comments as $tcomment=>$value) {
-          if (is_numeric(substr($tcomment, 3, 3))) {
-            echo "<option value='" . explode("#",$tcomment)[0] . "' >". explode("#",$tcomment)[0]." ".explode("#",$tcomment)[1]. " [".$value. "]</option>";
+          $clean_comment = explode("#",$tcomment)[0];
+          if (substr($clean_comment, 0, 3) === "vc-" || substr($clean_comment, 0, 3) === "up-") {
+            echo "<option value='" . $clean_comment . "' >". $clean_comment." ".explode("#",$tcomment)[1]. " [".$value. "]</option>";
           }
         }
         ?>
