@@ -241,7 +241,7 @@
                     android:inputType="textMultiLine"
                     android:textColor="#ffffff"
                     android:padding="16dp"
-                    android:hint="com.sg.gobiz, com.dana, com.ovo.id"
+                    android:hint="com.sg.gobiz, id.dana, ovo.id"
                     android:textColorHint="#444444"
                     android:textSize="14sp"
                     android:layout_marginBottom="24dp"/>

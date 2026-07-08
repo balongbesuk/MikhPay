@@ -27,8 +27,8 @@ Aplikasi ini menggantikan kebutuhan alat otomatisasi pihak ketiga seperti MacroD
 
 Berikut adalah nama paket aplikasi populer untuk mempermudah konfigurasi whitelist:
 - **GoPay Merchant / GoBiz**: `com.gojek.gopaymerchant` atau `com.sg.gobiz`
-- **Dana**: `com.dana`
-- **OVO**: `com.ovo.id`
+- **Dana**: `id.dana`
+- **OVO**: `ovo.id`
 - **Shopee Partner**: `com.shopee.partner`
 - **BCA Mobile**: `id.co.bca.mobile`
 - **Winpay Merchant**: `mobi.winpay.merchant`

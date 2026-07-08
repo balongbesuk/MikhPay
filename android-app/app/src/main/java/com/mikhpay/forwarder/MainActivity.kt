@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
         val savedKey = sharedPref.getString("api_key", "")
         val savedRegex = sharedPref.getString("custom_regex", "")
         // Default whitelist with standard payment and banking apps for user convenience
-        val defaultWhitelist = "com.gojek.gopaymerchant, com.sg.gobiz, com.dana, com.ovo.id, com.shopee.partner, id.co.bca.mobile, mobi.winpay.merchant, com.mikhpay.forwarder"
+        val defaultWhitelist = "com.gojek.gopaymerchant, com.sg.gobiz, id.dana, ovo.id, com.shopee.partner, id.co.bca.mobile, mobi.winpay.merchant, com.mikhpay.forwarder"
         val savedWhitelist = sharedPref.getString("package_whitelist", defaultWhitelist)
 
         inputWebhookUrl.setText(savedUrl)
