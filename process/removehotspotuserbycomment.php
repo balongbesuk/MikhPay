@@ -30,14 +30,10 @@ if (is_array($getuser)) {
   for ($i = 0; $i < $TotalReg; $i++) {
     $userdetails = $getuser[$i];
     $uid = $userdetails['.id'];
-    $uptime = isset($userdetails['uptime']) ? $userdetails['uptime'] : '';
 
-    // Only delete unused vouchers (uptime is empty, "0s", or "00:00:00")
-    if (empty($uptime) || $uptime === "0s" || $uptime === "00:00:00") {
-      $API->comm("/ip/hotspot/user/remove", array(
-        ".id" => "$uid",
-      ));
-    }
+    $API->comm("/ip/hotspot/user/remove", array(
+      ".id" => "$uid",
+    ));
   }
 } else {
   $_SESSION['ubp'] = "";

@@ -21,19 +21,24 @@ error_reporting(0);
 $getuser = $API->comm("/ip/hotspot/user/print", array(
   "?limit-uptime" => "1s",
 ));
-$TotalReg = count($getuser);
+if (is_array($getuser)) {
+  $TotalReg = count($getuser);
+  $_SESSION['ubp'] = ($TotalReg > 0 && isset($getuser[0]['profile'])) ? $getuser[0]['profile'] : "";
+  $_SESSION['ubc'] = "";
 
-$_SESSION['ubp'] = $getuser[0]['profile'];
-$_SESSION['ubc'] = "";
+  for ($i = 0; $i < $TotalReg; $i++) {
+    $userdetails = $getuser[$i];
+    $uid = $userdetails['.id'];
 
-for ($i = 0; $i < $TotalReg; $i++) {
-  $userdetails = $getuser[$i];
-  $uid = $userdetails['.id'];
-
-  $API->comm("/ip/hotspot/user/remove", array(
-    ".id" => "$uid",
-  ));
+    $API->comm("/ip/hotspot/user/remove", array(
+      ".id" => "$uid",
+    ));
+  }
+} else {
+  $_SESSION['ubp'] = "";
+  $_SESSION['ubc'] = "";
 }
+
 if ($_SESSION['ubp'] != "") {
   echo "<script>window.location='./?hotspot=users&profile=" . $_SESSION['ubp'] . "&session=" . $session . "'</script>";
 } else {
