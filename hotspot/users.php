@@ -224,7 +224,10 @@ if (!isset($_SESSION["mikhmon"])) {
              $group_comment = "vc-API-Retry";
           }
           
-          if (substr($group_comment, 0, 3) === "vc-" || substr($group_comment, 0, 3) === "up-") {
+          $is_qris = (strpos($group_comment, "QRIS-") !== false || strpos($group_comment, "API-Retry") !== false);
+          $is_standard = is_numeric(substr($group_comment, 3, 3));
+          
+          if ($is_standard || $is_qris) {
              $acomment_arr[] = $group_comment . "#" . $uprofile;
           }
         }
