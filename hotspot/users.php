@@ -40,12 +40,24 @@ if (!isset($_SESSION["mikhmon"])) {
 
   }
   if ($comm != "") {
-    $getuser = $API->comm("/ip/hotspot/user/print", array_merge(array(
-      "?comment" => "$comm",
-    ), $proplist));
+    $is_group = (strpos($comm, "QRIS-") !== false || strpos($comm, "API-Retry") !== false);
+    if ($is_group) {
+      $all_users = $API->comm("/ip/hotspot/user/print", $proplist);
+      $getuser = array();
+      if (is_array($all_users)) {
+        foreach ($all_users as $usr) {
+          if (isset($usr['comment']) && strpos($usr['comment'], $comm) === 0) {
+            $getuser[] = $usr;
+          }
+        }
+      }
+    } else {
+      $getuser = $API->comm("/ip/hotspot/user/print", array_merge(array(
+        "?comment" => "$comm",
+      ), $proplist));
+    }
     $TotalReg = count($getuser);
     $counttuser = $TotalReg;
-    
   }
   $exp = $_GET['exp'];
   if ($exp != "") {
@@ -194,20 +206,34 @@ if (!isset($_SESSION["mikhmon"])) {
         } else {
           echo "<option value=''>".$_comment."</option>";
         }
+        $acomment_arr = array();
         $TotalReg = count($getuser);
         for ($i = 0; $i < $TotalReg; $i++) {
           $ucomment = $getuser[$i]['comment'];
           $uprofile = $getuser[$i]['profile'];
-          $acomment .= ",".$ucomment."#". $uprofile;
+          
+          $group_comment = $ucomment;
+          if (strpos($ucomment, "QRIS-") !== false) {
+             $parts = explode("-", $ucomment);
+             if (count($parts) > 3) {
+                 array_pop($parts); // remove date
+                 array_pop($parts); // remove timestamp
+                 $group_comment = implode("-", $parts);
+             }
+          } elseif (strpos($ucomment, "API-Retry-") !== false) {
+             $group_comment = "vc-API-Retry";
+          }
+          
+          if (substr($group_comment, 0, 3) === "vc-" || substr($group_comment, 0, 3) === "up-") {
+             $acomment_arr[] = $group_comment . "#" . $uprofile;
+          }
         }
 
-        $ocomment=  explode(",",$acomment);
-        $comments=array_count_values($ocomment) ;
-        foreach ($comments as $tcomment=>$value) {
-          $clean_comment = explode("#",$tcomment)[0];
-          if (substr($clean_comment, 0, 3) === "vc-" || substr($clean_comment, 0, 3) === "up-") {
-            echo "<option value='" . $clean_comment . "' >". $clean_comment." ".explode("#",$tcomment)[1]. " [".$value. "]</option>";
-          }
+        $comments = array_count_values($acomment_arr);
+        foreach ($comments as $tcomment => $value) {
+          $clean_comment = explode("#", $tcomment)[0];
+          $uprof = explode("#", $tcomment)[1];
+          echo "<option value='" . $clean_comment . "' >". $clean_comment." ".$uprof. " [".$value. "]</option>";
         }
         ?>
       </select>

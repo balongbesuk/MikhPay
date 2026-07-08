@@ -18,9 +18,23 @@
 session_start();
 // hide all error
 error_reporting(0);
-$getuser = $API->comm("/ip/hotspot/user/print", array(
-  "?comment" => "$removehotspotuserbycomment"
-));
+$is_group = (strpos($removehotspotuserbycomment, "QRIS-") !== false || strpos($removehotspotuserbycomment, "API-Retry") !== false);
+
+if ($is_group) {
+  $all_users = $API->comm("/ip/hotspot/user/print");
+  $getuser = array();
+  if (is_array($all_users)) {
+    foreach ($all_users as $usr) {
+      if (isset($usr['comment']) && strpos($usr['comment'], $removehotspotuserbycomment) === 0) {
+        $getuser[] = $usr;
+      }
+    }
+  }
+} else {
+  $getuser = $API->comm("/ip/hotspot/user/print", array(
+    "?comment" => "$removehotspotuserbycomment"
+  ));
+}
 
 if (is_array($getuser)) {
   $TotalReg = count($getuser);
