@@ -199,7 +199,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
             } else {
                 $trans = readTransactionFile($filepath);
                 
-                if (isset($trans['status']) && $trans['status'] === 'paid_pending_generate') {
+                if (isset($trans['status']) && ($trans['status'] === 'paid_pending_generate' || $trans['status'] === 'processing')) {
                     $session = $trans['session'];
                     $profile = $trans['profile'];
                     
@@ -372,7 +372,7 @@ if (is_array($files)) {
             $dataTrans['order_id'] = $order;
             $dataTrans['file_time'] = filemtime($file);
             
-            if ($status === 'paid_pending_generate') {
+            if ($status === 'paid_pending_generate' || $status === 'processing') {
                 $pendingTransactions[] = $dataTrans;
             } else {
                 // Limit history to 50 items for performance

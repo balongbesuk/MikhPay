@@ -7,6 +7,18 @@
 
 require_once dirname(__FILE__) . '/../include/config.php';
 
+// Security check for HTTP/Web requests — wajib API Key
+if (php_sapi_name() !== 'cli') {
+    header('Content-Type: application/json');
+    $headers = function_exists('getallheaders') ? getallheaders() : [];
+    $apiKey = isset($headers['X-API-Key']) ? $headers['X-API-Key'] : (isset($headers['x-api-key']) ? $headers['x-api-key'] : (isset($_GET['api_key']) ? $_GET['api_key'] : ''));
+    
+    if (empty($mikhmon_api_key) || $apiKey !== $mikhmon_api_key) {
+        http_response_code(403);
+        echo json_encode(['status' => 'error', 'message' => 'Forbidden. Invalid API Key.']);
+        exit;
+    }
+}
 $dir = __DIR__ . '/../voucher/';
 $expiration_time = 5 * 60; // 5 menit
 

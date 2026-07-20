@@ -47,5 +47,7 @@ function csrf_verify() {
         echo '<h1>403 Forbidden</h1><p>Invalid or missing CSRF token. Silakan muat ulang halaman dan coba lagi.</p>';
         exit;
     }
+    // Regenerasi token setelah verifikasi berhasil untuk mencegah replay attack
+    $_SESSION['_csrf_token'] = bin2hex(random_bytes(32));
     return true;
 }

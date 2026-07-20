@@ -6,7 +6,8 @@
  */
 
 error_reporting(E_ALL);
-ini_set('display_errors', 1);
+ini_set('display_errors', 0);
+ini_set('log_errors', 1);
 
 // Set timezone Asia/Jakarta agar catatan waktu lunas sinkron dengan MikroTik
 date_default_timezone_set('Asia/Jakarta');
@@ -82,9 +83,18 @@ if (!$found_order_id) {
     exit;
 }
 
-// Tandai sebagai settlement
-$trans['status'] = 'settlement';
+// Proteksi Idempotency: Segera tandai sebagai 'processing' agar request duplikat
+// dari MacroDroid tidak bisa menemukan transaksi ini lagi (status bukan 'pending')
+$trans['status'] = 'processing';
 $trans['paid_at'] = time();
+
+// Simpan status 'processing' ke file SEBELUM generate voucher
+$file_ext_lock = file_exists($dir . "trans-" . $found_order_id . ".php") ? ".php" : (file_exists($dir . "trans-" . $found_order_id . ".json") ? ".json" : ".php");
+if ($file_ext_lock === ".php") {
+    writeTransactionFile($dir . "trans-" . $found_order_id . ".php", $trans);
+} else {
+    file_put_contents($dir . "trans-" . $found_order_id . ".json", json_encode($trans));
+}
 
 // Hubungkan ke MikroTik untuk buat voucher
 include_once(__DIR__ . '/lib/routeros_api.class.php');
@@ -122,9 +132,21 @@ if (isset($data[$selected_session])) {
         $result = $API->comm("/ip/hotspot/user/add", $addParams);
         
         if (!isset($result['!trap'])) {
-            // Berhasil
+            // Berhasil — update status dari 'processing' ke 'settlement'
+            $trans['status'] = 'settlement';
             $trans['username'] = $username;
             $trans['password'] = $password;
+            writeAppLog("TRANSACTION_SUCCESS", "Voucher " . $username . " berhasil digenerate via QRIS untuk Order ID: " . $found_order_id . " | Profil: " . $profile_to_buy . " | Nominal: Rp " . number_format($nominal, 0, ',', '.'));
+            
+            // Kirim notifikasi Telegram ke Admin
+            $telegramMessage = "✅ <b>[MikhPay] Pembayaran QRIS Berhasil!</b>\n\n"
+                . "<b>Order ID:</b> <code>{$found_order_id}</code>\n"
+                . "<b>Sesi Router:</b> <code>{$selected_session}</code>\n"
+                . "<b>Profil:</b> <code>{$profile_to_buy}</code>\n"
+                . "<b>Voucher:</b> <code>{$username}</code>\n"
+                . "<b>Nominal:</b> Rp " . number_format($nominal, 0, ',', '.') . "\n"
+                . "Voucher telah otomatis diterbitkan.";
+            sendTelegramNotification($telegramMessage);
         } else {
             // Gagal buat voucher
             $trans['status'] = 'paid_pending_generate';
@@ -139,6 +161,7 @@ if (isset($data[$selected_session])) {
 } else {
     $trans['status'] = 'paid_pending_generate';
     $trans['router_error'] = "Session " . $selected_session . " tidak ditemukan di database.";
+    writeAppLog("QRIS_VERIFY_ERROR", "Session router '" . $selected_session . "' tidak ditemukan saat verifikasi QRIS nominal: " . $nominal);
 }
 
 // Simpan kembali status

@@ -42,7 +42,7 @@ $failedCount = 0;
 if (is_array($files)) {
     foreach ($files as $file) {
         $trans = readTransactionFile($file);
-        if ($trans && isset($trans['status']) && $trans['status'] === 'paid_pending_generate') {
+        if ($trans && isset($trans['status']) && ($trans['status'] === 'paid_pending_generate' || $trans['status'] === 'processing')) {
             $order_id = isset($trans['order_id']) ? $trans['order_id'] : basename($file, (strpos($file, '.php') !== false ? '.php' : '.json'));
             $session = $trans['session'];
             $profile = $trans['profile'];

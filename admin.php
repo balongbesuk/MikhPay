@@ -48,11 +48,11 @@ ob_start("ob_gzhandler");
 $url = $_SERVER['REQUEST_URI'];
 
 // load session MikroTik
-$session = $_GET['session'];
-$id = $_GET['id'];
-$c = $_GET['c'];
-$router = $_GET['router'];
-$logo = $_GET['logo'];
+$session = isset($_GET['session']) ? preg_replace('/[^a-zA-Z0-9\-]/', '', $_GET['session']) : '';
+$id = isset($_GET['id']) ? preg_replace('/[^a-zA-Z0-9\-]/', '', $_GET['id']) : '';
+$c = isset($_GET['c']) ? preg_replace('/[^a-zA-Z0-9\-]/', '', $_GET['c']) : '';
+$router = isset($_GET['router']) ? preg_replace('/[^a-zA-Z0-9\-]/', '', $_GET['router']) : '';
+$logo = isset($_GET['logo']) ? preg_replace('/[^a-zA-Z0-9.\-_]/', '', $_GET['logo']) : '';
 
 $ids = array(
   "editor",

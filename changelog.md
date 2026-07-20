@@ -2,6 +2,20 @@
 
 Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 
+### [MikhPay v2.0.2] - 2026-07-20
+
+### Ditambahkan
+- **Notifikasi Telegram Otomatis via QRIS**: Menambahkan pengiriman notifikasi detail transaksi sukses secara real-time ke Telegram bot admin langsung saat transaksi terverifikasi via QRIS (`qris_verify.php`).
+- **Pencatatan Aktivitas Transaksi Sukses**: Mengintegrasikan logging aktivitas (`TRANSACTION_SUCCESS`) saat transaksi QRIS berhasil, sehingga riwayat transaksi terbit secara real-time di halaman Log Aktivitas.
+- **Log Gagal Session Router**: Menambahkan pencatatan log jika sesi router tidak ditemukan saat verifikasi transaksi QRIS.
+
+### Diperbaiki
+- **Keamanan Parameter Input**: Melakukan sanitasi parameter input URL (`$_GET`) pada file `admin.php` untuk mencegah potensi parameter injection dan menghilangkan PHP Notice.
+- **Proteksi Double-Spend QRIS**: Mencegah request ganda dari webhook/MacroDroid dengan status `processing` sementara selama pembuatan voucher sebelum status diubah ke `settlement`.
+- **Pengamanan Endpoint Cron QRIS**: Menambahkan validasi API Key pada `process/cron_qris.php` untuk mencegah pihak luar menjalankan pembersihan transaksi pending tanpa autentikasi.
+- **Rotasi CSRF Token**: Meningkatkan keamanan dengan merotasi (regenerasi) token CSRF setiap kali pengiriman form POST berhasil diverifikasi di `include/csrf.php`.
+- **Force HTTPS Redirect**: Mengatur pengalihan otomatis dari HTTP ke HTTPS melalui berkas `.htaccess` untuk mengamankan transmisi data.
+
 ### [MikhPay v2.0.1] - 2026-07-03
 
 ### Diperbaiki
