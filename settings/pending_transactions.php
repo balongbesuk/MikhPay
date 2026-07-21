@@ -1033,7 +1033,7 @@ uasort($profileSales, function($a, $b) {
                                             } elseif ($stVal === 'failed') {
                                                 $badgeClass = 'failed';
                                                 $badgeLabel = 'Gagal';
-                                            } elseif ($stVal === 'pending' && (time() - $txTime > 300)) {
+                                            } elseif ($stVal === 'pending' && (time() - $txTime > 600)) {
                                                 $badgeClass = 'failed';
                                                 $badgeLabel = 'Expired';
                                             }
