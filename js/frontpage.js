@@ -244,21 +244,49 @@ document.addEventListener("DOMContentLoaded", function() {
 
     // 2. Resume flow Midtrans telah dihapus (QRIS dinamis tidak perlu resume payment)
 
-    // 3. Render Purchase History from localStorage if available
+    // 3. Render Purchase History from localStorage and Server-side verified MAC
     var historyListEl = document.getElementById("voucherHistoryList");
     var historyContainerEl = document.getElementById("voucherHistoryContainer");
     if (historyListEl && historyContainerEl) {
-        var purchaseHistory = [];
+        var localHistory = [];
         try {
-            purchaseHistory = JSON.parse(localStorage.getItem('mikhtrans_purchase_history') || '[]');
+            localHistory = JSON.parse(localStorage.getItem('mikhtrans_purchase_history') || '[]');
         } catch (e) {
             console.error('Error reading purchase history:', e);
         }
         
+        // Ambil data server-side yang disuntikkan PHP
+        var serverHistory = window.serverPurchaseHistory || [];
+        
+        // Gabungkan keduanya dan hilangkan duplikat berdasarkan order_id
+        var combinedHistory = [];
+        var seenOrders = {};
+        
+        // Prioritaskan serverHistory terlebih dahulu karena datanya valid dari server
+        serverHistory.forEach(function(item) {
+            if (item && item.order_id && !seenOrders[item.order_id]) {
+                combinedHistory.push(item);
+                seenOrders[item.order_id] = true;
+            }
+        });
+        
+        // Tambahkan localHistory jika belum ada di serverHistory
+        localHistory.forEach(function(item) {
+            if (item && item.order_id && !seenOrders[item.order_id]) {
+                combinedHistory.push(item);
+                seenOrders[item.order_id] = true;
+            }
+        });
+        
+        // Simpan hasil gabungan kembali ke localStorage (batasi 10 item terbaru)
+        try {
+            localStorage.setItem('mikhtrans_purchase_history', JSON.stringify(combinedHistory.slice(0, 10)));
+        } catch(e) {}
+        
         var isSuccessScreen = document.querySelector('.receipt-card');
-        if (purchaseHistory.length > 0 && !isSuccessScreen) {
+        if (combinedHistory.length > 0 && !isSuccessScreen) {
             var html = '';
-            purchaseHistory.forEach(function(item) {
+            combinedHistory.forEach(function(item) {
                 var loginButton = '';
                 if (item.login_url) {
                     loginButton = `<a href="${item.login_url}" class="history-btn-connect" style="text-decoration: none;"><i class="fa fa-wifi"></i> Hubungkan</a>`;

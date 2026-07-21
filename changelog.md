@@ -2,6 +2,15 @@
 
 Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 
+### [MikhPay v2.0.3] - 2026-07-21
+
+### Ditambahkan
+- **History Voucher Berbasis MAC Address (Secure Hybrid)**: Mengimplementasikan sistem pelacakan riwayat pembelian voucher sukses di server side berdasarkan hardware MAC Address perangkat. Riwayat tetap persisten dan aman meskipun browser asisten captive portal ditutup/reconnect, dan dilindungi oleh PHP Session sehingga terisolasi penuh dari pengguna lain di jaringan WiFi lokal yang sama.
+- **Log Request Webhook QRIS**: Menambahkan log audit (`QRIS_VERIFY_REQUEST`) saat notifikasi webhook pertama kali diterima oleh `qris_verify.php` guna mempermudah pelacakan jika terjadi mismatch notifikasi bank.
+
+### Diperbaiki
+- **Masa Aktif QRIS Pending**: Menambah masa kedaluwarsa pengecekan transaksi QRIS pending dari 5 menit menjadi **10 menit** baik di frontend (`frontpage.php`) maupun backend cleaner (`cron_qris.php`) agar pengguna memiliki waktu luang yang cukup untuk memproses pembayaran m-banking.
+
 ### [MikhPay v2.0.2] - 2026-07-20
 
 ### Ditambahkan

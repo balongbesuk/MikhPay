@@ -18,6 +18,20 @@ if (session_status() === PHP_SESSION_NONE) {
     ]);
 }
 
+// Menangkap MAC Address client dari parameter MikroTik (?mac=)
+$raw_mac = isset($_GET['mac']) ? $_GET['mac'] : '';
+if (!empty($raw_mac)) {
+    // Normalisasi format MAC address (uppercase, tanpa tanda baca)
+    $clean_mac = strtoupper(preg_replace('/[^a-fA-F0-9]/', '', $raw_mac));
+    if (strlen($clean_mac) === 12) {
+        // Hanya set jika belum ada session, mencegah manipulasi manual parameter URL GET setelah load pertama
+        if (empty($_SESSION['verified_mac'])) {
+            $_SESSION['verified_mac'] = $clean_mac;
+        }
+    }
+}
+$client_mac = isset($_SESSION['verified_mac']) ? $_SESSION['verified_mac'] : '';
+
 // HTTP Security Headers
 header("X-Frame-Options: SAMEORIGIN");
 header("X-Content-Type-Options: nosniff");
@@ -390,7 +404,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                     $tData = readTransactionFile($file);
                     if ($tData && isset($tData['status']) && $tData['status'] === 'pending'
                         && isset($tData['session_id']) && $tData['session_id'] === $current_session_id
-                        && ($now - $tData['created_at']) < 300) {
+                        && ($now - $tData['created_at']) < 600) {
                         $found_existing = $tData;
                         break;
                     }
@@ -488,6 +502,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                                 'validity' => $validity,
                                 'created_at' => time(),
                                 'client_ip' => isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '',
+                                'client_mac' => $client_mac,
                                 'session_id' => session_id(),
                                 'qris_string' => $dynamic_qris_string
                             ];
@@ -1532,8 +1547,57 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
         </script>
     <?php endif; ?>
 
+    <?php
+    $server_purchase_history = [];
+    if (!empty($client_mac)) {
+        $dir = __DIR__ . '/voucher/';
+        if (is_dir($dir)) {
+            $files = array_merge(
+                glob($dir . 'trans-*.json'),
+                glob($dir . 'trans-*.php')
+            );
+            $retention_days = isset($dbSettings) ? (int)$dbSettings->get('log_retention_days', 2) : 2;
+            $retention_seconds = $retention_days * 86400;
+            $now = time();
+            
+            foreach ($files as $file) {
+                if ($now - filemtime($file) > $retention_seconds) {
+                    continue;
+                }
+                
+                $trans = readTransactionFile($file);
+                if ($trans && isset($trans['status']) && $trans['status'] === 'settlement' 
+                    && isset($trans['client_mac']) && $trans['client_mac'] === $client_mac
+                    && !empty($trans['username'])) {
+                    
+                    $server_purchase_history[] = [
+                        'order_id' => $trans['order_id'],
+                        'username' => $trans['username'],
+                        'password' => isset($trans['password']) ? $trans['password'] : $trans['username'],
+                        'profile' => $trans['profile'],
+                        'price' => $trans['price'],
+                        'validity' => isset($trans['validity']) ? $trans['validity'] : '',
+                        'login_url' => !empty($dnsname) ? "http://" . $dnsname . "/login?username=" . urlencode($trans['username']) . "&password=" . urlencode(isset($trans['password']) ? $trans['password'] : $trans['username']) : '',
+                        'date' => date('d/m/Y H:i:s', isset($trans['paid_at']) ? $trans['paid_at'] : filemtime($file))
+                    ];
+                }
+            }
+        }
+        
+        // Urutkan dari yang terbaru
+        usort($server_purchase_history, function($a, $b) {
+            $timeA = DateTime::createFromFormat('d/m/Y H:i:s', $a['date']);
+            $timeB = DateTime::createFromFormat('d/m/Y H:i:s', $b['date']);
+            return ($timeB ? $timeB->getTimestamp() : 0) - ($timeA ? $timeA->getTimestamp() : 0);
+        });
+        
+        $server_purchase_history = array_slice($server_purchase_history, 0, 5);
+    }
+    ?>
+
     <!-- Global Config and Javascript Controller -->
     <script>
+        window.serverPurchaseHistory = <?= json_encode($server_purchase_history) ?>;
         var FrontpageConfig = {
             session: "<?= urlencode($selected_session) ?>",
             ws: {

@@ -44,6 +44,9 @@ if (empty($qris_secret_token) || $token !== $qris_secret_token) {
     exit;
 }
 
+// Catat notifikasi masuk ke log audit untuk melacak sinkronisasi nominal
+writeAppLog("QRIS_VERIFY_REQUEST", "Menerima request verifikasi pembayaran nominal: Rp " . number_format($nominal, 0, ',', '.'));
+
 // Jika ini adalah request pengujian koneksi dari Aplikasi Android/Test
 if ($nominal === 12345) {
     echo json_encode(['status' => 'success', 'message' => 'Koneksi ke Webhook MikhPay Berhasil! (Test OK)']);

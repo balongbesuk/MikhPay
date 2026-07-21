@@ -20,7 +20,7 @@ if (php_sapi_name() !== 'cli') {
     }
 }
 $dir = __DIR__ . '/../voucher/';
-$expiration_time = 5 * 60; // 5 menit
+$expiration_time = 10 * 60; // 10 menit
 
 if (is_dir($dir)) {
     $files = array_merge(
