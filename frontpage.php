@@ -1424,11 +1424,11 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 <p class="qris-header-desc">Scan atau unduh QRIS di bawah ini</p>
                 
                 <?php
-                // Hitung sisa waktu pembayaran (5 menit = 300 detik)
-                $remaining_seconds = 300;
+                // Hitung sisa waktu pembayaran (10 menit = 600 detik)
+                $remaining_seconds = 600;
                 if (isset($transData['created_at'])) {
                     $elapsed = time() - $transData['created_at'];
-                    $remaining_seconds = 300 - $elapsed;
+                    $remaining_seconds = 600 - $elapsed;
                     if ($remaining_seconds < 0) $remaining_seconds = 0;
                 }
                 
@@ -1441,7 +1441,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 ?>
                 
                 <div class="timer-badge">
-                    <i class="fa fa-clock"></i> Bayar sebelum: <span id="countdownTimer">05:00</span>
+                    <i class="fa fa-clock"></i> Bayar sebelum: <span id="countdownTimer">10:00</span>
                 </div>
                 
                 <div class="qris-qr-container" style="width: 100%; max-width: 280px; box-sizing: border-box; display: inline-flex; flex-direction: column; align-items: center;">
