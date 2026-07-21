@@ -36,23 +36,51 @@ if (!isset($_SESSION["mikhmon"])) {
   }
 
   $getpool = $API->comm("/ip/pool/print");
+  $getallprofiles = $API->comm("/ip/hotspot/user/profile/print");
+  $profiledetalis = null;
+  if (is_array($getallprofiles)) {
+      foreach ($getallprofiles as $prof) {
+          if (isset($prof['.id']) && $prof['.id'] === $userprofile) {
+              $profiledetalis = $prof;
+              break;
+          }
+      }
+  }
 
-  $getprofile = $API->comm("/ip/hotspot/user/profile/print", array(
-    "?.id" => "$userprofile"
-  ));
-  $profiledetalis = $getprofile[0];
-  $pid = $profiledetalis['.id'];
-  $pname = $profiledetalis['name'];
-  $psharedu = $profiledetalis['shared-users'];
-  $pratelimit = $profiledetalis['rate-limit'];
-  $ponlogin = $profiledetalis['on-login'];
-  $ppool = $profiledetalis['address-pool'];
-  $sparent = $profiledetalis['parent-queue'];
+  if ($profiledetalis === null) {
+      echo "<b>User Profile '" . htmlspecialchars($userprofile) . "' tidak ditemukan di router.</b>";
+      exit;
+  }
+  
+  $pid = isset($profiledetalis['.id']) ? $profiledetalis['.id'] : '';
+  $pname = isset($profiledetalis['name']) ? $profiledetalis['name'] : '';
+  $psharedu = isset($profiledetalis['shared-users']) ? $profiledetalis['shared-users'] : '';
+  $pratelimit = isset($profiledetalis['rate-limit']) ? $profiledetalis['rate-limit'] : '';
+  $ponlogin = isset($profiledetalis['on-login']) ? $profiledetalis['on-login'] : '';
+  $ppool = isset($profiledetalis['address-pool']) ? $profiledetalis['address-pool'] : 'none';
+  $sparent = isset($profiledetalis['parent-queue']) ? $profiledetalis['parent-queue'] : 'none';
 
   if(empty($ppool)){$ppool = "none";}
   if(empty($sparent)){$sparent = "none";}
 
-  $getexpmode = explode(",", $ponlogin)[1];
+  $getexpmode = "0";
+  $getprice = "";
+  $getsprice = "";
+  $getvalid = "";
+  $getgracep = "";
+  $getlocku = "Disable";
+  
+  if (!empty($ponlogin)) {
+      $exp_login = explode(",", $ponlogin);
+      if (count($exp_login) > 1) {
+          $getexpmode = isset($exp_login[1]) ? trim($exp_login[1]) : "0";
+          $getprice = isset($exp_login[2]) && trim($exp_login[2]) !== "0" ? trim($exp_login[2]) : "";
+          $getvalid = isset($exp_login[3]) ? trim($exp_login[3]) : "";
+          $getsprice = isset($exp_login[4]) && trim($exp_login[4]) !== "0" ? trim($exp_login[4]) : "";
+          $getgracep = isset($exp_login[5]) ? trim($exp_login[5]) : "";
+          $getlocku = isset($exp_login[6]) && !empty(trim($exp_login[6])) ? trim($exp_login[6]) : "Disable";
+      }
+  }
 
   if ($getexpmode == "rem") {
     $getexpmodet = "Remove";
@@ -67,31 +95,6 @@ if (!isset($_SESSION["mikhmon"])) {
     $getexpmodet = "None";
   }
 
-  $getprice = explode(",", $ponlogin)[2];
-  if ($getprice == "0") {
-    $getprice = "";
-  } else {
-    $getprice = $getprice;
-  }
-
-  $getsprice = explode(",", $ponlogin)[4];
-  if ($getsprice == "0") {
-    $getsprice = "";
-  } else {
-    $getsprice = $getsprice;
-  }
-
-  $getvalid = explode(",", $ponlogin)[3];
-
-  $getgracep = explode(",", $ponlogin)[4];
-
-  $getlocku = explode(",", $ponlogin)[6];
-  if ($getlocku == "") {
-    $getlocku = "Disable";
-  } else {
-    $getlocku = $getlocku;
-  }
-
   $getallqueue = $API->comm("/queue/simple/print", array(
     "?dynamic" => "false",
   ));
@@ -99,11 +102,12 @@ if (!isset($_SESSION["mikhmon"])) {
   $getmonexpired = $API->comm("/system/scheduler/print", array(
     "?name" => "$pname",
   ));
-  $monexpired = $getmonexpired[0];
-  $monid = $monexpired['.id'];
-	$pmon = $monexpired['name'];
-	$chkpmon = $monexpired['disabled'];
-	if(empty($pmon) || $chkpmon == "true"){$moncolor = "text-orange";}else{$moncolor = "text-green";}
+  $monexpired = !empty($getmonexpired) ? $getmonexpired[0] : null;
+  $monid = isset($monexpired['.id']) ? $monexpired['.id'] : '';
+  $pmon = isset($monexpired['name']) ? $monexpired['name'] : '';
+  $chkpmon = isset($monexpired['disabled']) ? $monexpired['disabled'] : '';
+  
+  if(empty($pmon) || $chkpmon == "true"){$moncolor = "text-orange";}else{$moncolor = "text-green";}
 
   if (isset($_POST['name'])) {
     $name = (preg_replace('/\s+/', '-',$_POST['name']));
@@ -195,10 +199,11 @@ if (!isset($_SESSION["mikhmon"])) {
       "disabled" => "no",
       "comment" => "Monitor Profile $name",
       ));
-    }}else{
+    }
+  }}else{
       $API->comm("/system/scheduler/remove", array(
         ".id" => "$monid"));
-    }
+  }
 
   // Sanitize variables for HTML attributes
   $s_pname = htmlspecialchars($pname, ENT_QUOTES, 'UTF-8');
