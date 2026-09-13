@@ -138,4 +138,15 @@ Karena aplikasi ini dikompilasi secara mandiri (*self-signed*) dan di-host di lu
    * **Contoh Teks**: *"Terima transfer 5.025 dari GoPay"*
    * **Hasil Ekstraksi**: `5025`.
 
+---
+
+#### Q: Saat Login GoBiz & Auto-Sync Token berhasil login tapi muncul status "Unauthorized. Invalid or missing API Key" (HTTP 401).
+* **Solusi 1 (Server VPS/Hosting Belum di-Update)**: Jika Anda baru saja memperbarui aplikasi Android ke v3.0, pastikan server MikhPay (VPS Linux / aaPanel / cPanel) Anda juga sudah diperbarui dengan menjalankan `git pull origin main`. Versi backend `api.php` terbaru diperlukan agar server mengenali endpoint `action=update_gopay_token` dan mendukung dual-key authentication.
+* **Solusi 2 (Validasi API Key)**: Pastikan nilai yang Anda masukkan pada kolom **API Key (Token)** di aplikasi Android cocok dengan salah satu kunci berikut:
+  - `MIKHMON_API_KEY` (kunci API admin Mikhmon), ATAU
+  - `QRIS_SECRET_TOKEN` (token rahasia QRIS di `.env.php`).
+  Backend v3.0 mendukung keduanya baik lewat header `X-API-Key`, form-data POST, maupun query string URL.
+* **Solusi 3 (Periksa Webhook URL)**: Pastikan kolom **Webhook URL** di aplikasi Android mengarah ke alamat domain/IP server MikhPay yang benar (contoh: `https://domainanda.com/qris_verify.php`). Aplikasi Android akan otomatis menyesuaikan rute pengiriman token ke `api.php?action=update_gopay_token`.
+
+
 

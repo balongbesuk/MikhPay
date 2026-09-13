@@ -15,11 +15,14 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 - **Background Worker Cron (`process/gopay_sync.php`)**: Worker mandiri untuk otomatisasi pengecekan 24 jam nonstop via Windows Task Scheduler atau Linux Cron.
 - **Core Engine QRIS Modular (`include/qris_core.php`)**: Logika pemrosesan verifikasi settlement, pembuatan akun hotspot MikroTik, notifikasi Telegram, dan Pusher disatukan ke dalam fungsi modular terpusat `processQrisSettlement()`.
 - **1-Click Login GoBiz & Auto-Detect Token di Aplikasi Android**: Fitur baru pada aplikasi Android MikhPay-Forwarder dengan WebView portal GoBiz terintegrasi. Pengguna cukup login di aplikasi, token sesi `access_token` otomatis tertangkap dan langsung tersinkronkan ke server MikhPay tanpa perlu DevTools/F12 manual di PC.
+- **Dukungan Dual-Key & Anti-Filter Header pada REST API (`api.php`)**: Endpoint penerima token GoPay menerima otentikasi baik menggunakan `MIKHMON_API_KEY` maupun `QRIS_SECRET_TOKEN` (melalui HTTP Header, POST Body, atau Query URL) sehingga kebal terhadap pemotongan custom header oleh reverse proxy Nginx/aaPanel.
 - **Peringatan Otomatis Telegram Saat Token Kedaluwarsa**: Sistem mendeteksi respon HTTP 401 saat token sesi GoPay expired dan otomatis mengirimkan pesan peringatan HTML ke Bot Telegram Admin (lengkap dengan cooldown anti-spam 6 jam).
 - **Dashboard Manajemen GoPay Merchant**: Tab antarmuka baru di menu MikhPay Billing lengkap dengan status koneksi, indikator nama toko, kontrol auto-sync, tabel 10 mutasi transaksi live dari server GoPay, dan panduan Task Scheduler.
 
 ### Diperbaiki
 - **Pengenalan Status SETTLEMENT**: Menambahkan dukungan pemrosesan status `SETTLEMENT` dan `CAPTURE` dari GoBiz Journals API sehingga pencocokan nominal transaksi pending berjalan akurat 100%.
+- **Kestabilan Koneksi cURL VPS (Force IPv4)**: Menetapkan `CURLOPT_IPRESOLVE` ke `CURL_IPRESOLVE_V4` pada service GoPay untuk mencegah masalah timeout resolusi IPv6 yang kerap terjadi pada VPS Linux/aaPanel/cPanel.
+- **Opsi Manual Merchant ID**: Menambahkan input override Merchant ID manual pada form pengaturan untuk mengantisipasi jika endpoint auto-lookup toko terhalang oleh restriksi jaringan hosting.
 - **Proteksi Layar Putih (PRG Error Handling)**: Memperbaiki urutan pemuatan dependensi sistem pada penanganan aksi POST GoPay di `admin.php` dan menyematkan blok proteksi `try-catch (\Throwable $e)` guna mencegah terjadinya blank page.
 
 
