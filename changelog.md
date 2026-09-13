@@ -14,6 +14,8 @@ Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 - **Deteksi Otomatis Merchant ID & Nama Toko**: Sistem secara otomatis mengenali nama merchant resmi (contoh: *Toko Anda*) dan ID merchant GoBiz langsung dari token sesi.
 - **Background Worker Cron (`process/gopay_sync.php`)**: Worker mandiri untuk otomatisasi pengecekan 24 jam nonstop via Windows Task Scheduler atau Linux Cron.
 - **Core Engine QRIS Modular (`include/qris_core.php`)**: Logika pemrosesan verifikasi settlement, pembuatan akun hotspot MikroTik, notifikasi Telegram, dan Pusher disatukan ke dalam fungsi modular terpusat `processQrisSettlement()`.
+- **1-Click Login GoBiz & Auto-Detect Token di Aplikasi Android**: Fitur baru pada aplikasi Android MikhPay-Forwarder dengan WebView portal GoBiz terintegrasi. Pengguna cukup login di aplikasi, token sesi `access_token` otomatis tertangkap dan langsung tersinkronkan ke server MikhPay tanpa perlu DevTools/F12 manual di PC.
+- **Peringatan Otomatis Telegram Saat Token Kedaluwarsa**: Sistem mendeteksi respon HTTP 401 saat token sesi GoPay expired dan otomatis mengirimkan pesan peringatan HTML ke Bot Telegram Admin (lengkap dengan cooldown anti-spam 6 jam).
 - **Dashboard Manajemen GoPay Merchant**: Tab antarmuka baru di menu MikhPay Billing lengkap dengan status koneksi, indikator nama toko, kontrol auto-sync, tabel 10 mutasi transaksi live dari server GoPay, dan panduan Task Scheduler.
 
 ### Diperbaiki

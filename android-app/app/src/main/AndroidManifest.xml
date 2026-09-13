@@ -26,6 +26,12 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".GobizLoginActivity"
+            android:exported="false"
+            android:label="Login GoBiz Merchant"
+            android:windowSoftInputMode="adjustResize" />
+
         <service
             android:name=".MikhPayListenerService"
             android:label="@string/service_name"

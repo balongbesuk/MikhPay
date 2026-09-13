@@ -94,12 +94,59 @@ if (!file_exists(__DIR__ . '/include/config.php')) {
 include_once(__DIR__ . '/include/config.php');
 
 // Verifikasi API Key
-$headers = getallheaders();
-$apiKey = isset($headers['X-API-Key']) ? $headers['X-API-Key'] : (isset($_REQUEST['api_key']) ? $_REQUEST['api_key'] : '');
+$headers = function_exists('getallheaders') ? getallheaders() : [];
+$apiKey = isset($headers['X-API-Key']) 
+    ? $headers['X-API-Key'] 
+    : (isset($headers['x-api-key']) 
+        ? $headers['x-api-key'] 
+        : (isset($_SERVER['HTTP_X_API_KEY']) 
+            ? $_SERVER['HTTP_X_API_KEY'] 
+            : (isset($_REQUEST['api_key']) ? $_REQUEST['api_key'] : '')));
 
 if (empty($mikhmon_api_key) || $apiKey !== $mikhmon_api_key) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized. Invalid or missing API Key.']);
+    exit;
+}
+
+// Aksi khusus pengelolaan token GoPay (tidak memerlukan koneksi router MikroTik)
+$action = isset($_REQUEST['action']) ? $_REQUEST['action'] : '';
+
+if ($action === 'update_gopay_token') {
+    include_once(__DIR__ . '/include/autoload.php');
+    
+    $inputBody = json_decode(file_get_contents('php://input'), true);
+    $token = isset($_POST['token']) 
+        ? trim($_POST['token']) 
+        : (isset($inputBody['token']) 
+            ? trim($inputBody['token']) 
+            : (isset($_GET['token']) ? trim($_GET['token']) : ''));
+            
+    $phone = isset($_POST['phone']) 
+        ? trim($_POST['phone']) 
+        : (isset($inputBody['phone']) ? trim($inputBody['phone']) : '');
+        
+    $merchantId = isset($_POST['merchant_id']) 
+        ? trim($_POST['merchant_id']) 
+        : (isset($inputBody['merchant_id']) ? trim($inputBody['merchant_id']) : '');
+        
+    if (empty($token)) {
+        http_response_code(400);
+        echo json_encode(['status' => 'error', 'message' => 'Token sesi GoPay wajib diisi.']);
+        exit;
+    }
+    
+    $gopaySvc = new \App\Services\GoPayMerchantService();
+    $res = $gopaySvc->saveManualToken($token, $phone, $merchantId);
+    
+    $settings = new \App\Models\AppSettings();
+    http_response_code($res['success'] ? 200 : 400);
+    echo json_encode([
+        'status' => $res['success'] ? 'success' : 'error',
+        'message' => $res['message'],
+        'merchant_name' => $settings->get('gopay_merchant_name', ''),
+        'merchant_id' => $settings->get('gopay_merchant_id', '')
+    ]);
     exit;
 }
 

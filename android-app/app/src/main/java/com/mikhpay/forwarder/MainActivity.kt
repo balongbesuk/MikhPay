@@ -34,6 +34,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var logsContainer: android.widget.LinearLayout
     private lateinit var btnSimulateNotif: Button
     private lateinit var btnClearLogs: Button
+    private lateinit var btnGobizLogin: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState);
@@ -55,6 +56,7 @@ class MainActivity : AppCompatActivity() {
         logsContainer = findViewById(R.id.logs_container)
         btnSimulateNotif = findViewById(R.id.btn_simulate_notif)
         btnClearLogs = findViewById(R.id.btn_clear_logs)
+        btnGobizLogin = findViewById(R.id.btn_gobiz_login)
 
         // Request POST_NOTIFICATIONS runtime permission on Android 13+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -143,6 +145,30 @@ class MainActivity : AppCompatActivity() {
             sharedPref.edit().putString("notification_logs", "[]").apply()
             populateLogs()
             Toast.makeText(this, "Riwayat log dihapus", Toast.LENGTH_SHORT).show()
+        }
+
+        // GoBiz 1-Click Login & Auto-Sync Token Trigger
+        btnGobizLogin.setOnClickListener {
+            val url = inputWebhookUrl.text.toString().trim()
+            val key = inputApiKey.text.toString().trim()
+
+            if (url.isEmpty()) {
+                inputWebhookUrl.error = "Simpan Webhook URL terlebih dahulu"
+                Toast.makeText(this, "Silakan isi dan simpan Webhook URL terlebih dahulu.", Toast.LENGTH_SHORT).show()
+                return@setOnClickListener
+            }
+
+            // Auto-save settings first so GobizLoginActivity has latest config
+            with(sharedPref.edit()) {
+                putString("webhook_url", url)
+                putString("api_key", key)
+                putString("custom_regex", inputCustomRegex.text.toString().trim())
+                putString("package_whitelist", inputPackageWhitelist.text.toString().trim())
+                apply()
+            }
+
+            val intent = Intent(this, GobizLoginActivity::class.java)
+            startActivity(intent)
         }
     }
 

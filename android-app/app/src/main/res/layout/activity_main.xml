@@ -279,6 +279,70 @@
             </LinearLayout>
         </androidx.cardview.widget.CardView>
 
+        <!-- GoPay Merchant 1-Click Token Sync Card -->
+        <androidx.cardview.widget.CardView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            app:cardCornerRadius="16dp"
+            app:cardBackgroundColor="#1e1e1e"
+            app:cardElevation="2dp">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:padding="20dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="6dp">
+
+                    <TextView
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="GoPay Merchant Token Sync"
+                        android:textColor="#ffffff"
+                        android:textSize="16sp"
+                        android:textStyle="bold" />
+
+                    <TextView
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="1-Click"
+                        android:textColor="#8B5CF6"
+                        android:background="#228B5CF6"
+                        android:textSize="11sp"
+                        android:textStyle="bold"
+                        android:paddingHorizontal="8dp"
+                        android:paddingVertical="3dp"/>
+                </LinearLayout>
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="Masuk ke portal web GoBiz langsung dari aplikasi untuk mendeteksi token sesi dan menyinkronkannya otomatis ke server MikhPay tanpa perlu DevTools/F12."
+                    android:textColor="#888888"
+                    android:textSize="12sp"
+                    android:lineSpacingExtra="2dp"
+                    android:layout_marginBottom="16dp"/>
+
+                <Button
+                    android:id="@+id/btn_gobiz_login"
+                    android:layout_width="match_parent"
+                    android:layout_height="52dp"
+                    android:text="🔑 Login GoBiz &amp; Auto-Sync Token"
+                    android:textAllCaps="false"
+                    android:textColor="#ffffff"
+                    android:backgroundTint="#8B5CF6"
+                    app:cornerRadius="12dp" />
+            </LinearLayout>
+        </androidx.cardview.widget.CardView>
+
         <!-- Notification Logs Card -->
         <androidx.cardview.widget.CardView
             android:layout_width="match_parent"

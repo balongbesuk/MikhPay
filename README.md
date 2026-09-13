@@ -185,6 +185,7 @@ Sistem akan otomatis menghubungi server GoBiz, memvalidasi sesi, mendeteksi nama
 Sebagai alternatif pengganti MacroDroid yang lebih mudah dikonfigurasi, andal, dan ramah baterai, Anda dapat menggunakan aplikasi Android bawaan **MikhPay-Forwarder** yang berada di dalam repositori ini pada folder [android-app/](android-app/).
 
 ### Fitur Aplikasi Android:
+- **1-Click Login GoBiz & Auto-Sync Token**: Terintegrasi langsung dengan portal web resmi GoBiz via WebView di dalam aplikasi. Cukup login akun GoBiz di aplikasi, token sesi `access_token` otomatis tertangkap dan langsung tersinkronkan ke server MikhPay Anda tanpa perlu DevTools/F12 di PC!
 - **Konfigurasi Instan**: Hanya perlu mengisi URL Webhook (`https://yourdomain.com/qris_verify.php`) dan Token API Anda.
 - **Sistem Latar Belakang Tangguh**: Menggunakan *NotificationListenerService* bawaan Android yang berjalan 24/7 di latar belakang dengan konsumsi daya sangat rendah.
 - **Mulai Otomatis (Auto-Start on Boot)**: Otomatis aktif kembali di latar belakang saat HP dinyalakan ulang (restart) tanpa intervensi manual.

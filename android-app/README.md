@@ -12,6 +12,7 @@ Aplikasi ini menggantikan kebutuhan alat otomatisasi pihak ketiga seperti MacroD
 
 ## Fitur Utama
 
+- **1-Click Login GoBiz & Auto-Sync Token**: Terintegrasi langsung dengan portal web resmi GoBiz via WebView. Pengguna cukup login dengan akun GoBiz di aplikasi, dan aplikasi akan mendeteksi `access_token` secara otomatis serta mengunggahnya langsung ke server MikhPay tanpa perlu membuka DevTools/F12 manual di PC.
 - **Penyadapan Notifikasi Latar Belakang**: Menggunakan layanan bawaan Android `NotificationListenerService` yang berjalan stabil 24/7 di background.
 - **Mulai Otomatis (Auto-Start on Boot)**: Dilengkapi `BootReceiver` agar aplikasi langsung aktif otomatis ketika HP dinyalakan ulang (restart).
 - **Pengabaian Optimasi Baterai**: Akses satu-klik langsung dari aplikasi untuk menonaktifkan pembatasan daya baterai sistem Android, menjaga agar sistem operasi HP tidak membunuh aplikasi di latar belakang.
@@ -50,7 +51,11 @@ Berikut adalah nama paket aplikasi populer untuk mempermudah konfigurasi whiteli
    - **Target Whitelist**: Masukkan daftar nama paket aplikasi target yang dipisahkan dengan koma (contoh: `com.gojek.gopaymerchant, com.mikhpay.forwarder`).
 4. **Simpan Pengaturan**: Ketuk tombol **"Save Settings"**.
 5. **Uji Hubungan Server**: Ketuk **"Test Webhook"** untuk mengirimkan data pengujian.
-6. **Jalankan Simulasi**: Ketuk **"Simulasi Notifikasi"** di bagian bawah. Notifikasi tiruan GoPay akan muncul di layar atas Anda, disusul HP bergetar singkat, dan baris log sukses akan langsung terisi pada riwayat log di bawah.
+6. **Sinkronisasi Token GoBiz Otomatis (1-Klik)**:
+   - Ketuk tombol ungu **"🔑 Login GoBiz & Auto-Sync Token"**.
+   - Masukkan nomor HP GoBiz & kode OTP Anda di dalam layar login resmi yang muncul.
+   - Begitu login berhasil, aplikasi akan otomatis menangkap token sesi dan menyinkronkannya ke server MikhPay Anda seketika!
+7. **Jalankan Simulasi**: Ketuk **"Simulasi Notifikasi"** di bagian bawah. Notifikasi tiruan GoPay akan muncul di layar atas Anda, disusul HP bergetar singkat, dan baris log sukses akan langsung terisi pada riwayat log di bawah.
 
 ---
 
