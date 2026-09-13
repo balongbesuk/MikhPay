@@ -133,7 +133,8 @@ if ($id == 'pending-transactions' && isset($_POST['action']) && strpos($_POST['a
         } elseif ($_POST['action'] === 'gopay_save_manual_token') {
             $token = isset($_POST['token']) ? trim($_POST['token']) : '';
             $phone = isset($_POST['phone']) ? trim($_POST['phone']) : '';
-            $res = $gopaySvc->saveManualToken($token, $phone);
+            $merchantId = isset($_POST['merchant_id']) ? trim($_POST['merchant_id']) : '';
+            $res = $gopaySvc->saveManualToken($token, $phone, $merchantId);
             if ($res['success']) {
                 $_SESSION['mikhtrans_success_msg'] = $res['message'];
             } else {

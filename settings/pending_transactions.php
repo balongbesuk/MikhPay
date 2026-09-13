@@ -1302,6 +1302,11 @@ uasort($profileSales, function($a, $b) {
                                             <label style="font-size: 12px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 6px;">Nomor HP Terdaftar (Opsional):</label>
                                             <input type="text" name="phone" class="form-control" placeholder="08123456789" style="height: 42px; font-size: 13px;" />
                                         </div>
+                                        <div class="form-group" style="margin-bottom: 14px;">
+                                            <label style="font-size: 12px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 6px;">Merchant ID GoBiz (Opsional - Contoh: G313169710):</label>
+                                            <input type="text" name="merchant_id" class="form-control" placeholder="Contoh: G313169710" style="height: 42px; font-size: 13px;" />
+                                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px;">Isi langsung jika auto-deteksi nama toko di VPS/Hosting gagal.</div>
+                                        </div>
                                         <button type="submit" class="btn bg-grey" style="width: 100%; padding: 10px; font-weight: bold; border-radius: 8px; background: #6366f1; color: #fff;">
                                             <i class="fa fa-save"></i> Simpan & Uji Token
                                         </button>

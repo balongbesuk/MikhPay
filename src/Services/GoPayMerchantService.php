@@ -247,7 +247,7 @@ class GoPayMerchantService {
     /**
      * Opsi Manual: Simpan Token Bearer / Cookie Sesi secara langsung
      */
-    public function saveManualToken($token, $phone = '') {
+    public function saveManualToken($token, $phone = '', $merchantId = '') {
         $cleanToken = trim($token);
 
         // Jika user mem-paste cookie browser lengkap (berisi access_token=...;)
@@ -275,14 +275,19 @@ class GoPayMerchantService {
         if (!empty($phone)) {
             $this->settings->set('gopay_phone', $this->formatPhoneNumber($phone));
         }
+        if (!empty($merchantId)) {
+            $this->settings->set('gopay_merchant_id', trim($merchantId));
+        }
         $this->settings->set('gopay_auth_mode', 'manual_token');
         $this->settings->set('gopay_sync_enabled', true);
 
-        // Auto-deteksi merchant
+        // Auto-deteksi merchant jika belum diisi manual
         $mInfo = $this->getMerchantDetails($cleanToken);
         $merchantMsg = '';
         if ($mInfo) {
             $merchantMsg = " Terhubung ke merchant: {$mInfo['name']} ({$mInfo['id']}).";
+        } elseif (!empty($merchantId)) {
+            $merchantMsg = " Merchant ID manual terpasang: {$merchantId}.";
         }
 
         if (function_exists('writeAppLog')) {
@@ -732,6 +737,10 @@ class GoPayMerchantService {
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 6);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        if (defined('CURL_IPRESOLVE_V4')) {
+            curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);
+        }
 
         if ($method === 'POST') {
             curl_setopt($ch, CURLOPT_POST, true);
