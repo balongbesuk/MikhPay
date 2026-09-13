@@ -9,6 +9,7 @@ import android.os.Looper
 import android.os.VibrationEffect
 import android.os.Vibrator
 import android.os.VibratorManager
+import android.view.MotionEvent
 import android.view.View
 import android.webkit.*
 import android.widget.Button
@@ -83,6 +84,21 @@ class GobizLoginActivity : AppCompatActivity() {
     }
 
     private fun setupWebView() {
+        // Fix focusability so soft keyboard doesn't dismiss when tapping inputs
+        webView.isFocusable = true
+        webView.isFocusableInTouchMode = true
+        webView.requestFocus(View.FOCUS_DOWN)
+        webView.setOnTouchListener { v, event ->
+            when (event.action) {
+                MotionEvent.ACTION_DOWN, MotionEvent.ACTION_UP -> {
+                    if (!v.hasFocus()) {
+                        v.requestFocus()
+                    }
+                }
+            }
+            false
+        }
+
         val settings = webView.settings
         settings.javaScriptEnabled = true
         settings.domStorageEnabled = true
