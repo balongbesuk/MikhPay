@@ -441,7 +441,7 @@ body.login-page input.login-input {
             <div class="login-left-logo">
                 <i class="fa fa-wifi"></i>
             </div>
-            <h2 class="login-left-title">MikhPay v2.0</h2>
+            <h2 class="login-left-title">MikhPay v3.0</h2>
             <p class="login-left-desc">Billing Hotspot & Router Manager dengan sistem pembayaran QRIS Mandiri. Manajemen terstruktur, cepat, dan aman tanpa potongan admin payment gateway.</p>
             
             <div class="login-left-stats">
