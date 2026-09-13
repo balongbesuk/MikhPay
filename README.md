@@ -141,16 +141,39 @@ Untuk mengaktifkan pembacaan mutasi otomatis langsung dari server tanpa membutuh
 Sistem akan otomatis menghubungi server GoBiz, memvalidasi sesi, mendeteksi nama toko Anda (contoh: *Toko Anda - ID: G123456789*), dan mengaktifkan fitur auto-sync.
 
 #### Langkah 3: Otomatisasi 24 Jam di Server (Background Cron)
-- **Di Halaman Pembeli (Otomatis & Real-Time)**: Sistem sudah dilengkapi *Smart On-Demand Sync*. Ketika pembeli sedang berada di halaman QRIS, sistem langsung memicu pengecekan mutasi GoPay setiap interval cooldown (~5 detik). Begitu pembeli membayar, voucher otomatis terbit dan tampil seketika di layar tanpa menunggu reload!
-- **Background Worker 24 Jam (Untuk Pembeli yang Menutup Browser)**: Agar transaksi pembeli yang keluar/menutup browser tetap diverifikasi di latar belakang, daftarkan perintah sync berikut ke scheduler:
-  - **Windows (Task Scheduler / Command Prompt)**:
-    ```cmd
-    "D:\mikhmonv3ws\Mikhmon Server\php\m-php.exe" "D:\mikhmonv3ws\Mikhmon Server\mikhmon\process\gopay_sync.php"
-    ```
-  - **Linux / VPS (Crontab)**:
-    ```bash
-    * * * * * php /var/www/html/process/gopay_sync.php >/dev/null 2>&1
-    ```
+
+**Apa fungsinya?**
+- **Di Halaman Pembeli (Otomatis & Real-Time)**: Saat pembeli sedang membuka halaman QRIS di HP-nya, sistem otomatis memeriksa mutasi GoPay setiap interval ~5 detik (*Smart On-Demand Sync*). Begitu dana masuk, voucher langsung terbit di layar seketika tanpa perlu cron!
+- **Background Cron (Jaring Pengaman Jika Pembeli Menutup Browser)**: Jika pembeli membayar lalu langsung menutup browser/HP-nya mati, tidak ada browser yang memicu sync. Di sinilah background cron bertugas mengecek mutasi GoPay di belakang layar setiap menit agar voucher tetap terbuat di MikroTik.
+
+**Cara Memasang di Hosting / VPS:**
+
+1. **Di cPanel Hosting**:
+   - Masuk ke cPanel &gt; cari menu **Cron Jobs**.
+   - Pilih interval **Once Per Minute (`* * * * *`)**.
+   - Pada kolom **Command**, masukkan:
+     ```bash
+     php -q /home/USER_CPANEL_ANDA/public_html/process/gopay_sync.php
+     ```
+   - Atau bisa menggunakan trigger URL (Web Cron):
+     ```bash
+     curl -s "https://domainanda.com/process/gopay_sync.php?api_key=API_KEY_ANDA" >/dev/null 2>&1
+     ```
+
+2. **Di aaPanel / VPS Linux (Ubuntu / Debian)**:
+   - Di aaPanel: Buka menu **Cron** &gt; Type of Task: **Shell Script** &gt; Execution cycle: **Every 1 Minute** &gt; Script Content:
+     ```bash
+     php /www/wwwroot/domainanda.com/process/gopay_sync.php >/dev/null 2>&1
+     ```
+   - Di Terminal SSH: Ketik `crontab -e`, lalu tambahkan baris berikut di paling bawah:
+     ```bash
+     * * * * * php /var/www/html/process/gopay_sync.php >/dev/null 2>&1
+     ```
+
+3. **Di Komputer Windows Lokal (Mikhmon Server bawaan)**:
+   - Buka **Task Scheduler** &gt; Create Basic Task &gt; Trigger: Daily/Repeating &gt; Action: Start a Program:
+     - Program: `"D:\mikhmonv3ws\Mikhmon Server\php\m-php.exe"`
+     - Argument: `"D:\mikhmonv3ws\Mikhmon Server\mikhmon\process\gopay_sync.php"`
 
 > [!NOTE]
 > **Privasi & Keamanan Git**: Token sesi, kredensial router, nomor HP, dan log mutasi GoPay Anda disimpan di dalam berkas lokal `data/database.php` dan `data/gopay_processed.json` yang telah dimasukkan ke dalam `.gitignore`. Data sensitif Anda aman dan **TIDAK AKAN PERNAH** terunggah ke repositori Git publik.
