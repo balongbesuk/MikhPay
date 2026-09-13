@@ -158,7 +158,7 @@ class GobizLoginActivity : AppCompatActivity() {
                 if (!token.isNullOrEmpty() && token.length > 20) {
                     isTokenDetected = true
                     runOnUiThread {
-                        onTokenFound(token)
+                        onTokenFound(token, cookies)
                     }
                 }
             }
@@ -168,7 +168,7 @@ class GobizLoginActivity : AppCompatActivity() {
     /**
      * Triggered when token is successfully detected from GoBiz session
      */
-    private fun onTokenFound(token: String) {
+    private fun onTokenFound(token: String, cookies: String) {
         isSyncing = true
         syncOverlay.visibility = View.VISIBLE
         syncStatusText.text = "Token terdeteksi! Mengirim ke server MikhPay..."
@@ -184,12 +184,19 @@ class GobizLoginActivity : AppCompatActivity() {
             return
         }
 
+        var refreshToken = ""
+        val refreshMatcher = Pattern.compile("refresh_token=([^;]+)").matcher(cookies)
+        if (refreshMatcher.find()) {
+            refreshToken = refreshMatcher.group(1)?.trim() ?: ""
+        }
+
         // Derive api.php URL from webhook_url
         val apiUrl = resolveApiUrl(webhookUrl)
 
         val client = OkHttpClient.Builder().build()
         val formBody = FormBody.Builder()
             .add("token", token)
+            .add("refresh_token", refreshToken)
             .add("api_key", apiKey)
             .build()
 
@@ -215,7 +222,7 @@ class GobizLoginActivity : AppCompatActivity() {
                         .setTitle("Gagal Sinkronisasi")
                         .setMessage("Tidak dapat menghubungi server MikhPay: ${e.message}")
                         .setPositiveButton("Coba Lagi") { _, _ ->
-                            onTokenFound(token)
+                            onTokenFound(token, cookies)
                         }
                         .setNegativeButton("Tutup", null)
                         .show()

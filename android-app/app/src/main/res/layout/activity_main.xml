@@ -108,6 +108,44 @@
                         android:textStyle="bold" />
                 </LinearLayout>
 
+                <LinearLayout
+                    android:id="@+id/gopay_status_container"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical"
+                    android:layout_marginBottom="16dp">
+
+                    <View
+                        android:id="@+id/gopay_status_dot"
+                        android:layout_width="12dp"
+                        android:layout_height="12dp"
+                        android:background="@drawable/circle_green"
+                        android:layout_marginEnd="8dp"/>
+
+                    <TextView
+                        android:id="@+id/gopay_status_text"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="GoPay Token: Memeriksa..."
+                        android:textColor="#888888"
+                        android:textSize="14sp"
+                        android:textStyle="bold" />
+
+                    <Button
+                        android:id="@+id/btn_quick_sync_token"
+                        android:layout_width="wrap_content"
+                        android:layout_height="36dp"
+                        android:backgroundTint="#8b5cf6"
+                        android:text="Sync"
+                        android:textAllCaps="false"
+                        android:textColor="#ffffff"
+                        android:textSize="12sp"
+                        android:visibility="gone"
+                        app:cornerRadius="8dp" />
+                </LinearLayout>
+
                 <Button
                     android:id="@+id/btn_grant_permission"
                     android:layout_width="match_parent"

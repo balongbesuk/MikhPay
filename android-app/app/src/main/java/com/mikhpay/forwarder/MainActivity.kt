@@ -32,9 +32,10 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnSave: Button
     private lateinit var btnTest: Button
     private lateinit var logsContainer: android.widget.LinearLayout
-    private lateinit var btnSimulateNotif: Button
-    private lateinit var btnClearLogs: Button
     private lateinit var btnGobizLogin: Button
+    private lateinit var gopayStatusDot: View
+    private lateinit var gopayStatusText: TextView
+    private lateinit var btnQuickSyncToken: Button
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState);
@@ -57,6 +58,13 @@ class MainActivity : AppCompatActivity() {
         btnSimulateNotif = findViewById(R.id.btn_simulate_notif)
         btnClearLogs = findViewById(R.id.btn_clear_logs)
         btnGobizLogin = findViewById(R.id.btn_gobiz_login)
+        gopayStatusDot = findViewById(R.id.gopay_status_dot)
+        gopayStatusText = findViewById(R.id.gopay_status_text)
+        btnQuickSyncToken = findViewById(R.id.btn_quick_sync_token)
+
+        btnQuickSyncToken.setOnClickListener {
+            btnGobizLogin.performClick()
+        }
 
         // Request POST_NOTIFICATIONS runtime permission on Android 13+
         if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
@@ -176,6 +184,7 @@ class MainActivity : AppCompatActivity() {
         super.onResume()
         updatePermissionStatus()
         updateBatteryStatus()
+        checkGopayTokenStatus()
         populateLogs()
     }
 
@@ -363,5 +372,90 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             e.printStackTrace()
         }
+    }
+
+    private fun checkGopayTokenStatus() {
+        val sharedPref = getSharedPreferences("MikhPaySettings", Context.MODE_PRIVATE)
+        val webhookUrl = sharedPref.getString("webhook_url", "") ?: ""
+        val apiKey = sharedPref.getString("api_key", "") ?: ""
+
+        if (webhookUrl.isEmpty()) {
+            gopayStatusDot.setBackgroundResource(R.drawable.circle_red)
+            gopayStatusText.text = "GoPay Token: Webhook URL belum diatur"
+            gopayStatusText.setTextColor(android.graphics.Color.parseColor("#888888"))
+            btnQuickSyncToken.visibility = View.GONE
+            return
+        }
+
+        val trimmed = webhookUrl.trim()
+        val base = when {
+            trimmed.contains("qris_verify.php") -> trimmed.replace("qris_verify.php", "api.php")
+            trimmed.endsWith("/") -> "${trimmed}api.php"
+            else -> {
+                val lastSlash = trimmed.lastIndexOf('/')
+                if (lastSlash != -1 && trimmed.substring(lastSlash).contains(".php")) {
+                    "${trimmed.substring(0, lastSlash)}/api.php"
+                } else {
+                    "$trimmed/api.php"
+                }
+            }
+        }
+        val statusUrl = if (base.contains("?")) {
+            "$base&action=gopay_status&api_key=${java.net.URLEncoder.encode(apiKey, "UTF-8")}"
+        } else {
+            "$base?action=gopay_status&api_key=${java.net.URLEncoder.encode(apiKey, "UTF-8")}"
+        }
+
+        val client = OkHttpClient.Builder().build()
+        val request = Request.Builder()
+            .url(statusUrl)
+            .addHeader("X-API-Key", apiKey)
+            .get()
+            .build()
+
+        client.newCall(request).enqueue(object : Callback {
+            override fun onFailure(call: Call, e: IOException) {
+                runOnUiThread {
+                    gopayStatusDot.setBackgroundResource(R.drawable.circle_red)
+                    gopayStatusText.text = "GoPay Token: Server Offline"
+                    gopayStatusText.setTextColor(android.graphics.Color.parseColor("#888888"))
+                    btnQuickSyncToken.visibility = View.GONE
+                }
+            }
+
+            override fun onResponse(call: Call, response: Response) {
+                val respBody = response.body?.string() ?: ""
+                runOnUiThread {
+                    if (response.isSuccessful) {
+                        try {
+                            val json = JSONObject(respBody)
+                            val isConnected = json.optBoolean("is_connected", false)
+                            val tokenStatus = json.optString("token_status", "active")
+                            val merchantName = json.optString("merchant_name", "")
+
+                            if (!isConnected) {
+                                gopayStatusDot.setBackgroundResource(R.drawable.circle_red)
+                                gopayStatusText.text = "GoPay Token: Belum Terhubung"
+                                gopayStatusText.setTextColor(android.graphics.Color.parseColor("#ef4444"))
+                                btnQuickSyncToken.visibility = View.VISIBLE
+                            } else if (tokenStatus == "expired") {
+                                gopayStatusDot.setBackgroundResource(R.drawable.circle_red)
+                                gopayStatusText.text = "GoPay Token: Kedaluwarsa! (Perlu Sync)"
+                                gopayStatusText.setTextColor(android.graphics.Color.parseColor("#ef4444"))
+                                btnQuickSyncToken.visibility = View.VISIBLE
+                            } else {
+                                gopayStatusDot.setBackgroundResource(R.drawable.circle_green)
+                                val label = if (merchantName.isNotEmpty()) "GoPay Token: Aktif ($merchantName)" else "GoPay Token: Aktif"
+                                gopayStatusText.text = label
+                                gopayStatusText.setTextColor(android.graphics.Color.parseColor("#10b981"))
+                                btnQuickSyncToken.visibility = View.GONE
+                            }
+                        } catch (e: Exception) {
+                            // ignore parse errors
+                        }
+                    }
+                }
+            }
+        })
     }
 }

@@ -43,8 +43,11 @@ class GoPayMerchantService {
             }
         }
 
+        $tokenStatus = $this->settings->get('gopay_token_status', 'active');
+
         return [
             'is_connected' => !empty($token),
+            'token_status' => $tokenStatus,
             'phone' => $phone,
             'enabled' => $enabled,
             'merchant_name' => $merchantName,
@@ -280,6 +283,7 @@ class GoPayMerchantService {
         }
         $this->settings->set('gopay_auth_mode', 'manual_token');
         $this->settings->set('gopay_sync_enabled', true);
+        $this->settings->set('gopay_token_status', 'active');
 
         // Auto-deteksi merchant jika belum diisi manual
         $mInfo = $this->getMerchantDetails($cleanToken);
@@ -365,6 +369,12 @@ class GoPayMerchantService {
         }
 
         if ($resp['code'] === 401 || (isset($resp['data']['code']) && $resp['data']['code'] == 401)) {
+            static $retriedMerchant = false;
+            if (!$retriedMerchant && $this->tryRefreshAccessToken()) {
+                $retriedMerchant = true;
+                $newToken = $this->settings->get('gopay_access_token', '');
+                return $this->getMerchantDetails($newToken);
+            }
             $this->notifyTokenExpired();
         }
 
@@ -372,9 +382,70 @@ class GoPayMerchantService {
     }
 
     /**
+     * Coba perbarui token sesi GoPay secara otomatis di background menggunakan refresh_token
+     */
+    public function tryRefreshAccessToken() {
+        $refreshToken = $this->settings->get('gopay_refresh_token', '');
+        if (empty($refreshToken)) {
+            return false;
+        }
+
+        $uniqueId = $this->getUniqueId();
+        $payload = [
+            'client_id' => 'go-biz-web-dashboard',
+            'grant_type' => 'refresh_token',
+            'data' => [
+                'refresh_token' => $refreshToken
+            ]
+        ];
+
+        $headers = [
+            'Content-Type: application/json',
+            'Accept: application/json',
+            'X-AppVersion: platform-v3.107.0-94ce5d57',
+            'X-Platform: Web',
+            'X-User-Type: merchant',
+            'x-appId: go-biz-web-dashboard',
+            'x-uniqueid: ' . $uniqueId,
+            'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36'
+        ];
+
+        $resp = $this->makeHttpRequest('https://api.gojekapi.com/v3/auth/token', 'POST', $payload, $headers);
+        if ($resp['success'] && !empty($resp['data'])) {
+            $data = $resp['data'];
+            $newAccess = '';
+            $newRefresh = '';
+
+            if (isset($data['data']['access_token'])) {
+                $newAccess = $data['data']['access_token'];
+                $newRefresh = isset($data['data']['refresh_token']) ? $data['data']['refresh_token'] : '';
+            } elseif (isset($data['access_token'])) {
+                $newAccess = $data['access_token'];
+                $newRefresh = isset($data['refresh_token']) ? $data['refresh_token'] : '';
+            }
+
+            if (!empty($newAccess)) {
+                $this->settings->set('gopay_access_token', $newAccess);
+                if (!empty($newRefresh)) {
+                    $this->settings->set('gopay_refresh_token', $newRefresh);
+                }
+                $this->settings->set('gopay_token_status', 'active');
+                if (function_exists('writeAppLog')) {
+                    writeAppLog('GOPAY_AUTH', 'Silent Auto-Refresh Token GoPay sukses diperbarui di background.');
+                }
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
      * Kirim notifikasi Telegram jika masa aktif token GoPay telah habis
      */
     public function notifyTokenExpired() {
+        $this->settings->set('gopay_token_status', 'expired');
+
         if (!function_exists('sendTelegramNotification')) {
             @include_once dirname(__FILE__) . '/../../include/env_config.php';
         }
@@ -555,11 +626,17 @@ class GoPayMerchantService {
         }
 
         if ($resp['code'] === 401 || (isset($resp['data']['code']) && $resp['data']['code'] == 401)) {
+            static $retriedTx = false;
+            if (!$retriedTx && $this->tryRefreshAccessToken()) {
+                $retriedTx = true;
+                $newToken = $this->settings->get('gopay_access_token', '');
+                return $this->fetchTransactionsFromApi($newToken, $limit);
+            }
             $this->notifyTokenExpired();
             return [
                 'success' => false,
                 'code' => 401,
-                'message' => 'Token sesi GoPay telah kedaluwarsa (HTTP 401). Silakan perbarui token di menu GoPay Merchant.',
+                'message' => 'Token sesi GoPay telah kedaluwarsa (HTTP 401). Silakan perbarui token di menu GoPay Merchant atau via aplikasi Android.',
                 'transactions' => []
             ];
         }

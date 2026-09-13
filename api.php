@@ -125,6 +125,22 @@ if (!$isValidApiKey) {
 // Aksi khusus pengelolaan token GoPay (tidak memerlukan koneksi router MikroTik)
 $action = isset($_REQUEST['action']) ? $_REQUEST['action'] : '';
 
+if ($action === 'gopay_status') {
+    include_once(__DIR__ . '/include/autoload.php');
+    $gopaySvc = new \App\Services\GoPayMerchantService();
+    $status = $gopaySvc->getStatus();
+    
+    echo json_encode([
+        'status' => 'success',
+        'is_connected' => $status['is_connected'],
+        'token_status' => isset($status['token_status']) ? $status['token_status'] : 'active',
+        'merchant_name' => $status['merchant_name'],
+        'merchant_id' => $status['merchant_id'],
+        'last_sync' => $status['last_sync']
+    ]);
+    exit;
+}
+
 if ($action === 'update_gopay_token') {
     include_once(__DIR__ . '/include/autoload.php');
     
@@ -135,6 +151,12 @@ if ($action === 'update_gopay_token') {
             ? trim($inputBody['token']) 
             : (isset($_GET['token']) ? trim($_GET['token']) : ''));
             
+    $refreshToken = isset($_POST['refresh_token']) 
+        ? trim($_POST['refresh_token']) 
+        : (isset($inputBody['refresh_token']) 
+            ? trim($inputBody['refresh_token']) 
+            : (isset($_GET['refresh_token']) ? trim($_GET['refresh_token']) : ''));
+
     $phone = isset($_POST['phone']) 
         ? trim($_POST['phone']) 
         : (isset($inputBody['phone']) ? trim($inputBody['phone']) : '');
@@ -153,6 +175,10 @@ if ($action === 'update_gopay_token') {
     $res = $gopaySvc->saveManualToken($token, $phone, $merchantId);
     
     $settings = new \App\Models\AppSettings();
+    if (!empty($refreshToken)) {
+        $settings->set('gopay_refresh_token', $refreshToken);
+    }
+    
     http_response_code($res['success'] ? 200 : 400);
     echo json_encode([
         'status' => $res['success'] ? 'success' : 'error',
