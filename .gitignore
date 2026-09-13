@@ -6,6 +6,11 @@
 /data/rate_limit.json
 /data/profile_cache_*.json
 /data/login_rate_limit.json
+/data/gopay_processed.json
+/data/*.zip
+/data/*.tar
+.user.ini
+
 
 
 # Ignore customer transaction log files

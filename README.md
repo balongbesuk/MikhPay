@@ -98,6 +98,65 @@ Kredensial MikroTik, nama sesi, IP, user, password, dan dnsname diatur secara ot
 
 ---
 
+## 💳 Sistem Verifikasi Pembayaran QRIS (2 Opsi Fleksibel & Hybrid)
+
+MikhPay v3.0 memperkenalkan arsitektur verifikasi pembayaran ganda yang fleksibel. Anda bebas memilih metode verifikasi yang paling sesuai dengan kebutuhan infrastruktur hotspot Anda:
+
+| Fitur / Perbandingan | Opsi 1: Notif Forwarder (Android) | Opsi 2: GoPay Merchant Direct API |
+| :--- | :--- | :--- |
+| **Kebutuhan Perangkat** | Membutuhkan HP Android menyala | **100% Tanpa HP** (Cukup Web Server) |
+| **Kecepatan Respon** | Instan (< 2 detik via Push Notif) | 3 - 5 detik (On-demand polling) |
+| **Ketergantungan Baterai** | Tergantung baterai & sinyal HP | Bebas dari masalah baterai HP tertidur |
+| **Metode Kerja** | Event-driven webhook (`qris_verify.php`) | Polling mutasi jurnal GoBiz resmi |
+| **Biaya Gateway** | **0% (Gratis)** | **0% (Gratis)** |
+
+> [!TIP]
+> **Mode Hybrid (Direkomendasikan)**: Anda dapat mengaktifkan **kedua opsi sekaligus**. Aplikasi HP Forwarder bertindak sebagai jalur kilat instan, sementara API GoPay bertindak sebagai *safety net* otomatis jika notifikasi di HP Anda tertunda. Proteksi kunci transaksi memastikan voucher tidak akan pernah terbit ganda.
+
+---
+
+### 🔑 Panduan Memasang Token GoPay Merchant (Opsi 2: Tanpa HP)
+
+Untuk mengaktifkan pembacaan mutasi otomatis langsung dari server tanpa membutuhkan HP Android:
+
+#### Langkah 1: Ambil Token Sesi dari Portal GoBiz Web
+1. Buka peramban komputer (Google Chrome / Edge / Firefox) dan kunjungi portal resmi:  
+   👉 **https://portal.gofoodmerchant.co.id/** atau **https://app.gobiz.co.id/**
+2. Masuk (Login) menggunakan akun GoPay Merchant / GoBiz Anda.
+3. Buka menu **Developer Tools**:
+   - Tekan tombol **`F12`** di keyboard, atau klik kanan di mana saja lalu pilih **Inspect (Periksa)**.
+4. Salin Token Sesi:
+   - Masuk ke tab **Application** (pada Google Chrome) atau tab **Storage** (pada Firefox).
+   - Di panel sebelah kiri, buka menu **Cookies** &gt; pilih `https://portal.gofoodmerchant.co.id`.
+   - Cari baris cookie bernama **`access_token`**. Klik dua kali nilainya, lalu salin (**Copy**) teks token tersebut (diawali dengan `eyJhbGciOi...`).
+   *(Alternatif: Anda juga bisa menyalin seluruh nilai header `Cookie` dari salah satu request di tab **Network**)*.
+
+#### Langkah 2: Masukkan Token ke MikhPay
+1. Buka Web Admin Panel MikhPay Anda di browser: `http://localhost/admin.php`.
+2. Buka menu dropdown **MikhPay Billing** &gt; pilih **GoPay Merchant**.
+3. Gulir ke bagian **Metode 2: Input Bearer Token Manual**.
+4. Tempelkan (*paste*) token atau string cookie yang telah Anda salin tadi ke kolom **Bearer Token / Cookie Sesi**.
+5. Klik tombol **Simpan & Uji Token**.
+
+Sistem akan otomatis menghubungi server GoBiz, memvalidasi sesi, mendeteksi nama toko Anda (contoh: *Toko Anda - ID: G123456789*), dan mengaktifkan fitur auto-sync.
+
+#### Langkah 3: Otomatisasi 24 Jam di Server (Background Cron)
+- **Di Halaman Pembeli (Otomatis & Real-Time)**: Sistem sudah dilengkapi *Smart On-Demand Sync*. Ketika pembeli sedang berada di halaman QRIS, sistem langsung memicu pengecekan mutasi GoPay setiap interval cooldown (~5 detik). Begitu pembeli membayar, voucher otomatis terbit dan tampil seketika di layar tanpa menunggu reload!
+- **Background Worker 24 Jam (Untuk Pembeli yang Menutup Browser)**: Agar transaksi pembeli yang keluar/menutup browser tetap diverifikasi di latar belakang, daftarkan perintah sync berikut ke scheduler:
+  - **Windows (Task Scheduler / Command Prompt)**:
+    ```cmd
+    "D:\mikhmonv3ws\Mikhmon Server\php\m-php.exe" "D:\mikhmonv3ws\Mikhmon Server\mikhmon\process\gopay_sync.php"
+    ```
+  - **Linux / VPS (Crontab)**:
+    ```bash
+    * * * * * php /var/www/html/process/gopay_sync.php >/dev/null 2>&1
+    ```
+
+> [!NOTE]
+> **Privasi & Keamanan Git**: Token sesi, kredensial router, nomor HP, dan log mutasi GoPay Anda disimpan di dalam berkas lokal `data/database.php` dan `data/gopay_processed.json` yang telah dimasukkan ke dalam `.gitignore`. Data sensitif Anda aman dan **TIDAK AKAN PERNAH** terunggah ke repositori Git publik.
+
+---
+
 ## 📱 Aplikasi Android MikhPay-Forwarder (Alternatif Lebih Praktis)
 
 Sebagai alternatif pengganti MacroDroid yang lebih mudah dikonfigurasi, andal, dan ramah baterai, Anda dapat menggunakan aplikasi Android bawaan **MikhPay-Forwarder** yang berada di dalam repositori ini pada folder [android-app/](android-app/).

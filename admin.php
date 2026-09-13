@@ -80,10 +80,14 @@ if ($_SESSION['theme'] == "") {
     $themecolor = $_SESSION['themecolor'];
 }
 
+// Load essential dependencies for early PRG processing
+include_once('./include/config.php');
+include_once('./include/env_config.php');
+include_once('./include/autoload.php');
+
 // PRG: Intercept save_settings POST before any HTML output
 // so accent color changes take effect immediately on redirect
 if ($id == 'pending-transactions' && isset($_POST['action']) && $_POST['action'] === 'save_settings' && isset($_SESSION['mikhmon'])) {
-    include_once('./include/autoload.php');
     $earlySettings = new \App\Models\AppSettings();
     $earlySettings->set('telegram_bot_token', isset($_POST['telegram_bot_token']) ? trim($_POST['telegram_bot_token']) : '');
     $earlySettings->set('telegram_chat_id', isset($_POST['telegram_chat_id']) ? trim($_POST['telegram_chat_id']) : '');
@@ -98,6 +102,64 @@ if ($id == 'pending-transactions' && isset($_POST['action']) && $_POST['action']
     $earlySettings->set('portal_operational_hours', isset($_POST['portal_operational_hours']) ? trim($_POST['portal_operational_hours']) : '');
     $_SESSION['mikhtrans_success_msg'] = 'Sukses! Pengaturan MikhPay berhasil disimpan.';
     header('Location: ./admin.php?id=pending-transactions&tab=tab-settings');
+    exit;
+}
+
+// PRG: Intercept gopay_* POST actions before any HTML output
+if ($id == 'pending-transactions' && isset($_POST['action']) && strpos($_POST['action'], 'gopay_') === 0 && isset($_SESSION['mikhmon'])) {
+    include_once('./include/csrf.php');
+    csrf_verify();
+    
+    try {
+        $gopaySvc = new \App\Services\GoPayMerchantService();
+
+        if ($_POST['action'] === 'gopay_request_otp') {
+            $phone = isset($_POST['phone']) ? trim($_POST['phone']) : '';
+            $res = $gopaySvc->requestOtp($phone);
+            if ($res['success']) {
+                $_SESSION['mikhtrans_success_msg'] = $res['message'];
+            } else {
+                $_SESSION['mikhtrans_error_msg'] = $res['message'];
+            }
+        } elseif ($_POST['action'] === 'gopay_verify_otp') {
+            $otp = isset($_POST['otp']) ? trim($_POST['otp']) : '';
+            $otpToken = isset($_POST['otp_token']) ? trim($_POST['otp_token']) : '';
+            $res = $gopaySvc->verifyOtp($otp, $otpToken);
+            if ($res['success']) {
+                $_SESSION['mikhtrans_success_msg'] = $res['message'];
+            } else {
+                $_SESSION['mikhtrans_error_msg'] = $res['message'];
+            }
+        } elseif ($_POST['action'] === 'gopay_save_manual_token') {
+            $token = isset($_POST['token']) ? trim($_POST['token']) : '';
+            $phone = isset($_POST['phone']) ? trim($_POST['phone']) : '';
+            $res = $gopaySvc->saveManualToken($token, $phone);
+            if ($res['success']) {
+                $_SESSION['mikhtrans_success_msg'] = $res['message'];
+            } else {
+                $_SESSION['mikhtrans_error_msg'] = $res['message'];
+            }
+        } elseif ($_POST['action'] === 'gopay_disconnect') {
+            $res = $gopaySvc->disconnect();
+            $_SESSION['mikhtrans_success_msg'] = $res['message'];
+        } elseif ($_POST['action'] === 'gopay_update_sync') {
+            $enabled = isset($_POST['gopay_sync_enabled']);
+            $interval = isset($_POST['gopay_sync_interval']) ? (int)$_POST['gopay_sync_interval'] : 30;
+            $gopaySvc->updateSyncSettings($enabled, $interval);
+            $_SESSION['mikhtrans_success_msg'] = 'Pengaturan Auto-Sync GoPay berhasil diperbarui.';
+        } elseif ($_POST['action'] === 'gopay_sync_now') {
+            $res = $gopaySvc->syncPendingOrders();
+            if ($res['success']) {
+                $_SESSION['mikhtrans_success_msg'] = $res['message'];
+            } else {
+                $_SESSION['mikhtrans_error_msg'] = $res['message'];
+            }
+        }
+    } catch (\Throwable $e) {
+        $_SESSION['mikhtrans_error_msg'] = 'Gagal memproses aksi GoPay: ' . $e->getMessage();
+    }
+
+    header('Location: ./admin.php?id=pending-transactions&tab=tab-gopay');
     exit;
 }
 

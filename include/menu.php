@@ -223,6 +223,7 @@ if($idleto != "disable"){
     <a href="./admin.php?id=pending-transactions&tab=tab-analytics" class="<?= ($id == 'pending-transactions' && $_GET['tab'] == 'tab-analytics') ? 'active' : ''; ?>"><i class="fa fa-line-chart"></i> <?= ($langid == 'id') ? 'Analitik Penjualan' : 'Sales Analytics' ?></a>
     <a href="./admin.php?id=pending-transactions&tab=tab-history" class="<?= ($id == 'pending-transactions' && $_GET['tab'] == 'tab-history') ? 'active' : ''; ?>"><i class="fa fa-history"></i> <?= ($langid == 'id') ? 'Riwayat Transaksi' : 'Transaction History' ?></a>
     <a href="./admin.php?id=pending-transactions&tab=tab-logs" class="<?= ($id == 'pending-transactions' && $_GET['tab'] == 'tab-logs') ? 'active' : ''; ?>"><i class="fa fa-terminal"></i> Log Aktivitas</a>
+    <a href="./admin.php?id=pending-transactions&tab=tab-gopay" class="<?= ($id == 'pending-transactions' && $_GET['tab'] == 'tab-gopay') ? 'active' : ''; ?>"><i class="fa fa-qrcode"></i> GoPay Merchant</a>
     <a href="./admin.php?id=pending-transactions&tab=tab-settings" class="<?= ($id == 'pending-transactions' && $_GET['tab'] == 'tab-settings') ? 'active' : ''; ?>"><i class="fa fa-sliders"></i> <?= ($langid == 'id') ? 'Pengaturan & Backup' : 'Settings & Backup' ?></a>
   </div>
   <a href="./admin.php?id=settings&router=new-<?= rand(1111,9999) ?>" class="menu <?= $snsettings ?>"><i class="fa fa-plus"></i> <?= $_add_router ?></a>

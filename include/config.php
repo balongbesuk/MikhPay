@@ -1,5 +1,5 @@
 <?php
-if(substr($_SERVER["REQUEST_URI"], -10) == "config.php"){header("Location:./");};
+if(isset($_SERVER["REQUEST_URI"]) && substr($_SERVER["REQUEST_URI"], -10) == "config.php"){header("Location:./");};
 
 // Load autoloader fallback
 require_once dirname(__FILE__) . '/autoload.php';

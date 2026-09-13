@@ -53,10 +53,11 @@ if (!file_exists(__DIR__ . '/include/config.php')) {
 }
 include_once(__DIR__ . '/include/config.php');
 include_once(__DIR__ . '/include/env_config.php');
+include_once(__DIR__ . '/include/autoload.php');
 include_once(__DIR__ . '/include/csrf.php');
 
 // Handle AJAX contact form submission
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'submit_contact') {
+if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'submit_contact') {
     header('Content-Type: application/json');
     
     // CSRF verification
@@ -179,6 +180,24 @@ if (isset($_GET['check_order'])) {
     
     if (file_exists($filepath)) {
         $trans = readTransactionFile($filepath);
+
+        // Jika status masih pending dan integrasi GoPay aktif, picu pengecekan langsung ke GoBiz (cooldown 5 detik)
+        if (isset($trans['status']) && $trans['status'] === 'pending') {
+            try {
+                $gopaySettings = new \App\Models\AppSettings();
+                if ($gopaySettings->get('gopay_sync_enabled', false) && !empty($gopaySettings->get('gopay_access_token', ''))) {
+                    $lastSync = (int)$gopaySettings->get('gopay_last_sync', 0);
+                    if ((time() - $lastSync) >= 5) {
+                        $gopaySvc = new \App\Services\GoPayMerchantService();
+                        $gopaySvc->syncPendingOrders();
+                        $trans = readTransactionFile($filepath);
+                    }
+                }
+            } catch (\Throwable $e) {
+                // Abaikan error sementara agar respons polling client tetap lancar
+            }
+        }
+
         if (isset($trans['status']) && $trans['status'] === 'settlement' && !empty($trans['username'])) {
             echo json_encode([
                 'status' => 'success',

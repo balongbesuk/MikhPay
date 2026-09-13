@@ -24,6 +24,21 @@ if (isset($_SESSION['mikhtrans_success_msg'])) {
     $success_msg = $_SESSION['mikhtrans_success_msg'];
     unset($_SESSION['mikhtrans_success_msg']);
 }
+if (isset($_SESSION['mikhtrans_error_msg'])) {
+    $error_msg = $_SESSION['mikhtrans_error_msg'];
+    unset($_SESSION['mikhtrans_error_msg']);
+}
+
+// Inisialisasi GoPay Merchant Service
+$gopayService = new \App\Services\GoPayMerchantService();
+$gopayStatus = $gopayService->getStatus();
+$gopayTransactions = [];
+if ($gopayStatus['is_connected']) {
+    $gopayFetch = $gopayService->getRecentTransactions(10);
+    if ($gopayFetch['success']) {
+        $gopayTransactions = $gopayFetch['transactions'];
+    }
+}
 
 // Helper to generate backup ZIP file
 function createBackupZip() {
@@ -819,6 +834,9 @@ uasort($profileSales, function($a, $b) {
                 <button class="tab-header-btn" onclick="openTab('tab-logs', this)">
                     <i class="fa fa-terminal"></i> Log Aktivitas <span id="wsStatusBadge" style="margin-left: 6px; padding: 2px 6px; border-radius: 4px; font-size: 9px; background: #94a3b8; color: #ffffff;">Mengecek...</span>
                 </button>
+                <button class="tab-header-btn" onclick="openTab('tab-gopay', this)">
+                    <i class="fa fa-qrcode"></i> GoPay Merchant
+                </button>
                 <button class="tab-header-btn" onclick="openTab('tab-settings', this)">
                     <i class="fa fa-sliders"></i> <?= ($langid == 'id') ? 'Pengaturan & Backup' : 'Settings & Backup' ?>
                 </button>
@@ -1142,6 +1160,305 @@ uasort($profileSales, function($a, $b) {
                         <div style="font-size: 11px; color: var(--text-muted); margin-top: 10px; text-align: left;">
                             * Menampilkan 30 aktivitas sistem terbaru. Log aktivitas disinkronkan secara otomatis.
                         </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Panel GoPay Merchant Integration -->
+            <div id="tab-gopay" class="tab-panel">
+                <style>
+                    .gopay-grid {
+                        display: grid !important;
+                        grid-template-columns: 1fr 1fr !important;
+                        gap: 20px !important;
+                        margin-bottom: 24px !important;
+                    }
+                    @media (max-width: 900px) {
+                        .gopay-grid {
+                            grid-template-columns: 1fr !important;
+                        }
+                    }
+                    .gopay-info-card {
+                        background: var(--bg-card, #ffffff);
+                        border: 1px solid var(--border-color);
+                        border-radius: 12px;
+                        padding: 20px;
+                        box-shadow: var(--shadow-card);
+                    }
+                    .gopay-stat-item {
+                        display: flex;
+                        justify-content: space-between;
+                        padding: 10px 0;
+                        border-bottom: 1px dashed var(--border-color);
+                        font-size: 13px;
+                    }
+                    .gopay-stat-item:last-child {
+                        border-bottom: none;
+                    }
+                    .gopay-stat-label {
+                        color: var(--text-muted);
+                        font-weight: 600;
+                    }
+                    .gopay-stat-val {
+                        color: var(--text-main);
+                        font-weight: 700;
+                    }
+                    .gopay-guide-box {
+                        background: rgba(0, 139, 201, 0.06);
+                        border-left: 4px solid var(--primary, #008BC9);
+                        padding: 14px 18px;
+                        border-radius: 0 8px 8px 0;
+                        margin-bottom: 20px;
+                        font-size: 13px;
+                        line-height: 1.6;
+                        color: var(--text-main);
+                    }
+                </style>
+
+                <!-- Header Info & Mode Explanation -->
+                <div class="card" style="margin-bottom: 20px;">
+                    <div class="card-header" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                        <h3 style="margin: 0;"><i class="fa fa-qrcode" style="color: #008BC9;"></i> Integrasi GoPay Merchant (<code>com.gojek.gopaymerchant</code>)</h3>
+                        <?php if ($gopayStatus['is_connected']): ?>
+                            <div class="sync-status connected"><span class="status-dot connected"></span> Terhubung: <?= htmlspecialchars(!empty($gopayStatus['merchant_name']) ? $gopayStatus['merchant_name'] : ($gopayStatus['phone'] ?: 'Manual Sesi')) ?></div>
+                        <?php else: ?>
+                            <div class="sync-status disconnected"><span class="status-dot disconnected"></span> Belum Terhubung</div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="card-body">
+                        <div class="gopay-guide-box">
+                            <strong><i class="fa fa-info-circle"></i> Mode Verifikasi Fleksibel (Hybrid):</strong>
+                            <div style="margin-top: 4px;">
+                                Aplikasi Android <b>MikhPay Forwarder</b> di HP Anda <b>tidak perlu dihapus</b> dan <b>sama sekali tidak membebani server</b> karena hanya mengirim data saat ada transfer masuk. Anda dapat membiarkan Forwarder di HP tetap aktif untuk respon instan (&lt; 2 detik), sementara modul GoPay ini bertindak sebagai <b>safety net</b> yang otomatis menyapu transaksi jika notifikasi di HP Anda macet atau tidak muncul. Sistem MikhPay sudah dilengkapi proteksi kunci transaksi sehingga voucher dijamin tidak akan terbuat dobel.
+                            </div>
+                        </div>
+
+                        <?php if (!$gopayStatus['is_connected']): ?>
+                            <!-- Belum Terhubung: Tampilkan Form Koneksi -->
+                            <div class="gopay-grid">
+                                <!-- Metode 1: Login OTP Otomatis -->
+                                <div class="gopay-info-card">
+                                    <h4 style="margin: 0 0 14px 0; font-size: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa fa-mobile" style="font-size: 20px; color: #10B981;"></i> 
+                                        Metode 1: Login via Nomor HP & OTP
+                                    </h4>
+                                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+                                        Koneksikan langsung ke akun <b>com.gojek.gopaymerchant</b> Anda. Sistem akan meminta kode OTP via SMS atau WhatsApp.
+                                    </p>
+
+                                    <!-- Form Request OTP -->
+                                    <form method="post" action="" style="margin-bottom: 16px;">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="action" value="gopay_request_otp" />
+                                        <div class="form-group" style="margin-bottom: 12px;">
+                                            <label style="font-size: 12px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 6px;">Nomor HP Akun GoPay Merchant:</label>
+                                            <input type="text" name="phone" class="form-control" placeholder="Contoh: 08123456789 atau +628123456789" value="<?= isset($_SESSION['gopay_temp_phone']) ? htmlspecialchars($_SESSION['gopay_temp_phone']) : '' ?>" required style="height: 42px; font-size: 13px;" />
+                                        </div>
+                                        <button type="submit" class="btn bg-blue" style="width: 100%; padding: 10px; font-weight: bold; border-radius: 8px;">
+                                            <i class="fa fa-paper-plane"></i> Kirim Kode OTP
+                                        </button>
+                                    </form>
+
+                                    <?php if (isset($_SESSION['gopay_temp_otp_token'])): ?>
+                                        <!-- Form Verifikasi OTP -->
+                                        <div style="background: rgba(16, 185, 129, 0.08); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 8px; padding: 14px; margin-top: 14px;">
+                                            <div style="font-size: 12px; font-weight: bold; color: #10B981; margin-bottom: 8px;">
+                                                <i class="fa fa-check-circle"></i> OTP Dikirim ke <?= htmlspecialchars($_SESSION['gopay_temp_phone']) ?>
+                                            </div>
+                                            <form method="post" action="">
+                                                <?= csrf_field() ?>
+                                                <input type="hidden" name="action" value="gopay_verify_otp" />
+                                                <input type="hidden" name="otp_token" value="<?= htmlspecialchars($_SESSION['gopay_temp_otp_token']) ?>" />
+                                                <div class="form-group" style="margin-bottom: 12px;">
+                                                    <label style="font-size: 12px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 6px;">Masukkan Kode OTP (4-6 Digit):</label>
+                                                    <input type="text" name="otp" maxlength="8" class="form-control" placeholder="1234" required style="height: 42px; font-size: 16px; font-weight: bold; letter-spacing: 4px; text-align: center;" />
+                                                </div>
+                                                <button type="submit" class="btn bg-green" style="width: 100%; padding: 10px; font-weight: bold; border-radius: 8px;">
+                                                    <i class="fa fa-key"></i> Verifikasi & Hubungkan Akun
+                                                </button>
+                                            </form>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+
+                                <!-- Metode 2: Input Manual Bearer Token -->
+                                <div class="gopay-info-card">
+                                    <h4 style="margin: 0 0 14px 0; font-size: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa fa-shield" style="font-size: 20px; color: #8B5CF6;"></i> 
+                                        Metode 2: Input Token Manual (Bypass Captcha)
+                                    </h4>
+                                    <p style="font-size: 12px; color: var(--text-muted); margin-bottom: 16px;">
+                                        Gunakan metode ini jika server Gojek memicu verifikasi captcha atau Anda telah memiliki Bearer Token sesi dari portal web GoBiz/GoPay.
+                                    </p>
+
+                                    <form method="post" action="">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="action" value="gopay_save_manual_token" />
+                                        <div class="form-group" style="margin-bottom: 12px;">
+                                            <label style="font-size: 12px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 6px;">Bearer Access Token:</label>
+                                            <textarea name="token" rows="3" class="form-control" placeholder="Contoh: eyJhbGciOiJSUzI1NiIs..." required style="font-family: monospace; font-size: 11px; height: auto; padding: 10px;"></textarea>
+                                        </div>
+                                        <div class="form-group" style="margin-bottom: 14px;">
+                                            <label style="font-size: 12px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 6px;">Nomor HP Terdaftar (Opsional):</label>
+                                            <input type="text" name="phone" class="form-control" placeholder="08123456789" style="height: 42px; font-size: 13px;" />
+                                        </div>
+                                        <button type="submit" class="btn bg-grey" style="width: 100%; padding: 10px; font-weight: bold; border-radius: 8px; background: #6366f1; color: #fff;">
+                                            <i class="fa fa-save"></i> Simpan & Uji Token
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        <?php else: ?>
+                            <!-- Sudah Terhubung: Tampilkan Detail & Kontrol -->
+                            <div class="gopay-grid">
+                                <!-- Status Akun & Tombol Aksi -->
+                                <div class="gopay-info-card">
+                                    <h4 style="margin: 0 0 14px 0; font-size: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa fa-check-circle" style="color: #10B981;"></i> Status Akun GoPay Merchant
+                                    </h4>
+                                    <?php if (!empty($gopayStatus['merchant_name'])): ?>
+                                    <div class="gopay-stat-item">
+                                        <span class="gopay-stat-label">Merchant GoBiz:</span>
+                                        <span class="gopay-stat-val" style="font-weight: bold; color: var(--accent);"><?= htmlspecialchars($gopayStatus['merchant_name']) ?> <span style="font-size: 11px; opacity: 0.8;">(<?= htmlspecialchars($gopayStatus['merchant_id']) ?>)</span></span>
+                                    </div>
+                                    <?php endif; ?>
+                                    <div class="gopay-stat-item">
+                                        <span class="gopay-stat-label">Nomor HP Terdaftar:</span>
+                                        <span class="gopay-stat-val"><?= htmlspecialchars($gopayStatus['phone'] ?: 'Manual Token') ?></span>
+                                    </div>
+                                    <div class="gopay-stat-item">
+                                        <span class="gopay-stat-label">Metode Otentikasi:</span>
+                                        <span class="gopay-stat-val"><?= ($gopayStatus['auth_mode'] === 'otp') ? 'Login OTP Otomatis' : 'Manual Bearer Token' ?></span>
+                                    </div>
+                                    <div class="gopay-stat-item">
+                                        <span class="gopay-stat-label">Status Auto-Sync:</span>
+                                        <span class="gopay-stat-val">
+                                            <?= $gopayStatus['enabled'] ? '<span class="badge bg-green">Aktif</span>' : '<span class="badge bg-red">Nonaktif</span>' ?>
+                                        </span>
+                                    </div>
+                                    <div class="gopay-stat-item">
+                                        <span class="gopay-stat-label">Sinkronisasi Terakhir:</span>
+                                        <span class="gopay-stat-val"><?= htmlspecialchars($gopayStatus['last_sync']) ?></span>
+                                    </div>
+                                    <div class="gopay-stat-item">
+                                        <span class="gopay-stat-label">Token Sesi:</span>
+                                        <span class="gopay-stat-val" style="font-family: monospace; font-size: 11px;"><?= htmlspecialchars($gopayStatus['token_preview']) ?></span>
+                                    </div>
+
+                                    <div style="margin-top: 18px; display: flex; gap: 10px; flex-wrap: wrap;">
+                                        <form method="post" action="./admin.php?id=pending-transactions&tab=tab-gopay" style="flex: 1;">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="action" value="gopay_sync_now" />
+                                            <button type="submit" class="btn bg-blue" style="width: 100%; padding: 10px; font-weight: bold; border-radius: 8px;">
+                                                <i class="fa fa-refresh"></i> Cek & Sinkronkan Sekarang
+                                            </button>
+                                        </form>
+                                        <form method="post" action="./admin.php?id=pending-transactions&tab=tab-gopay" onsubmit="return confirm('Yakin ingin memutuskan koneksi akun GoPay Merchant?');">
+                                            <?= csrf_field() ?>
+                                            <input type="hidden" name="action" value="gopay_disconnect" />
+                                            <button type="submit" class="btn bg-red" style="padding: 10px 16px; font-weight: bold; border-radius: 8px;">
+                                                <i class="fa fa-unlink"></i> Putuskan
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+
+                                <!-- Pengaturan Auto-Sync Poller -->
+                                <div class="gopay-info-card">
+                                    <h4 style="margin: 0 0 14px 0; font-size: 15px; color: var(--text-main); display: flex; align-items: center; gap: 8px;">
+                                        <i class="fa fa-sliders" style="color: #008BC9;"></i> Konfigurasi Auto-Sync Background
+                                    </h4>
+                                    <form method="post" action="./admin.php?id=pending-transactions&tab=tab-gopay">
+                                        <?= csrf_field() ?>
+                                        <input type="hidden" name="action" value="gopay_update_sync" />
+                                        
+                                        <div class="form-group" style="margin-bottom: 16px;">
+                                            <label style="display: flex; align-items: center; gap: 10px; font-size: 13px; font-weight: 700; color: var(--text-main); cursor: pointer;">
+                                                <input type="checkbox" name="gopay_sync_enabled" value="1" <?= $gopayStatus['enabled'] ? 'checked' : '' ?> style="width: 18px; height: 18px; cursor: pointer;" />
+                                                Aktifkan Pemeriksaan Mutasi Otomatis (Auto-Sync)
+                                            </label>
+                                            <div style="font-size: 11px; color: var(--text-muted); margin-top: 4px; margin-left: 28px;">
+                                                Secara otomatis mengambil mutasi transaksi terbaru dari GoPay untuk menyelesaikan transaksi pending.
+                                            </div>
+                                        </div>
+
+                                        <div class="form-group" style="margin-bottom: 16px;">
+                                            <label style="font-size: 12px; font-weight: bold; color: var(--text-muted); display: block; margin-bottom: 6px;">Interval Pengecekan (Detik):</label>
+                                            <select name="gopay_sync_interval" class="form-control" style="height: 42px; font-size: 13px;">
+                                                <option value="15" <?= ($gopayStatus['sync_interval'] == 15) ? 'selected' : '' ?>>15 Detik (Sangat Responsif)</option>
+                                                <option value="30" <?= ($gopayStatus['sync_interval'] == 30) ? 'selected' : '' ?>>30 Detik (Direkomendasikan)</option>
+                                                <option value="60" <?= ($gopayStatus['sync_interval'] == 60) ? 'selected' : '' ?>>60 Detik (Hemat Bandwidth)</option>
+                                            </select>
+                                        </div>
+
+                                        <button type="submit" class="btn bg-green" style="width: 100%; padding: 10px; font-weight: bold; border-radius: 8px;">
+                                            <i class="fa fa-save"></i> Simpan Konfigurasi Auto-Sync
+                                        </button>
+                                    </form>
+
+                                    <!-- Panduan Task Scheduler / Cron -->
+                                    <div style="margin-top: 18px; background: rgba(0,0,0,0.03); border-radius: 8px; padding: 12px; font-size: 11px; color: var(--text-muted);">
+                                        <strong><i class="fa fa-terminal"></i> Otomasi 24 Jam via Windows Task Scheduler / Cron:</strong>
+                                        <div style="margin-top: 4px; font-family: monospace; word-break: break-all; background: var(--bg-card); padding: 6px; border-radius: 4px; border: 1px solid var(--border-color);">
+                                            php "<?= str_replace('/', '\\', realpath(__DIR__ . '/../process/gopay_sync.php')) ?>"
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Tabel Mutasi GoPay Terkini -->
+                            <div class="card" style="margin-top: 10px;">
+                                <div class="card-header" style="display: flex; justify-content: space-between; align-items: center;">
+                                    <h3 style="margin: 0;"><i class="fa fa-list"></i> Mutasi Transaksi Terakhir (Live dari GoPay)</h3>
+                                    <span style="font-size: 12px; color: var(--text-muted);">Maks. 10 Transaksi Terbaru</span>
+                                </div>
+                                <div class="card-body">
+                                    <?php if (empty($gopayTransactions)): ?>
+                                        <div style="text-align: center; padding: 30px; color: var(--text-muted); font-size: 13px;">
+                                            <i class="fa fa-inbox" style="font-size: 36px; color: #94a3b8; display: block; margin-bottom: 10px;"></i>
+                                            Belum ada mutasi yang terbaca dari server GoPay atau mutasi kosong.
+                                        </div>
+                                    <?php else: ?>
+                                        <div class="overflow">
+                                            <table class="table table-hover">
+                                                <thead>
+                                                    <tr>
+                                                        <th>Waktu Transaksi</th>
+                                                        <th>ID Transaksi GoPay</th>
+                                                        <th>Keterangan / Pengirim</th>
+                                                        <th style="text-align: center;">Tipe</th>
+                                                        <th style="text-align: center;">Status</th>
+                                                        <th style="text-align: right;">Nominal</th>
+                                                    </tr>
+                                                </thead>
+                                                <tbody>
+                                                    <?php foreach ($gopayTransactions as $gt): ?>
+                                                        <tr>
+                                                            <td><?= htmlspecialchars($gt['time']) ?></td>
+                                                            <td style="font-family: monospace; font-weight: bold; font-size: 12px;"><?= htmlspecialchars($gt['id']) ?></td>
+                                                            <td><?= htmlspecialchars($gt['description']) ?></td>
+                                                            <td style="text-align: center;">
+                                                                <?php if ($gt['type'] === 'credit'): ?>
+                                                                    <span class="badge bg-green">Masuk</span>
+                                                                <?php else: ?>
+                                                                    <span class="badge bg-red">Keluar</span>
+                                                                <?php endif; ?>
+                                                            </td>
+                                                            <td style="text-align: center;">
+                                                                <span class="badge bg-blue"><?= htmlspecialchars($gt['status']) ?></span>
+                                                            </td>
+                                                            <td style="text-align: right; font-weight: bold; font-family: monospace; font-size: 13px; color: <?= ($gt['type'] === 'credit') ? '#10B981' : '#EF4444' ?>;">
+                                                                <?= ($gt['type'] === 'credit' ? '+' : '-') ?> Rp <?= number_format($gt['amount'], 0, ',', '.') ?>
+                                                            </td>
+                                                        </tr>
+                                                    <?php endforeach; ?>
+                                                </tbody>
+                                            </table>
+                                        </div>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        <?php endif; ?>
                     </div>
                 </div>
             </div>

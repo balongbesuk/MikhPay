@@ -2,6 +2,25 @@
 
 Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 
+### [MikhPay v3.0.0] - 2026-09-13
+
+### Ditambahkan
+- **Integrasi Penuh GoPay Merchant Mandiri (GoBiz Engine)**: Modul internal untuk menghubungkan akun GoPay Merchant langsung ke server Mikhmon melalui GoBiz Journals API tanpa mewajibkan aplikasi Notif Forwarder di HP Android.
+- **Dua Opsi Verifikasi Fleksibel (Hybrid Architecture)**:
+  - **Opsi 1: Android MikhPay Forwarder**: Berfungsi via event notifikasi HP resmi untuk respon instan (< 2 detik).
+  - **Opsi 2: GoPay Merchant Direct API Poller**: Berfungsi 100% mandiri di server Mikhmon dengan membaca mutasi jurnal GoBiz secara berkala tanpa membutuhkan HP standby.
+  - **Mode Hybrid**: Kedua metode dapat aktif berdampingan dengan proteksi kunci transaksi (*idempotent file lock*) sehingga voucher dijamin tidak pernah terbit ganda.
+- **Smart On-Demand Verification di Halaman Pembeli (`frontpage.php`)**: Sinkronisasi mutasi real-time otomatis saat pembeli berada di halaman QRIS (cooldown 5 detik), membuat voucher otomatis terbit dan langsung muncul di layar pembeli dalam hitungan detik setelah membayar tanpa wajib menunggu background cron.
+- **Deteksi Otomatis Merchant ID & Nama Toko**: Sistem secara otomatis mengenali nama merchant resmi (contoh: *Toko Anda*) dan ID merchant GoBiz langsung dari token sesi.
+- **Background Worker Cron (`process/gopay_sync.php`)**: Worker mandiri untuk otomatisasi pengecekan 24 jam nonstop via Windows Task Scheduler atau Linux Cron.
+- **Core Engine QRIS Modular (`include/qris_core.php`)**: Logika pemrosesan verifikasi settlement, pembuatan akun hotspot MikroTik, notifikasi Telegram, dan Pusher disatukan ke dalam fungsi modular terpusat `processQrisSettlement()`.
+- **Dashboard Manajemen GoPay Merchant**: Tab antarmuka baru di menu MikhPay Billing lengkap dengan status koneksi, indikator nama toko, kontrol auto-sync, tabel 10 mutasi transaksi live dari server GoPay, dan panduan Task Scheduler.
+
+### Diperbaiki
+- **Pengenalan Status SETTLEMENT**: Menambahkan dukungan pemrosesan status `SETTLEMENT` dan `CAPTURE` dari GoBiz Journals API sehingga pencocokan nominal transaksi pending berjalan akurat 100%.
+- **Proteksi Layar Putih (PRG Error Handling)**: Memperbaiki urutan pemuatan dependensi sistem pada penanganan aksi POST GoPay di `admin.php` dan menyematkan blok proteksi `try-catch (\Throwable $e)` guna mencegah terjadinya blank page.
+
+
 ### [MikhPay v2.0.3] - 2026-07-21
 
 ### Ditambahkan
