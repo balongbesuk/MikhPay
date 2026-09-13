@@ -290,6 +290,9 @@ class GoPayMerchantService {
             $merchantMsg = " Merchant ID manual terpasang: {$merchantId}.";
         }
 
+        // Reset cooldown alert Telegram agar jika nanti expired bisa memberitahu lagi
+        $this->settings->set('gopay_token_alert_sent', 0);
+
         if (function_exists('writeAppLog')) {
             writeAppLog('GOPAY_AUTH', 'Token manual GoPay Merchant berhasil disimpan.' . $merchantMsg);
         }
@@ -361,7 +364,50 @@ class GoPayMerchantService {
             return ['id' => $mId, 'name' => $mName];
         }
 
+        if ($resp['code'] === 401 || (isset($resp['data']['code']) && $resp['data']['code'] == 401)) {
+            $this->notifyTokenExpired();
+        }
+
         return null;
+    }
+
+    /**
+     * Kirim notifikasi Telegram jika masa aktif token GoPay telah habis
+     */
+    public function notifyTokenExpired() {
+        if (!function_exists('sendTelegramNotification')) {
+            @include_once dirname(__FILE__) . '/../../include/env_config.php';
+        }
+
+        $lastAlert = (int)$this->settings->get('gopay_token_alert_sent', 0);
+        // Cooldown 6 jam agar tidak spam notifikasi ke Telegram admin
+        if ((time() - $lastAlert) < 21600) {
+            return false;
+        }
+
+        $merchantName = $this->settings->get('gopay_merchant_name', 'GoPay Merchant');
+        $merchantId = $this->settings->get('gopay_merchant_id', '');
+
+        $message = "⚠️ <b>[MikhPay Alert] Token GoPay Merchant Kedaluwarsa!</b>\n\n"
+            . "Halo Admin, token sesi GoPay Merchant untuk toko <b>" . htmlspecialchars($merchantName) . "</b> "
+            . (!empty($merchantId) ? "(ID: <code>" . htmlspecialchars($merchantId) . "</code>) " : "")
+            . "telah <b>habis masa aktifnya</b> (HTTP 401 Unauthorized).\n\n"
+            . "Pemeriksaan mutasi otomatis sementara terhenti. Silakan login ke portal web GoBiz (<code>portal.gofoodmerchant.co.id</code>) dan perbarui token di menu:\n"
+            . "👉 <b>MikhPay Billing > GoPay Merchant</b>";
+
+        $sent = false;
+        if (function_exists('sendTelegramNotification')) {
+            $sent = sendTelegramNotification($message);
+        }
+
+        if ($sent) {
+            $this->settings->set('gopay_token_alert_sent', time());
+            if (function_exists('writeAppLog')) {
+                writeAppLog('GOPAY_ALERT', 'Peringatan token GoPay kedaluwarsa berhasil dikirimkan ke Telegram Admin.');
+            }
+        }
+
+        return $sent;
     }
 
     /**
@@ -505,6 +551,16 @@ class GoPayMerchantService {
             return [
                 'success' => true,
                 'transactions' => $standardized
+            ];
+        }
+
+        if ($resp['code'] === 401 || (isset($resp['data']['code']) && $resp['data']['code'] == 401)) {
+            $this->notifyTokenExpired();
+            return [
+                'success' => false,
+                'code' => 401,
+                'message' => 'Token sesi GoPay telah kedaluwarsa (HTTP 401). Silakan perbarui token di menu GoPay Merchant.',
+                'transactions' => []
             ];
         }
 
