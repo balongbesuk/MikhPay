@@ -174,10 +174,17 @@ class GobizLoginActivity : AppCompatActivity() {
         val client = OkHttpClient.Builder().build()
         val formBody = FormBody.Builder()
             .add("token", token)
+            .add("api_key", apiKey)
             .build()
 
+        val fullApiUrl = if (apiUrl.contains("?")) {
+            "$apiUrl&api_key=${java.net.URLEncoder.encode(apiKey, "UTF-8")}"
+        } else {
+            "$apiUrl?api_key=${java.net.URLEncoder.encode(apiKey, "UTF-8")}"
+        }
+
         val request = Request.Builder()
-            .url(apiUrl)
+            .url(fullApiUrl)
             .addHeader("X-API-Key", apiKey)
             .post(formBody)
             .build()

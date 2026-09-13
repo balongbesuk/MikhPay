@@ -95,15 +95,28 @@ include_once(__DIR__ . '/include/config.php');
 
 // Verifikasi API Key
 $headers = function_exists('getallheaders') ? getallheaders() : [];
+$inputBodyRaw = @file_get_contents('php://input');
+$inputBodyJson = !empty($inputBodyRaw) ? json_decode($inputBodyRaw, true) : [];
+
 $apiKey = isset($headers['X-API-Key']) 
     ? $headers['X-API-Key'] 
     : (isset($headers['x-api-key']) 
         ? $headers['x-api-key'] 
         : (isset($_SERVER['HTTP_X_API_KEY']) 
             ? $_SERVER['HTTP_X_API_KEY'] 
-            : (isset($_REQUEST['api_key']) ? $_REQUEST['api_key'] : '')));
+            : (isset($_REQUEST['api_key']) 
+                ? $_REQUEST['api_key'] 
+                : (isset($_POST['api_key']) 
+                    ? $_POST['api_key'] 
+                    : (isset($inputBodyJson['api_key']) ? $inputBodyJson['api_key'] : '')))));
 
-if (empty($mikhmon_api_key) || $apiKey !== $mikhmon_api_key) {
+$apiKey = trim((string)$apiKey);
+
+// Validasi: Terima MIKHMON_API_KEY atau QRIS_SECRET_TOKEN
+$isValidApiKey = (!empty($mikhmon_api_key) && $apiKey === $mikhmon_api_key) 
+    || (!empty($qris_secret_token) && $apiKey === $qris_secret_token);
+
+if (!$isValidApiKey) {
     http_response_code(401);
     echo json_encode(['status' => 'error', 'message' => 'Unauthorized. Invalid or missing API Key.']);
     exit;
