@@ -2,6 +2,15 @@
 
 Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 
+### [MikhPay v3.1.0] - 2026-09-19
+
+### Ditambahkan
+- **Silent Auto-Refresh Token GoBiz di Aplikasi Android (Headless WebView)**: Menambahkan modul `GobizTokenManager` pada aplikasi Android MikhPay Forwarder untuk memperbarui token sesi GoBiz secara tersembunyi di background setiap 6 jam sekali. Menggunakan sesi cookie resmi yang tersimpan di Android `CookieManager`, aplikasi secara otomatis menangkap `access_token` baru dan langsung mengunggahnya ke server Mikhmon tanpa meminta login atau OTP ulang kepada pengguna.
+- **Penjadwalan 24/7 Otomatis di Background Service**: `MikhPayListenerService` kini secara berkala memantau umur token dan memicu auto-refresh otomatis di latar belakang saat token berumur ≥ 6 jam, mencegah token kedaluwarsa setelah batas 24 jam.
+- **Indikator & Timestamp Auto-Refresh di UI Android**: Menampilkan riwayat waktu terakhir token berhasil di-refresh otomatis pada kartu status GoPay di `MainActivity` (contoh: `GoPay: Toko Anda (Auto: 19/09 08:00)`).
+- **Auto-Recovery Status Expired di Android**: Saat aplikasi mendeteksi status token kedaluwarsa dari server, aplikasi secara proaktif menjalankan *silent auto-recovery* seketika untuk memulihkan koneksi GoPay.
+- **Penyelarasan Versi 3.1 Web & Android**: Memperbarui nomor versi aplikasi Android (`versionCode 2`, `versionName 3.1`) serta antarmuka web Mikhmon Server (Dashboard, Halaman Login, dan About) ke versi 3.1.
+
 ### [MikhPay v3.0.0] - 2026-09-13
 
 ### Ditambahkan

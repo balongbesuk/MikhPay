@@ -15,6 +15,37 @@ class MikhPayListenerService : NotificationListenerService() {
 
     private val TAG = "MikhPayForwarder"
     private val client = OkHttpClient()
+    private val refreshHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    private val refreshRunnable = object : Runnable {
+        override fun run() {
+            try {
+                Log.d(TAG, "Pengecekan periodik token GoBiz dari MikhPayListenerService...")
+                GobizTokenManager.checkAndSilentRefresh(applicationContext)
+            } catch (e: Exception) {
+                Log.e(TAG, "Error pada periodic GoBiz token refresh: ${e.message}")
+            }
+            // Jadwalkan pengecekan ulang setiap 1 jam (GobizTokenManager akan mengeksekusi jika sudah >= 6 jam)
+            refreshHandler.postDelayed(this, 60 * 60 * 1000L)
+        }
+    }
+
+    override fun onListenerConnected() {
+        super.onListenerConnected()
+        Log.i(TAG, "MikhPay Notification Listener service terhubung.")
+        // Mulai periodic check setelah 15 detik service terhubung
+        refreshHandler.removeCallbacks(refreshRunnable)
+        refreshHandler.postDelayed(refreshRunnable, 15_000L)
+    }
+
+    override fun onListenerDisconnected() {
+        super.onListenerDisconnected()
+        refreshHandler.removeCallbacks(refreshRunnable)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        refreshHandler.removeCallbacks(refreshRunnable)
+    }
 
     override fun onNotificationPosted(sbn: StatusBarNotification) {
         val packageName = sbn.packageName

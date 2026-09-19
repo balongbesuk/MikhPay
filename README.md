@@ -100,7 +100,7 @@ Kredensial MikroTik, nama sesi, IP, user, password, dan dnsname diatur secara ot
 
 ## 💳 Sistem Verifikasi Pembayaran QRIS (2 Opsi Fleksibel & Hybrid)
 
-MikhPay v3.0 memperkenalkan arsitektur verifikasi pembayaran ganda yang fleksibel. Anda bebas memilih metode verifikasi yang paling sesuai dengan kebutuhan infrastruktur hotspot Anda:
+MikhPay v3.1 memperkenalkan arsitektur verifikasi pembayaran ganda yang fleksibel. Anda bebas memilih metode verifikasi yang paling sesuai dengan kebutuhan infrastruktur hotspot Anda:
 
 | Fitur / Perbandingan | Opsi 1: Notif Forwarder (Android) | Opsi 2: GoPay Merchant Direct API |
 | :--- | :--- | :--- |

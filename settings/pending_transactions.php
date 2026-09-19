@@ -801,7 +801,7 @@ uasort($profileSales, function($a, $b) {
                 </div>
                 <div class="dash-welcome-time">
                     <i class="fa fa-credit-card"></i>
-                    <div class="time-date">v3.0</div>
+                    <div class="time-date">v3.1</div>
                 </div>
             </div>
         </div>

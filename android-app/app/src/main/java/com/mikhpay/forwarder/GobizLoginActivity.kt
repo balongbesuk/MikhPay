@@ -242,6 +242,14 @@ class GobizLoginActivity : AppCompatActivity() {
                                 val merchantName = json.optString("merchant_name", "Toko Anda")
                                 val merchantId = json.optString("merchant_id", "")
 
+                                // Update session status for background auto-refresh
+                                with(sharedPref.edit()) {
+                                    putLong(GobizTokenManager.KEY_LAST_REFRESH_TIME, System.currentTimeMillis())
+                                    putBoolean(GobizTokenManager.KEY_GOBIZ_SESSION_ACTIVE, true)
+                                    putString(GobizTokenManager.KEY_LAST_REFRESH_STATUS, "Login manual sukses")
+                                    apply()
+                                }
+
                                 AlertDialog.Builder(this@GobizLoginActivity)
                                     .setTitle("Sinkronisasi Berhasil!")
                                     .setMessage("Akun GoBiz terhubung dengan sukses ke server MikhPay.\n\nMerchant: $merchantName\nID: $merchantId\n\nAuto-Sync di server kini aktif.")

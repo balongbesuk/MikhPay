@@ -147,7 +147,7 @@ if (file_exists($changelogPath)) {
       <div class="about-logo">
         <i class="fa fa-credit-card"></i>
       </div>
-      <h2 style="font-weight: 800; color: var(--text-bright); margin: 0 0 6px 0; letter-spacing: -0.5px;">MikhPay v3.0</h2>
+      <h2 style="font-weight: 800; color: var(--text-bright); margin: 0 0 6px 0; letter-spacing: -0.5px;">MikhPay v3.1</h2>
       <p style="color: var(--text-muted); font-size: 13.5px; line-height: 1.6; margin: 0;">
         Billing Hotspot & Router Manager dengan sistem pembayaran QRIS Dinamis Mandiri. Aplikasi ini merupakan modifikasi modern dari basis MIKHMON v3 untuk mendukung transaksi asinkron bebas biaya gateway admin.
       </p>

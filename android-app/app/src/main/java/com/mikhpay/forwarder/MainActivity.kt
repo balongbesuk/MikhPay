@@ -31,6 +31,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var inputPackageWhitelist: EditText
     private lateinit var btnSave: Button
     private lateinit var btnTest: Button
+    private lateinit var btnSimulateNotif: Button
+    private lateinit var btnClearLogs: Button
     private lateinit var logsContainer: android.widget.LinearLayout
     private lateinit var btnGobizLogin: Button
     private lateinit var gopayStatusDot: View
@@ -186,6 +188,15 @@ class MainActivity : AppCompatActivity() {
         updateBatteryStatus()
         checkGopayTokenStatus()
         populateLogs()
+
+        // Pengecekan otomatis silent refresh jika token sudah > 6 jam
+        GobizTokenManager.checkAndSilentRefresh(this) { success, _ ->
+            if (success) {
+                runOnUiThread {
+                    checkGopayTokenStatus()
+                }
+            }
+        }
     }
 
     private fun updatePermissionStatus() {
@@ -440,12 +451,26 @@ class MainActivity : AppCompatActivity() {
                                 btnQuickSyncToken.visibility = View.VISIBLE
                             } else if (tokenStatus == "expired") {
                                 gopayStatusDot.setBackgroundResource(R.drawable.circle_red)
-                                gopayStatusText.text = "GoPay Token: Kedaluwarsa! (Perlu Sync)"
+                                gopayStatusText.text = "GoPay Token: Kedaluwarsa! Merefresh..."
                                 gopayStatusText.setTextColor(android.graphics.Color.parseColor("#ef4444"))
                                 btnQuickSyncToken.visibility = View.VISIBLE
+
+                                // Coba silent auto-recovery jika sesi cookie di HP masih tersimpan
+                                GobizTokenManager.checkAndSilentRefresh(this@MainActivity, force = true) { success, _ ->
+                                    if (success) {
+                                        runOnUiThread {
+                                            checkGopayTokenStatus()
+                                        }
+                                    }
+                                }
                             } else {
                                 gopayStatusDot.setBackgroundResource(R.drawable.circle_green)
-                                val label = if (merchantName.isNotEmpty()) "GoPay Token: Aktif ($merchantName)" else "GoPay Token: Aktif"
+                                val lastRefresh = sharedPref.getLong(GobizTokenManager.KEY_LAST_REFRESH_TIME, 0L)
+                                val refreshNote = if (lastRefresh > 0) {
+                                    val sdf = java.text.SimpleDateFormat("dd/MM HH:mm", java.util.Locale.getDefault())
+                                    " (Auto: ${sdf.format(java.util.Date(lastRefresh))})"
+                                } else ""
+                                val label = if (merchantName.isNotEmpty()) "GoPay: $merchantName$refreshNote" else "GoPay Token: Aktif$refreshNote"
                                 gopayStatusText.text = label
                                 gopayStatusText.setTextColor(android.graphics.Color.parseColor("#10b981"))
                                 btnQuickSyncToken.visibility = View.GONE
