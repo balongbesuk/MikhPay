@@ -62,21 +62,14 @@ Berikut adalah nama paket aplikasi populer untuk mempermudah konfigurasi whiteli
 
 ## Cara Kompilasi (Build) dari Kode Sumber
 
-Anda dapat meng-compile ulang proyek ini menggunakan **Android Studio** atau melalui Terminal:
+Metode yang paling mudah, aman, dan direkomendasikan untuk meng-compile proyek ini adalah menggunakan **Android Studio**:
 
-### Menggunakan Android Studio
-1. Buka Android Studio.
-2. Pilih **File > Open** lalu arahkan ke direktori folder `android-app/`.
-3. Tunggu hingga proses sinkronisasi Gradle selesai (`BUILD SUCCESSFUL`).
-4. Buka menu **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
-5. Berkas APK hasil kompilasi akan tersimpan di: `app/build/outputs/apk/release/app-release.apk` (atau di folder `release` yang Anda tentukan).
-
-### Menggunakan Command Line (Terminal Windows PowerShell)
-Buka terminal di dalam direktori folder `android-app/` lalu jalankan perintah:
-```powershell
-.\gradlew.bat assembleRelease
-```
-Hasil berkas APK siap pasang akan tersimpan di dalam folder `/app/release/` atau `/app/build/outputs/apk/release/`.
+1. Buka aplikasi **Android Studio**.
+2. Pilih menu **File > Open**, lalu pilih direktori folder `android-app/`.
+3. Tunggu hingga proses sinkronisasi Gradle selesai secara otomatis (*Gradle Sync Finished*).
+4. Buka menu atas: **Build > Build Bundle(s) / APK(s) > Build APK(s)**.
+5. Setelah notifikasi build berhasil muncul di pojok kanan bawah, klik **locate** (atau buka folder `app/build/outputs/apk/release/` atau `app/build/outputs/apk/debug/`).
+6. Berkas APK hasil kompilasi siap dipindahkan dan dipasang ke HP Android Anda.
 
 ---
 
