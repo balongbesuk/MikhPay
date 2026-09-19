@@ -186,6 +186,7 @@ Sebagai alternatif pengganti MacroDroid yang lebih mudah dikonfigurasi, andal, d
 
 ### Fitur Aplikasi Android:
 - **1-Click Login GoBiz & Auto-Sync Token**: Terintegrasi langsung dengan portal web resmi GoBiz via WebView di dalam aplikasi. Cukup login akun GoBiz di aplikasi, token sesi `access_token` otomatis tertangkap dan langsung tersinkronkan ke server MikhPay Anda tanpa perlu DevTools/F12 di PC!
+- **Silent Auto-Refresh Token GoBiz (Anti-Expired 24 Jam)**: Aplikasi secara cerdas memperbarui token GoBiz di latar belakang (*headless WebView*) setiap 6–8 jam sekali dan langsung mengunggah token baru ke server MikhPay tanpa perlu menginput OTP atau login ulang setiap hari!
 - **Konfigurasi Instan**: Hanya perlu mengisi URL Webhook (`https://yourdomain.com/qris_verify.php`) dan Token API Anda.
 - **Sistem Latar Belakang Tangguh**: Menggunakan *NotificationListenerService* bawaan Android yang berjalan 24/7 di latar belakang dengan konsumsi daya sangat rendah.
 - **Mulai Otomatis (Auto-Start on Boot)**: Otomatis aktif kembali di latar belakang saat HP dinyalakan ulang (restart) tanpa intervensi manual.
@@ -270,7 +271,7 @@ Jalankan perintah berikut di **New Terminal** Winbox MikroTik Anda:
 /ip hotspot walled-garden add dst-host=fonts.gstatic.com action=allow
 /ip hotspot walled-garden add dst-host=cdnjs.cloudflare.com action=allow
 ```
-*Ganti `172.16.11.91` pada baris pertama dengan IP/Domain publik hosting portal MikhPay Anda.*
+*Ganti `[ip-atau-domain-mikhpay]` pada baris pertama dengan IP/Domain publik hosting portal MikhPay Anda.*
 
 ### 3. Login Otomatis (Auto-Login)
 Setelah pembayaran lunas, portal MikhPay akan memunculkan tombol **"Hubungkan Sekarang"**. Tombol ini otomatis mengirimkan parameter login langsung ke MikroTik (`http://[dnsname]/login?username=[voucher]&password=[voucher]`) sehingga pengguna langsung terhubung ke internet tanpa perlu mengetik kode voucher secara manual.
@@ -331,5 +332,5 @@ Gunakan header `X-API-Key` atau parameter query `api_key` untuk otentikasi.
 
 ## 📝 Changelog & Riwayat Perubahan
 
-Riwayat pembaruan sistem dan log perbaikan versi lengkap dapat Anda akses secara detail di berkas **changelog.md**.
+Riwayat pembaruan sistem dan log perbaikan versi lengkap dapat Anda akses secara detail di berkas [changelog.md](changelog.md).
 
