@@ -36,7 +36,15 @@ $url = $_SERVER['REQUEST_URI'];
 
 $session = $_GET['session'];
 
-if (!isset($_SESSION["mikhmon"])) {
+$is_portal_request = isset($_GET['check_order'])
+    || isset($_GET['check_router'])
+    || isset($_GET['show_voucher'])
+    || isset($_GET['cancel_order'])
+    || isset($_POST['buy_profile'])
+    || (isset($_POST['action']) && $_POST['action'] === 'submit_contact')
+    || isset($_GET['portal']);
+
+if (!isset($_SESSION["mikhmon"]) || $is_portal_request) {
   include_once(__DIR__ . '/frontpage.php');
   exit;
 } elseif (empty($session)) {
@@ -512,8 +520,8 @@ elseif ($ppp == "edit-profile") {
 </div>
 <script src="./js/highcharts/highcharts.js"></script>
 <script src="./js/highcharts/themes/hc.<?= $theme; ?>.js"></script>
-<script src="./js/mikhmon-ui.<?= $theme; ?>.min.js?t=<?= time(); ?>"></script>
-<script src="./js/mikhmon.js?t=<?= str_replace(" ","_",date("Y-m-d H:i:s")); ?>"></script>
+<script src="./js/mikhmon-ui.<?= $theme; ?>.min.js?v=<?= @filemtime(__DIR__ . '/js/mikhmon-ui.' . $theme . '.min.js') ?: 1 ?>"></script>
+<script src="./js/mikhmon.js?v=<?= @filemtime(__DIR__ . '/js/mikhmon.js') ?: 1 ?>"></script>
 
 <script>
     function setSyncStatus(status) {

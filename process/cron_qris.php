@@ -20,9 +20,15 @@ if (php_sapi_name() !== 'cli') {
     }
 }
 $dir = __DIR__ . '/../voucher/';
-$expiration_time = 10 * 60; // 10 menit
+$expiration_time = 30 * 60; // 30 menit (selaras dengan masa berlaku validasi settlement)
 
 if (is_dir($dir)) {
+    $lockFile = __DIR__ . '/../data/settlement.lock';
+    $lockFp = @fopen($lockFile, 'c+');
+    if ($lockFp) {
+        flock($lockFp, LOCK_EX);
+    }
+
     $files = array_merge(
         glob($dir . 'trans-*.json'),
         glob($dir . 'trans-*.php')
@@ -41,6 +47,11 @@ if (is_dir($dir)) {
                 $deleted_count++;
             }
         }
+    }
+
+    if ($lockFp) {
+        flock($lockFp, LOCK_UN);
+        fclose($lockFp);
     }
     
     if (php_sapi_name() === 'cli' || isset($_GET['debug'])) {

@@ -25,6 +25,7 @@ if (!isset($_SESSION["mikhmon"])) {
 }
 
 // Parse local changelog.md safely to display in the about page
+include_once(__DIR__ . '/version.php');
 $changelogHtml = '';
 $changelogPath = __DIR__ . '/../changelog.md';
 if (file_exists($changelogPath)) {
@@ -147,7 +148,7 @@ if (file_exists($changelogPath)) {
       <div class="about-logo">
         <i class="fa fa-credit-card"></i>
       </div>
-      <h2 style="font-weight: 800; color: var(--text-bright); margin: 0 0 6px 0; letter-spacing: -0.5px;">MikhPay v3.1</h2>
+      <h2 style="font-weight: 800; color: var(--text-bright); margin: 0 0 6px 0; letter-spacing: -0.5px;">MikhPay v<?= htmlspecialchars(defined('MIKHPAY_VERSION_SHORT') ? MIKHPAY_VERSION_SHORT : '3.2', ENT_QUOTES, 'UTF-8') ?></h2>
       <p style="color: var(--text-muted); font-size: 13.5px; line-height: 1.6; margin: 0;">
         Billing Hotspot & Router Manager dengan sistem pembayaran QRIS Dinamis Mandiri. Aplikasi ini merupakan modifikasi modern dari basis MIKHMON v3 untuk mendukung transaksi asinkron bebas biaya gateway admin.
       </p>

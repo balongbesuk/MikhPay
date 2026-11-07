@@ -1,20 +1,29 @@
 # Ignore local server configurations containing MikroTik and QRIS credentials
 .env
+.env.*
 .env.php
 /data/database.json
 /data/database.php
+/data/database.php.*
 /data/rate_limit.json
+/data/rate_limit_*.json
 /data/profile_cache_*.json
 /data/login_rate_limit.json
 /data/gopay_processed.json
+/data/gopay_processed.php
+/data/*.lock
+/data/*.tmp
 /data/*.zip
 /data/*.tar
 .user.ini
 
-
-
-# Ignore customer transaction log files
+# Ignore customer transaction and activity log files
 /voucher/trans-*.json
+/voucher/trans-*.php
+/voucher/activity_logs.json
+/voucher/activity_logs.php
+/voucher/*.lock
+/voucher/*.tmp
 
 # Ignore server error logs and temporary OS files
 error_log
@@ -25,14 +34,13 @@ Thumbs.db
 /logs/error.log.php
 /logs/error-*.log.php
 
-# Ignore hotspot local directory
-
-# Ignore PHP transaction files
-/voucher/trans-*.php
+# Ignore keystore and private signing files
+*.jks
+*.keystore
 
 # Ignore example configuration templates and utility scripts
 /include/config.php.example
 /replace.ps1
 
-# Ignore Android App project folder completely for now
+# Ignore Android App IDE folder
 /android-app/.idea/

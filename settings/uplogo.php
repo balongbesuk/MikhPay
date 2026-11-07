@@ -25,6 +25,8 @@ if (!isset($_SESSION["mikhmon"])) {
 } else {
 
   if (isset($_POST["submit"])) {
+    include_once(__DIR__ . '/../include/csrf.php');
+    csrf_verify();
     $logo_dir = "./img/";
     $logo_file = $logo_dir . basename($_FILES["UploadLogo"]["name"]);
     $uploadOk = 1;
@@ -51,7 +53,7 @@ if (!isset($_SESSION["mikhmon"])) {
       $uploadOk = 0;
     }
 
-    if (basename($_FILES["UploadLogo"]["name"] != "logo-" . $session . ".png")) {
+    if (basename($_FILES["UploadLogo"]["name"]) !== "logo-" . $session . ".png") {
       if ($currency == in_array($currency, $cekindo['indo'])) {
         $galat = '<div class="bg-danger" style="margin-top:0; margin-bottom:16px;"><i class="fa fa-warning"></i> <span>Hanya bisa upload file bernama logo-' . $session . '.png.</span></div>';
       } else {
@@ -173,6 +175,7 @@ if (!isset($_SESSION["mikhmon"])) {
     <?= $galat; ?>
     
       <form action="" method="post" enctype="multipart/form-data">
+        <?php include_once(__DIR__ . '/../include/csrf.php'); echo csrf_field(); ?>
         <div class="upload-area-card">
           <div class="upload-icon-box">
             <i class="fa fa-cloud-upload"></i>

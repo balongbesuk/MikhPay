@@ -208,10 +208,14 @@ if (!function_exists('triggerWebSocketPaidEvent')) {
 }
 
 // QRIS environment variables config overrides
-$mikhmon_api_key = mikhmonEnv('MIKHMON_API_KEY', "YOUR_MIKHMON_API_KEY_HERE");
+$mikhmon_api_key = mikhmonEnv('MIKHMON_API_KEY', "");
 $qris_mode = filter_var(mikhmonEnv('QRIS_MODE', false), FILTER_VALIDATE_BOOLEAN);
 $qris_static_string = mikhmonEnv('QRIS_STATIC_STRING', "");
-$qris_secret_token = mikhmonEnv('QRIS_SECRET_TOKEN', "token_rahasia");
+$qris_secret_token = mikhmonEnv('QRIS_SECRET_TOKEN', "");
+
+$insecure_placeholders = ['YOUR_MIKHMON_API_KEY_HERE', 'isi_dengan_api_key_rahasia_anda', 'token_rahasia', 'isi_dengan_token_rahasia_anda'];
+if (in_array($mikhmon_api_key, $insecure_placeholders, true)) $mikhmon_api_key = '';
+if (in_array($qris_secret_token, $insecure_placeholders, true)) $qris_secret_token = '';
 
 $ws_app_id = mikhmonEnv('WS_APP_ID', "");
 $ws_app_key = mikhmonEnv('WS_APP_KEY', "");
@@ -251,3 +255,5 @@ if (!function_exists('writeTransactionFile')) {
         return @file_put_contents($filepath, $prefix . json_encode($data));
     }
 }
+
+require_once __DIR__ . '/version.php';

@@ -24,10 +24,12 @@ object GobizTokenManager {
     const val KEY_LAST_REFRESH_TIME = "last_gobiz_refresh_time"
     const val KEY_GOBIZ_SESSION_ACTIVE = "gobiz_session_active"
     const val KEY_LAST_REFRESH_STATUS = "last_gobiz_refresh_status"
+    const val KEY_LAST_ACCESS_TOKEN = "last_gobiz_access_token"
 
     // Interval refresh otomatis: 6 jam (sebelum token 24 jam kedaluwarsa)
     private const val REFRESH_INTERVAL_MS = 6 * 60 * 60 * 1000L
-    private const val GOBIZ_PORTAL_URL = "https://app.gobiz.co.id"
+    const val GOBIZ_PORTAL_URL = "https://portal.gofoodmerchant.co.id/"
+    const val GOBIZ_USER_AGENT = "Mozilla/5.0 (Linux; Android 12; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36"
 
     @Volatile
     private var isRefreshing = false
@@ -62,7 +64,7 @@ object GobizTokenManager {
         if (!force && elapsed < REFRESH_INTERVAL_MS) {
             val hoursLeft = (REFRESH_INTERVAL_MS - elapsed) / (1000 * 60 * 60)
             Log.d(TAG, "Token GoBiz masih segar (diperbarui ${(elapsed / (1000 * 60))} menit lalu). Refresh berikutnya dalam ~${hoursLeft + 1} jam.")
-            onResult?.invoke(true, "Token masih aktif")
+            onResult?.invoke(false, "Token masih aktif")
             return
         }
 
@@ -101,15 +103,21 @@ object GobizTokenManager {
                 settings.domStorageEnabled = true
                 settings.databaseEnabled = true
                 settings.cacheMode = WebSettings.LOAD_DEFAULT
-                settings.userAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Mobile Safari/537.36"
+                settings.userAgentString = GOBIZ_USER_AGENT
 
                 val cookieManager = CookieManager.getInstance()
                 cookieManager.setAcceptCookie(true)
                 cookieManager.setAcceptThirdPartyCookies(webView, true)
 
+                val oldToken = appContext.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
+                    .getString(KEY_LAST_ACCESS_TOKEN, "") ?: ""
+                // Clear stale access_token cookie so GoBiz SPA mints a new one from session/refresh cookies
+                cookieManager.setCookie(GOBIZ_PORTAL_URL, "access_token=; Max-Age=0; path=/")
+                cookieManager.setCookie("https://app.gobiz.co.id", "access_token=; Max-Age=0; path=/")
+
                 var tokenCaptured = false
 
-                // Polling helper untuk memeriksa cookies berkala selama halaman memuat
+                // Polling helper untuk memeriksa cookies & localStorage berkala selama halaman memuat
                 timeoutHandler = Handler(Looper.getMainLooper())
                 var attempts = 0
                 val maxAttempts = 12 // 12 x 2s = 24 detik maksimal
@@ -118,37 +126,25 @@ object GobizTokenManager {
                     override fun run() {
                         if (tokenCaptured || !isRefreshing) return
 
-                        val cookies = cookieManager.getCookie(GOBIZ_PORTAL_URL) 
-                            ?: cookieManager.getCookie("https://portal.gofoodmerchant.co.id") 
-                            ?: ""
-
-                        if (cookies.contains("access_token=")) {
-                            val matcher = Pattern.compile("access_token=([^;]+)").matcher(cookies)
-                            if (matcher.find()) {
-                                val token = matcher.group(1)?.trim()
-                                if (!token.isNullOrEmpty() && token.length > 20) {
-                                    tokenCaptured = true
-                                    Log.i(TAG, "Token GoBiz berhasil tertangkap secara silent!")
-
-                                    var refreshToken = ""
-                                    val refreshMatcher = Pattern.compile("refresh_token=([^;]+)").matcher(cookies)
-                                    if (refreshMatcher.find()) {
-                                        refreshToken = refreshMatcher.group(1)?.trim() ?: ""
-                                    }
-
-                                    uploadRefreshedToken(appContext, webhookUrl, apiKey, token, refreshToken, onResult)
-                                    return
-                                }
+                        extractTokensFromWebView(webView, cookieManager) { token, refreshToken ->
+                            if (tokenCaptured || !isRefreshing) return@extractTokensFromWebView
+                            if (token.length > 20 && (token != oldToken || refreshToken.length > 15)) {
+                                tokenCaptured = true
+                                cookieManager.flush()
+                                Log.i(TAG, "Token GoBiz berhasil tertangkap secara silent!")
+                                uploadRefreshedToken(appContext, webhookUrl, apiKey, token, refreshToken, onResult)
                             }
                         }
 
                         attempts++
-                        if (attempts < maxAttempts) {
-                            timeoutHandler?.postDelayed(this, 2000L)
-                        } else {
-                            Log.w(TAG, "Timeout Silent Refresh: Tidak menemukan access_token setelah 24 detik.")
-                            saveRefreshStatus(appContext, "Gagal: Sesi GoBiz kedaluwarsa atau offline.")
-                            cleanup(false, "Timeout atau sesi kedaluwarsa", onResult)
+                        if (!tokenCaptured) {
+                            if (attempts < maxAttempts) {
+                                timeoutHandler?.postDelayed(this, 2000L)
+                            } else {
+                                Log.w(TAG, "Timeout Silent Refresh: Tidak menemukan access_token setelah 24 detik.")
+                                saveRefreshStatus(appContext, "Gagal: Sesi GoBiz kedaluwarsa atau offline.")
+                                cleanup(false, "Timeout atau sesi kedaluwarsa", onResult)
+                            }
                         }
                     }
                 }
@@ -227,6 +223,7 @@ object GobizTokenManager {
                                 putLong(KEY_LAST_REFRESH_TIME, System.currentTimeMillis())
                                 putBoolean(KEY_GOBIZ_SESSION_ACTIVE, true)
                                 putString(KEY_LAST_REFRESH_STATUS, "Sukses diperbarui")
+                                putString(KEY_LAST_ACCESS_TOKEN, token)
                                 apply()
                             }
                             Log.i(TAG, "Token GoBiz di server MikhPay berhasil diperbarui secara otomatis di background!")
@@ -276,7 +273,87 @@ object GobizTokenManager {
         sharedPref.edit().putString(KEY_LAST_REFRESH_STATUS, status).apply()
     }
 
-    private fun resolveApiUrl(webhookUrl: String): String {
+    /**
+     * Mengekstrak access_token dan refresh_token dari CookieManager maupun WebStorage (localStorage/sessionStorage).
+     */
+    fun extractTokensFromWebView(
+        webView: WebView,
+        cookieManager: CookieManager,
+        onExtracted: (String, String) -> Unit
+    ) {
+        val cookies = listOfNotNull(
+            cookieManager.getCookie(GOBIZ_PORTAL_URL),
+            cookieManager.getCookie("https://app.gobiz.co.id")
+        ).joinToString("; ")
+
+        var cookieAccess = ""
+        var cookieRefresh = ""
+
+        val accessMatcher = Pattern.compile("access_token=([^;]+)").matcher(cookies)
+        if (accessMatcher.find()) {
+            cookieAccess = accessMatcher.group(1)?.trim() ?: ""
+        }
+        val refreshMatcher = Pattern.compile("refresh_token=([^;]+)").matcher(cookies)
+        if (refreshMatcher.find()) {
+            cookieRefresh = refreshMatcher.group(1)?.trim() ?: ""
+        }
+
+        val js = """
+            (function() {
+                var access = '', refresh = '';
+                try {
+                    var stores = [window.localStorage, window.sessionStorage];
+                    for (var s = 0; s < stores.length; s++) {
+                        var st = stores[s];
+                        if (!st) continue;
+                        for (var i = 0; i < st.length; i++) {
+                            var k = st.key(i) || '';
+                            var v = st.getItem(k) || '';
+                            if ((k === 'access_token' || k === 'token' || k === 'auth_token') && v.length > 20 && v.charAt(0) !== '{') {
+                                access = access || v.replace(/^"|"$/g, '');
+                            }
+                            if (k === 'refresh_token' && v.length > 15 && v.charAt(0) !== '{') {
+                                refresh = refresh || v.replace(/^"|"$/g, '');
+                            }
+                            if (v.indexOf('access_token') !== -1 || v.indexOf('refresh_token') !== -1) {
+                                var mA = v.match(/"access_token"\s*:\s*"([^"]+)"/);
+                                if (mA && mA[1]) access = access || mA[1];
+                                var mR = v.match(/"refresh_token"\s*:\s*"([^"]+)"/);
+                                if (mR && mR[1]) refresh = refresh || mR[1];
+                            }
+                        }
+                    }
+                } catch (e) {}
+                return JSON.stringify({access_token: access, refresh_token: refresh});
+            })()
+        """.trimIndent()
+
+        try {
+            webView.evaluateJavascript(js) { rawResult ->
+                var storageAccess = ""
+                var storageRefresh = ""
+                if (!rawResult.isNullOrEmpty() && rawResult != "null") {
+                    try {
+                        val unquoted = if (rawResult.startsWith("\"") && rawResult.endsWith("\"")) {
+                            org.json.JSONTokener(rawResult).nextValue().toString()
+                        } else {
+                            rawResult
+                        }
+                        val obj = JSONObject(unquoted)
+                        storageAccess = obj.optString("access_token", "").trim()
+                        storageRefresh = obj.optString("refresh_token", "").trim()
+                    } catch (_: Exception) {}
+                }
+                val finalAccess = if (cookieAccess.length > 20) cookieAccess else storageAccess
+                val finalRefresh = if (cookieRefresh.length > 15) cookieRefresh else storageRefresh
+                onExtracted(finalAccess, finalRefresh)
+            }
+        } catch (_: Exception) {
+            onExtracted(cookieAccess, cookieRefresh)
+        }
+    }
+
+    fun resolveApiUrl(webhookUrl: String, action: String = "update_gopay_token"): String {
         val trimmed = webhookUrl.trim()
         val base = when {
             trimmed.contains("qris_verify.php") -> trimmed.replace("qris_verify.php", "api.php")
@@ -290,6 +367,6 @@ object GobizTokenManager {
                 }
             }
         }
-        return if (base.contains("?")) "$base&action=update_gopay_token" else "$base?action=update_gopay_token"
+        return if (base.contains("?")) "$base&action=$action" else "$base?action=$action"
     }
 }

@@ -43,6 +43,8 @@ if (!isset($_SESSION["mikhmon"])) {
   }
 
   if (isset($_POST['save'])) {
+    include_once(__DIR__ . '/../include/csrf.php');
+    csrf_verify();
 
     $siphost = (preg_replace('/\s+/', '', $_POST['ipmik']));
     $suserhost = ($_POST['usermik']);
@@ -59,7 +61,10 @@ if (!isset($_SESSION["mikhmon"])) {
     $siface = ($_POST['iface']);
     $sidleto = ($_POST['idleto']);
 
-    $sesname = (preg_replace('/\s+/', '-', $_POST['sessname']));
+    $sesname = preg_replace('/[^a-zA-Z0-9\-]/', '', preg_replace('/\s+/', '-', $_POST['sessname']));
+    if (empty($sesname) || $sesname === 'mikhmon') {
+      $sesname = 'Router-' . rand(100, 999);
+    }
     $slivereport = ($_POST['livereport']);
 
     $dbSessions = new \App\Models\RouterSession();
@@ -295,6 +300,7 @@ if (!isset($_SESSION["mikhmon"])) {
 </style>
 
 <form autocomplete="off" method="post" action="" name="settings">  
+<?= function_exists('csrf_field') ? csrf_field() : '' ?>
 <div class="row">
 	<div class="col-12">
   		<div class="card" style="box-shadow: var(--shadow-card); border-radius: var(--radius); border: 1px solid var(--border-color);">
@@ -347,7 +353,7 @@ if (!isset($_SESSION["mikhmon"])) {
 
                    <div style="display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; flex-wrap: wrap;">
                      <button type="submit" name="save" class="btn-modern-action btn-save"><i class="fa fa-save"></i> Save</button>
-                     <span class="connect pointer btn-modern-action btn-connect" id="<?= $session; ?>&c=settings"><i class="fa fa-link"></i> Connect</span>
+                     <span class="connect pointer btn-modern-action btn-connect" id="<?= $s_session; ?>&c=settings"><i class="fa fa-link"></i> Connect</span>
                      <span class="pointer btn-modern-action btn-ping" id="ping_test"><i class="fa fa-bolt"></i> Ping</span>
                      <div class="btn-modern-action btn-reload pointer" onclick="location.reload();" title="Reload Data"><i class="fa fa-refresh"></i></div>
                    </div>
@@ -394,12 +400,11 @@ if (!isset($_SESSION["mikhmon"])) {
                 <label for="idleto"><?= $_idle_timeout ?></label>
                 <div class="modern-input-group-wrapper">
                   <select class="form-control" name="idleto" required="1" id="idleto">
-                    <option value="<?= $s_idleto; ?>"><?= $s_idleto; ?></option>
-                    <option value="5">5</option>
-                    <option value="10">10</option>
-                    <option value="30">30</option>
-                    <option value="60">60</option>
-                    <option value="disable">disable</option>
+                    <option value="5" <?= ($idleto == '5') ? 'selected' : '' ?>>5</option>
+                    <option value="10" <?= ($idleto == '10' || empty($idleto)) ? 'selected' : '' ?>>10</option>
+                    <option value="30" <?= ($idleto == '30') ? 'selected' : '' ?>>30</option>
+                    <option value="60" <?= ($idleto == '60') ? 'selected' : '' ?>>60</option>
+                    <option value="disable" <?= ($idleto == 'disable') ? 'selected' : '' ?>>disable</option>
                   </select>
                   <span class="modern-input-group-addon"><?= $_min ?></span>
                 </div>
@@ -414,9 +419,8 @@ if (!isset($_SESSION["mikhmon"])) {
               <div class="form-field-group" style="margin-bottom: 0 !important;">
                 <label for="livereport"><?= $_live_report ?></label>
                 <select class="form-control" name="livereport" id="livereport">
-                  <option value="<?= $s_livereport; ?>"><?= ucfirst($s_livereport); ?></option>
-                  <option value="enable">Enable</option>
-                  <option value="disable">Disable</option>
+                  <option value="enable" <?= ($livereport === 'enable') ? 'selected' : '' ?>>Enable</option>
+                  <option value="disable" <?= ($livereport === 'disable') ? 'selected' : '' ?>>Disable</option>
                 </select>
               </div>
               <?php endif; ?>
@@ -430,15 +434,9 @@ if (!isset($_SESSION["mikhmon"])) {
   </div>
 </div>
 </form>
-</div>
-</div>
-</div>
-</div>
-</div>
-</form>
 <script type="text/javascript">
   function pingTest(sessname_value) {
-    $("#ping").load("./status/ping-test.php?ping&session=" + sessname_value);
+    $("#ping").load("./status/ping-test.php?ping&session=" + encodeURIComponent(sessname_value));
   }
 
   document.getElementById("ping_test").onclick = function() {

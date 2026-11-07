@@ -157,6 +157,8 @@ if (!isset($_SESSION["mikhmon"])) {
   } elseif ($id == "editor") {
     $seditor = "active";
     $mpage = $_template_editor;
+  } elseif ($id == "pending-transactions") {
+    $mpage = "MikhPay Billing";
   }
 }
 
@@ -227,6 +229,7 @@ if($idleto != "disable"){
     <a href="./admin.php?id=pending-transactions&tab=tab-settings" class="<?= ($id == 'pending-transactions' && $_GET['tab'] == 'tab-settings') ? 'active' : ''; ?>"><i class="fa fa-sliders"></i> <?= ($langid == 'id') ? 'Pengaturan & Backup' : 'Settings & Backup' ?></a>
   </div>
   <a href="./admin.php?id=settings&router=new-<?= rand(1111,9999) ?>" class="menu <?= $snsettings ?>"><i class="fa fa-plus"></i> <?= $_add_router ?></a>
+  <a href="./index.php?portal=1<?= !empty($session) ? '&session=' . urlencode($session) : '' ?>" target="_blank" class="menu"><i class="fa fa-external-link"></i> <?= ($langid == 'id') ? 'Lihat Portal Voucher' : 'Customer Portal' ?></a>
   <a href="./admin.php?id=about" class="menu <?= $sabout; ?>"><i class="fa fa-info-circle"></i> <?= $_about ?></a>
 
 </div>
@@ -361,6 +364,8 @@ include('./info.php');
     <a href="./?hotspot=uplogo&session=<?= $session; ?>" class="menu <?= $uplogo; ?>"><i class="fa fa-upload "></i> <?= $_upload_logo ?> </a>
     <a href="./?hotspot=template-editor&template=default&session=<?= $session; ?>" class="menu <?= $teditor; ?>"><i class="fa fa-edit "></i> <?= $_template_editor ?> </a>          
   </div>
+  <!--customer portal-->
+  <a href="./index.php?portal=1&session=<?= urlencode($session); ?>" target="_blank" class="menu"><i class="fa fa-external-link"></i> <?= ($langid == 'id') ? 'Lihat Portal Voucher' : 'Customer Portal' ?></a>
   <!--about-->
   <a href="./?hotspot=about&session=<?= $session; ?>" class="menu <?= $sabout; ?>"><i class="fa fa-info-circle"></i> <?= $_about ?></a>
 

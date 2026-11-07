@@ -21,6 +21,8 @@ header('Content-Type: application/json');
 // Ambil input GET atau POST
 $token = isset($_REQUEST['token']) ? $_REQUEST['token'] : '';
 $nominal = isset($_REQUEST['nominal']) ? (int)preg_replace('/[^0-9]/', '', $_REQUEST['nominal']) : 0;
+$eventId = isset($_REQUEST['event_id']) ? (string)$_REQUEST['event_id'] : '';
+$paidTime = isset($_REQUEST['timestamp']) ? (int)$_REQUEST['timestamp'] : 0;
 
 // Cek jika request berupa JSON (dari Aplikasi Android MikhPay Forwarder)
 $contentType = isset($_SERVER["CONTENT_TYPE"]) ? trim($_SERVER["CONTENT_TYPE"]) : '';
@@ -33,6 +35,12 @@ if (strpos($contentType, 'application/json') !== false) {
         }
         if (isset($jsonData['amount'])) {
             $nominal = (int)preg_replace('/[^0-9]/', '', $jsonData['amount']);
+        }
+        if (isset($jsonData['event_id'])) {
+            $eventId = (string)$jsonData['event_id'];
+        }
+        if (isset($jsonData['timestamp'])) {
+            $paidTime = (int)$jsonData['timestamp'];
         }
     }
 }
@@ -51,7 +59,11 @@ writeAppLog("QRIS_VERIFY_REQUEST", "Menerima request verifikasi pembayaran nomin
 require_once(__DIR__ . '/include/qris_core.php');
 
 // Jalankan pemrosesan settlement
-$result = processQrisSettlement($nominal);
+$result = processQrisSettlement($nominal, [
+    'source' => 'webhook_android',
+    'ref_id' => $eventId,
+    'paid_time' => $paidTime
+]);
 
 if (isset($result['code'])) {
     http_response_code($result['code']);

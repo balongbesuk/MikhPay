@@ -44,6 +44,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main);
 
         // Bind Views
+        try {
+            val verName = packageManager.getPackageInfo(packageName, 0).versionName ?: "3.2"
+            findViewById<TextView>(R.id.app_title)?.text = "MikhPay v$verName"
+        } catch (_: Exception) {}
         statusDot = findViewById(R.id.status_dot)
         statusText = findViewById(R.id.status_text)
         btnGrantPermission = findViewById(R.id.btn_grant_permission)
@@ -398,24 +402,8 @@ class MainActivity : AppCompatActivity() {
             return
         }
 
-        val trimmed = webhookUrl.trim()
-        val base = when {
-            trimmed.contains("qris_verify.php") -> trimmed.replace("qris_verify.php", "api.php")
-            trimmed.endsWith("/") -> "${trimmed}api.php"
-            else -> {
-                val lastSlash = trimmed.lastIndexOf('/')
-                if (lastSlash != -1 && trimmed.substring(lastSlash).contains(".php")) {
-                    "${trimmed.substring(0, lastSlash)}/api.php"
-                } else {
-                    "$trimmed/api.php"
-                }
-            }
-        }
-        val statusUrl = if (base.contains("?")) {
-            "$base&action=gopay_status&api_key=${java.net.URLEncoder.encode(apiKey, "UTF-8")}"
-        } else {
-            "$base?action=gopay_status&api_key=${java.net.URLEncoder.encode(apiKey, "UTF-8")}"
-        }
+        val base = GobizTokenManager.resolveApiUrl(webhookUrl, "gopay_status")
+        val statusUrl = "$base&api_key=${java.net.URLEncoder.encode(apiKey, "UTF-8")}"
 
         val client = OkHttpClient.Builder().build()
         val request = Request.Builder()

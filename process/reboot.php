@@ -23,6 +23,8 @@ if (!isset($_SESSION["mikhmon"])) {
 } else {
 
   if (isset($_POST['submit'])) {
+    include_once(__DIR__ . '/../include/csrf.php');
+    csrf_verify();
     $API = new RouterosAPI();
     $API->debug = false;
     if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
@@ -41,6 +43,7 @@ if (!isset($_SESSION["mikhmon"])) {
     </div>
   	<div class="card-body text-center">
   		<form action="" method="post" enctype="multipart/form-data">
+        <?php include_once(__DIR__ . '/../include/csrf.php'); echo csrf_field(); ?>
         <div>
           <h3><?= $_reboot.' '. $session; ?>?</h3>
         </div>

@@ -43,6 +43,8 @@ if (!isset($_SESSION["mikhmon"])) {
         $popupQR = "javascript:window.open('./voucher/vpreview.php?usermode=up&small=yes&qr=yes&session=" . $session . "','_blank','width=310,height=310')";
     }
     if (isset($_POST['save'])) {
+        include_once(__DIR__ . '/../include/csrf.php');
+        csrf_verify();
         include_once('./src/Database.php');
         include_once('./src/Models/AppSettings.php');
         $settingsModel = new \App\Models\AppSettings();
@@ -179,6 +181,7 @@ textarea{
             </div>
             <div class="card-body" style="padding: 24px !important;">
                 <form autocomplete="off" method="post" action="">
+                    <?php include_once(__DIR__ . '/../include/csrf.php'); echo csrf_field(); ?>
                     <div style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 14px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 16px;">
                         <div style="display: flex; gap: 8px;">
                             <button type="submit" title="Save template" class="btn-editor-action bg-primary" name="save"><i class="fa fa-save"></i> <?= $_save ?></button>

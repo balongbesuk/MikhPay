@@ -117,12 +117,18 @@ function handleCheckoutSubmit(form) {
 }
 
 // Tab switching logic for compliance policies
-function switchTab(tabId) {
+function switchTab(tabId, btnEl) {
     document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
     document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
     
-    event.target.classList.add('active');
-    document.getElementById(tabId).classList.add('active');
+    var activeBtn = btnEl || (typeof event !== 'undefined' && event ? (event.currentTarget || event.target) : null);
+    if (activeBtn && activeBtn.classList) {
+        activeBtn.classList.add('active');
+    }
+    var panel = document.getElementById(tabId);
+    if (panel) {
+        panel.classList.add('active');
+    }
 }
 
 // Global Polling handler for transaction verification
@@ -156,7 +162,7 @@ function startTransactionPolling(orderId) {
                                     <span id="pendingOrderId">${orderId}</span>
                                     <i class="fa-regular fa-copy" style="cursor: pointer; color: var(--primary);" onclick="var r = document.createRange(); r.selectNode(document.getElementById('pendingOrderId')); window.getSelection().removeAllRanges(); window.getSelection().addRange(r); document.execCommand('copy'); alert('Order ID disalin!');" title="Salin Order ID"></i>
                                 </div>
-                                <a href="index.php?session=${encodeURIComponent(FrontpageConfig.session)}" style="display: block; width: 100%; padding: 12px; background: var(--primary); color: white; border-radius: 8px; text-decoration: none; font-weight: bold; text-align: center;">Kembali ke Beranda</a>
+                                <a href="index.php?portal=1&session=${encodeURIComponent(FrontpageConfig.session)}" style="display: block; width: 100%; padding: 12px; background: var(--primary); color: white; border-radius: 8px; text-decoration: none; font-weight: bold; text-align: center;">Kembali ke Beranda</a>
                             </div>
                         `;
                         localStorage.removeItem('active_order_id');
@@ -285,33 +291,44 @@ document.addEventListener("DOMContentLoaded", function() {
         
         var isSuccessScreen = document.querySelector('.receipt-card');
         if (combinedHistory.length > 0 && !isSuccessScreen) {
+            var escapeHtml = function(str) {
+                return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+            };
             var html = '';
             combinedHistory.forEach(function(item) {
+                var u = item.username || '';
+                var p = item.password || u;
                 var loginButton = '';
                 if (item.login_url) {
-                    loginButton = `<a href="${item.login_url}" class="history-btn-connect" style="text-decoration: none;"><i class="fa fa-wifi"></i> Hubungkan</a>`;
+                    loginButton = `<a href="${escapeHtml(item.login_url)}" class="history-btn-connect" style="text-decoration: none;"><i class="fa fa-wifi"></i> Hubungkan</a>`;
                 }
+                var credentialsHtml = (u === p)
+                    ? `<div style="display: flex; align-items: center; gap: 6px; margin-right: 4px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Kode:</span>
+                            <span class="history-item-code" style="margin: 0; padding: 8px 12px; font-size: 12px; line-height: 1; font-weight: 700; border-radius: 8px; min-width: 80px; letter-spacing: 0.5px; background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main);">${escapeHtml(u)}</span>
+                       </div>`
+                    : `<div style="display: flex; align-items: center; gap: 6px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">User:</span>
+                            <span class="history-item-code" style="margin: 0; padding: 8px 12px; font-size: 12px; line-height: 1; font-weight: 700; border-radius: 8px; min-width: 80px; letter-spacing: 0.5px; background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main);">${escapeHtml(u)}</span>
+                       </div>
+                       <div style="display: flex; align-items: center; gap: 6px; margin-right: 4px;">
+                            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Pass:</span>
+                            <span class="history-item-code" style="margin: 0; padding: 8px 12px; font-size: 12px; line-height: 1; font-weight: 700; border-radius: 8px; min-width: 80px; letter-spacing: 0.5px; background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main);">${escapeHtml(p)}</span>
+                       </div>`;
                 html += `
                 <div class="history-item">
                     <div class="history-item-info">
                         <div class="history-item-title">
-                            <span class="history-item-profile">Paket ${item.profile}</span>
-                            <span class="history-badge-validity">${item.validity}</span>
+                            <span class="history-item-profile">Paket ${escapeHtml(item.profile)}</span>
+                            <span class="history-badge-validity">${escapeHtml(item.validity)}</span>
                         </div>
                         <div class="history-item-meta">
-                            ID: <span class="history-monospace">${item.order_id}</span> · ${item.date}
+                            ID: <span class="history-monospace">${escapeHtml(item.order_id)}</span> · ${escapeHtml(item.date)}
                         </div>
                     </div>
                     <div class="history-item-actions">
-                        <div style="display: flex; align-items: center; gap: 6px;">
-                            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Username:</span>
-                            <span class="history-item-code" style="margin: 0; padding: 8px 12px; font-size: 12px; line-height: 1; font-weight: 700; border-radius: 8px; min-width: 80px; letter-spacing: 0.5px; background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main);">${item.username}</span>
-                        </div>
-                        <div style="display: flex; align-items: center; gap: 6px; margin-right: 4px;">
-                            <span style="font-size: 12px; font-weight: 700; color: var(--text-muted);">Password:</span>
-                            <span class="history-item-code" style="margin: 0; padding: 8px 12px; font-size: 12px; line-height: 1; font-weight: 700; border-radius: 8px; min-width: 80px; letter-spacing: 0.5px; background: #ffffff; border: 1px solid var(--border-color); color: var(--text-main);">${item.password || item.username}</span>
-                        </div>
-                        <button type="button" class="history-btn-copy" onclick="copyHistoryCode('${item.username}', '${item.password || item.username}', this)">
+                        ${credentialsHtml}
+                        <button type="button" class="history-btn-copy" onclick="copyHistoryCode('${escapeHtml(u)}', '${escapeHtml(p)}', this)">
                             <i class="fa-regular fa-copy"></i> Salin
                         </button>
                         ${loginButton}

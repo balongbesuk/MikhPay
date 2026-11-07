@@ -25,7 +25,7 @@
 }
 
 body {
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background-color: var(--background);
     color: var(--text-main);
     min-height: 100vh;
@@ -34,6 +34,29 @@ body {
     background-image: radial-gradient(circle at 10% 20%, rgba(99, 102, 241, 0.04) 0%, transparent 40%),
                       radial-gradient(circle at 90% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 40%);
 }
+
+/* Offline Captive Portal Compatibility: Map FontAwesome 6 classes to local FontAwesome 4.7 glyphs */
+.fa-solid, .fa-regular, .fa-brands {
+    display: inline-block;
+    font: normal normal normal 14px/1 FontAwesome;
+    font-size: inherit;
+    text-rendering: auto;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+.fa-user-shield:before, .fa-file-shield:before { content: "\f132"; }
+.fa-circle-check:before { content: "\f058"; }
+.fa-circle-exclamation:before { content: "\f06a"; }
+.fa-map-marker-alt:before, .fa-location-dot:before { content: "\f041"; }
+.fa-triangle-exclamation:before { content: "\f071"; }
+.fa-trash-can:before { content: "\f1f8"; }
+.fa-user-lock:before { content: "\f023"; }
+.fa-clock:before { content: "\f017"; }
+.fa-gauge-high:before { content: "\f0e4"; }
+.fa-ticket-alt:before { content: "\f145"; }
+.fa-circle-xmark:before { content: "\f057"; }
+.fa-circle-info:before { content: "\f05a"; }
+.fa-xmark:before { content: "\f00d"; }
 
 /* Container & Grid Setup */
 .wrapper {

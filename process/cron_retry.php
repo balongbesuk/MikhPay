@@ -14,8 +14,7 @@ date_default_timezone_set('Asia/Jakarta');
 
 // Load config and dependencies
 require_once dirname(__FILE__) . '/../include/config.php';
-require_once dirname(__FILE__) . '/../lib/routeros_api.class.php';
-require_once dirname(__FILE__) . '/../lib/formatbytesbites.php';
+require_once dirname(__FILE__) . '/../include/qris_core.php';
 
 // Security check for HTTP/Web requests
 if (php_sapi_name() !== 'cli') {
@@ -40,71 +39,38 @@ $processedCount = 0;
 $failedCount = 0;
 
 if (is_array($files)) {
+    $now = time();
     foreach ($files as $file) {
         $trans = readTransactionFile($file);
-        if ($trans && isset($trans['status']) && ($trans['status'] === 'paid_pending_generate' || $trans['status'] === 'processing')) {
+        if (!$trans || !isset($trans['status'])) continue;
+        $st = $trans['status'];
+        $paidAt = isset($trans['paid_at']) ? (int)$trans['paid_at'] : (isset($trans['created_at']) ? (int)$trans['created_at'] : 0);
+        // Hanya retry 'processing' jika sudah menggantung > 60 detik agar tidak bentrok dengan settlement aktif
+        if ($st === 'paid_pending_generate' || ($st === 'processing' && ($paidAt === 0 || ($now - $paidAt) > 60))) {
             $order_id = isset($trans['order_id']) ? $trans['order_id'] : basename($file, (strpos($file, '.php') !== false ? '.php' : '.json'));
             $session = $trans['session'];
-            $profile = $trans['profile'];
-            
-            if (isset($data[$session])) {
-                $iphost = explode('!', $data[$session][1])[1];
-                $userhost = explode('@|@', $data[$session][2])[1];
-                $passwdhost = explode('#|#', $data[$session][3])[1];
-                
-                $API = new RouterosAPI();
-                $API->debug = false;
-                
-                if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
-                    // Generate voucher code
-                    $userLength = 5;
-                    $shuf = $userLength;
-                    $a = ["1" => "", "", 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6];
-                    $shuf = $userLength - (isset($a[$userLength]) ? (int)$a[$userLength] : 2);
-                    
-                    $username = randNLC($shuf) . randN($userLength - $shuf);
-                    $password = $username;
-                    
-                    $comment = "vc-API-Cron-" . rand(100, 999) . "-" . date("m.d.y") . "-Paid QRIS";
-                    
-                    $addParams = [
-                        "server" => "all",
-                        "name" => $username,
-                        "password" => $password,
-                        "profile" => $profile,
-                        "comment" => $comment
-                    ];
-                    
-                    $API->comm("/ip/hotspot/user/add", $addParams);
-                    $API->disconnect();
-                    
-                    // Update transaction
-                    $trans['status'] = 'settlement';
-                    $trans['username'] = $username;
-                    $trans['password'] = $password;
-                    $trans['paid_at'] = time();
-                    
-                    if (strpos($file, '.php') !== false) {
-                        writeTransactionFile($file, $trans);
-                    } else {
-                        file_put_contents($file, json_encode($trans));
-                    }
-                    $processedCount++;
-                    writeAppLog("CRON_RETRY_SUCCESS", "Voucher " . $username . " sukses digenerate via Cron untuk Order ID: " . $order_id);
-                    
-                    // Kirim notifikasi Telegram sukses ke Admin
-                    $telegramMessage = "✅ <b>[MikhPay Cron] Voucher Berhasil Diterbitkan!</b>\n\n"
-                        . "<b>Order ID:</b> <code>{$order_id}</code>\n"
-                        . "<b>Sesi Router:</b> <code>{$session}</code>\n"
-                        . "<b>Voucher:</b> <code>{$username}</code>\n"
-                        . "<b>Nominal:</b> Rp " . number_format($trans['price'], 0, ',', '.') . "\n"
-                        . "Status tertunda sebelumnya telah diselesaikan secara otomatis.";
-                    sendTelegramNotification($telegramMessage);
+            $comment = "vc-API-Cron-" . rand(100, 999) . "-" . date("m.d.y") . "-Paid QRIS";
+
+            if (generateHotspotVoucherForOrder($trans, $comment)) {
+                $username = $trans['username'];
+                if (strpos($file, '.php') !== false) {
+                    writeTransactionFile($file, $trans);
                 } else {
-                    $failedCount++;
+                    file_put_contents($file, json_encode($trans));
                 }
+                $processedCount++;
+                writeAppLog("CRON_RETRY_SUCCESS", "Voucher " . $username . " sukses digenerate via Cron untuk Order ID: " . $order_id);
+
+                $telegramMessage = "✅ <b>[MikhPay Cron] Voucher Berhasil Diterbitkan!</b>\n\n"
+                    . "<b>Order ID:</b> <code>{$order_id}</code>\n"
+                    . "<b>Sesi Router:</b> <code>{$session}</code>\n"
+                    . "<b>Voucher:</b> <code>{$username}</code>\n"
+                    . "<b>Nominal:</b> Rp " . number_format($trans['price'], 0, ',', '.') . "\n"
+                    . "Status tertunda sebelumnya telah diselesaikan secara otomatis.";
+                sendTelegramNotification($telegramMessage);
             } else {
-                writeAppLog("CRON_RETRY_ERROR", "Sesi router '{$session}' untuk Order ID: " . $order_id . " tidak terkonfigurasi.");
+                $failedCount++;
+                writeAppLog("CRON_RETRY_ERROR", "Gagal retry Order ID: " . $order_id . " (" . (isset($trans['router_error']) ? $trans['router_error'] : 'unknown') . ")");
             }
         }
     }

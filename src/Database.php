@@ -85,12 +85,26 @@ class Database {
     /**
      * Menyimpan seluruh data ke file PHP/JSON dengan penguncian berkas (exclusive lock)
      */
-    public function saveAll() {
+    public function saveAll($mutator = null) {
         @chmod($this->dbFile, 0666);
-        $fp = @fopen($this->dbFile, 'cb');
+        $fp = @fopen($this->dbFile, 'c+b');
         if ($fp) {
             $locked = flock($fp, LOCK_EX);
+            if ($mutator !== null) {
+                $content = '';
+                rewind($fp);
+                while (!feof($fp)) {
+                    $content .= fread($fp, 8192);
+                }
+                $jsonContent = preg_replace('/^<\?php.*?\?>\s*/s', '', $content);
+                $decoded = json_decode($jsonContent, true);
+                if (is_array($decoded)) {
+                    $this->data = $decoded;
+                }
+                call_user_func($mutator, $this);
+            }
             ftruncate($fp, 0);
+            rewind($fp);
             $prefix = "<?php header('HTTP/1.0 403 Forbidden'); exit; ?>\n";
             fwrite($fp, $prefix . json_encode($this->data));
             fflush($fp);
@@ -118,17 +132,17 @@ class Database {
     }
 
     public function setData($section, $key, $value) {
-        if (!isset($this->data[$section])) {
-            $this->data[$section] = array();
-        }
-        $this->data[$section][$key] = $value;
-        $this->saveAll();
+        $this->saveAll(function($db) use ($section, $key, $value) {
+            if (!isset($db->data[$section])) {
+                $db->data[$section] = array();
+            }
+            $db->data[$section][$key] = $value;
+        });
     }
 
     public function removeData($section, $key) {
-        if (isset($this->data[$section][$key])) {
-            unset($this->data[$section][$key]);
-            $this->saveAll();
-        }
+        $this->saveAll(function($db) use ($section, $key) {
+            unset($db->data[$section][$key]);
+        });
     }
 }

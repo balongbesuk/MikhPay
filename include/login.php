@@ -25,16 +25,17 @@ $sessionsCount = count($dbSessions->getAll());
 
 $dbSettings = new \App\Models\AppSettings();
 $portal_accent_color = $dbSettings->get('portal_accent_color', '#6366f1');
+if (!preg_match('/^#[0-9a-fA-F]{3,8}$/', (string)$portal_accent_color)) {
+    $portal_accent_color = '#6366f1';
+}
 ?>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap');
-
-/* Apply resets and custom font */
+/* Apply resets and custom font (offline-first system stack) */
 body.login-page {
     margin: 0;
     padding: 0;
-    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
     background: #f8fafc; /* Soft light background */
     min-height: 100vh;
     display: flex;
@@ -441,7 +442,7 @@ body.login-page input.login-input {
             <div class="login-left-logo">
                 <i class="fa fa-wifi"></i>
             </div>
-            <h2 class="login-left-title">MikhPay v3.1</h2>
+            <h2 class="login-left-title">MikhPay v<?= htmlspecialchars(defined('MIKHPAY_VERSION_SHORT') ? MIKHPAY_VERSION_SHORT : '3.2', ENT_QUOTES, 'UTF-8') ?></h2>
             <p class="login-left-desc">Billing Hotspot & Router Manager dengan sistem pembayaran QRIS Mandiri. Manajemen terstruktur, cepat, dan aman tanpa potongan admin payment gateway.</p>
             
             <div class="login-left-stats">
@@ -459,7 +460,7 @@ body.login-page input.login-input {
                         <?php if ($is_qris_configured): ?>
                             <span class="text-green"><i class="fa fa-circle"></i> QRIS Mandiri Aktif</span>
                         <?php else: ?>
-                            <span class="text-muted" style="color: #64748b;">Not Configured</span>
+                            <span class="text-muted" style="color: #cbd5e1;">Not Configured</span>
                         <?php endif; ?>
                     </div>
                 </div>

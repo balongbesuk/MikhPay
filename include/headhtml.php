@@ -44,7 +44,7 @@ error_reporting(0);
 		<script src="js/pace.min.js"></script>
 
 		<!-- Modern CSS Overrides (Dynamic Dark/Light Mode) -->
-		<link rel="stylesheet" href="css/modern-override.css?t=<?= time() ?>">
+		<link rel="stylesheet" href="css/modern-override.css?v=<?= @filemtime(__DIR__ . '/../css/modern-override.css') ?: 1 ?>">
 		<?php
 		if (!class_exists('\App\Models\AppSettings')) {
 			include_once(__DIR__ . '/autoload.php');

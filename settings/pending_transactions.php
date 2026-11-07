@@ -33,7 +33,7 @@ if (isset($_SESSION['mikhtrans_error_msg'])) {
 $gopayService = new \App\Services\GoPayMerchantService();
 $gopayStatus = $gopayService->getStatus();
 $gopayTransactions = [];
-if ($gopayStatus['is_connected']) {
+if ($gopayStatus['is_connected'] && $_SERVER['REQUEST_METHOD'] !== 'POST') {
     $gopayFetch = $gopayService->getRecentTransactions(10);
     if ($gopayFetch['success']) {
         $gopayTransactions = $gopayFetch['transactions'];
@@ -49,6 +49,9 @@ function createBackupZip() {
     $backupDir = __DIR__ . '/../data';
     if (!file_exists($backupDir)) {
         mkdir($backupDir, 0755, true);
+    }
+    foreach (glob($backupDir . '/mikhtrans-backup-*.*') as $oldBackup) {
+        @unlink($oldBackup);
     }
     
     $zipFile = $backupDir . '/mikhtrans-backup-' . date('Ymd-His') . '.zip';
@@ -99,6 +102,9 @@ function createBackupTar() {
     $backupDir = __DIR__ . '/../data';
     if (!file_exists($backupDir)) {
         mkdir($backupDir, 0755, true);
+    }
+    foreach (glob($backupDir . '/mikhtrans-backup-*.*') as $oldBackup) {
+        @unlink($oldBackup);
     }
     
     $tarFile = $backupDir . '/mikhtrans-backup-' . date('Ymd-His') . '.tar';
@@ -213,98 +219,32 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action'])) {
                 $error_msg = "Berkas data transaksi tidak ditemukan.";
             } else {
                 $trans = readTransactionFile($filepath);
-                
-                if (isset($trans['status']) && ($trans['status'] === 'paid_pending_generate' || $trans['status'] === 'processing')) {
+                $paidAt = isset($trans['paid_at']) ? (int)$trans['paid_at'] : (isset($trans['created_at']) ? (int)$trans['created_at'] : 0);
+                if (isset($trans['status']) && ($trans['status'] === 'paid_pending_generate' || ($trans['status'] === 'processing' && ($paidAt === 0 || (time() - $paidAt) > 60)))) {
+                    require_once __DIR__ . '/../include/qris_core.php';
                     $session = $trans['session'];
-                    $profile = $trans['profile'];
-                    
-                    if (isset($data[$session])) {
-                        $iphost = explode('!', $data[$session][1])[1];
-                        $userhost = explode('@|@', $data[$session][2])[1];
-                        $passwdhost = explode('#|#', $data[$session][3])[1];
-                        
-                        $API = new RouterosAPI();
-                        $API->debug = false;
-                        
-                        if ($API->connect($iphost, $userhost, decrypt($passwdhost))) {
-                            // Generate voucher code
-                            $userLength = 5;
-                            $shuf = $userLength;
-                            $a = ["1" => "", "", 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6];
-                            $shuf = $userLength - (isset($a[$userLength]) ? (int)$a[$userLength] : 2);
-                            
-                            $username = randNLC($shuf) . randN($userLength - $shuf);
-                            $password = $username;
-                            
-                            $comment = "vc-API-Retry-" . rand(100, 999) . "-" . date("m.d.y") . "-Paid QRIS";
-                            
-                            $addParams = [
-                                "server" => "all",
-                                "name" => $username,
-                                "password" => $password,
-                                "profile" => $profile,
-                                "comment" => $comment
-                            ];
-                            
-                            $API->comm("/ip/hotspot/user/add", $addParams);
-                            $API->disconnect();
-                            
-                            // Update transaction
-                            $trans['status'] = 'settlement';
-                            $trans['username'] = $username;
-                            $trans['password'] = $password;
-                            $trans['paid_at'] = time();
-                            
-                            if (strpos($filepath, '.php') !== false) {
-                                writeTransactionFile($filepath, $trans);
-                            } else {
-                                file_put_contents($filepath, json_encode($trans));
-                            }
-                            $success_msg = ($langid == 'id') 
-                                ? "Sukses! Voucher {$username} berhasil dibuat untuk Order ID: {$order_id}." 
-                                : "Success! Voucher {$username} generated for Order ID: {$order_id}.";
-                            writeAppLog("WEBHOOK_RETRY_SUCCESS", "Voucher " . $username . " sukses digenerate manual via retry queue untuk Order ID: " . $order_id);
+                    $comment = "vc-API-Retry-" . rand(100, 999) . "-" . date("m.d.y") . "-Paid QRIS";
+                    if (generateHotspotVoucherForOrder($trans, $comment)) {
+                        $username = $trans['username'];
+                        if (strpos($filepath, '.php') !== false) {
+                            writeTransactionFile($filepath, $trans);
                         } else {
-                            $error_msg = ($langid == 'id')
-                                ? "Gagal menghubungkan ke router untuk sesi '{$session}'. Pastikan router online."
-                                : "Failed to connect to router for session '{$session}'. Make sure the router is online.";
+                            file_put_contents($filepath, json_encode($trans));
                         }
+                        $success_msg = ($langid == 'id') 
+                            ? "Sukses! Voucher {$username} berhasil dibuat untuk Order ID: {$order_id}." 
+                            : "Success! Voucher {$username} generated for Order ID: {$order_id}.";
+                        writeAppLog("WEBHOOK_RETRY_SUCCESS", "Voucher " . $username . " sukses digenerate manual via retry queue untuk Order ID: " . $order_id);
                     } else {
-                        $error_msg = "Sesi router '{$session}' tidak ditemukan dalam konfigurasi.";
+                        $error_msg = ($langid == 'id')
+                            ? "Gagal membuat voucher di router untuk sesi '{$session}' (" . (isset($trans['router_error']) ? $trans['router_error'] : 'pastikan router online') . ")."
+                            : "Failed to generate voucher on router for session '{$session}'.";
                     }
                 } else {
                     $error_msg = "Transaksi tidak dalam status tertunda atau sudah terproses.";
                 }
             }
         }
-    } elseif ($_POST['action'] === 'save_settings') {
-        $bot_token = isset($_POST['telegram_bot_token']) ? trim($_POST['telegram_bot_token']) : '';
-        $chat_id = isset($_POST['telegram_chat_id']) ? trim($_POST['telegram_chat_id']) : '';
-        $log_retention = isset($_POST['log_retention_days']) ? (int)$_POST['log_retention_days'] : 2;
-        $p_title = isset($_POST['portal_title']) ? trim($_POST['portal_title']) : '';
-        $p_logo = isset($_POST['portal_logo_url']) ? trim($_POST['portal_logo_url']) : '';
-        $p_accent = isset($_POST['portal_accent_color']) ? trim($_POST['portal_accent_color']) : '#008BC9';
-        $p_wa = isset($_POST['portal_support_wa']) ? trim($_POST['portal_support_wa']) : '';
-        $p_tele = isset($_POST['portal_support_telegram']) ? trim($_POST['portal_support_telegram']) : '';
-        $p_email = isset($_POST['portal_support_email']) ? trim($_POST['portal_support_email']) : '';
-        $p_address = isset($_POST['portal_office_address']) ? trim($_POST['portal_office_address']) : '';
-        $p_hours = isset($_POST['portal_operational_hours']) ? trim($_POST['portal_operational_hours']) : '';
-        
-        $settingsModel->set('telegram_bot_token', $bot_token);
-        $settingsModel->set('telegram_chat_id', $chat_id);
-        $settingsModel->set('log_retention_days', $log_retention);
-        $settingsModel->set('portal_title', $p_title);
-        $settingsModel->set('portal_logo_url', $p_logo);
-        $settingsModel->set('portal_accent_color', $p_accent);
-        $settingsModel->set('portal_support_wa', $p_wa);
-        $settingsModel->set('portal_support_telegram', $p_tele);
-        $settingsModel->set('portal_support_email', $p_email);
-        $settingsModel->set('portal_office_address', $p_address);
-        $settingsModel->set('portal_operational_hours', $p_hours);
-        
-        $success_msg = ($langid == 'id') 
-            ? "Sukses! Pengaturan MikhPay berhasil disimpan." 
-            : "Success! MikhPay settings successfully saved.";
     } elseif ($_POST['action'] === 'test_telegram') {
         $testMsg = "🔔 <b>[MikhPay] Test Notifikasi Sukses!</b>\n\nIntegrasi Telegram Bot Anda telah berhasil dikonfigurasi.";
         if (sendTelegramNotification($testMsg)) {
@@ -360,7 +300,7 @@ $portal_support_email = $settingsModel->get('portal_support_email', '');
 $portal_office_address = $settingsModel->get('portal_office_address', '');
 $portal_operational_hours = $settingsModel->get('portal_operational_hours', '');
 
-// Load and group transactions
+// Load and group transactions + Calculate Sales Analytics (Omzet 30 hari & Paket Terlaris)
 $dir = __DIR__ . '/../voucher/';
 $files = array_merge(
     glob($dir . 'trans-*.json'),
@@ -369,77 +309,54 @@ $files = array_merge(
 
 $pendingTransactions = [];
 $historyTransactions = [];
-$now = time();
-
-if (is_array($files)) {
-    // Sort files by last modified time descending (newest first)
-    usort($files, function($a, $b) {
-        return filemtime($b) - filemtime($a);
-    });
-    
-    foreach ($files as $file) {
-        $dataTrans = readTransactionFile($file);
-        if ($dataTrans) {
-            $order = isset($dataTrans['order_id']) ? $dataTrans['order_id'] : basename($file, (strpos($file, '.php') !== false ? '.php' : '.json'));
-            $status = isset($dataTrans['status']) ? $dataTrans['status'] : 'pending';
-            
-            // Add file details
-            $dataTrans['order_id'] = $order;
-            $dataTrans['file_time'] = filemtime($file);
-            
-            if ($status === 'paid_pending_generate' || $status === 'processing') {
-                $pendingTransactions[] = $dataTrans;
-            } else {
-                // Limit history to 50 items for performance
-                if (count($historyTransactions) < 50) {
-                    $historyTransactions[] = $dataTrans;
-                }
-            }
-        }
-    }
-}
-
-// Calculate Sales Analytics (Omzet 30 hari & Paket Terlaris)
 $totalRevenue = 0;
 $successCount = 0;
-
 $dailySales = [];
 for ($i = 29; $i >= 0; $i--) {
-    $dateKey = date('Y-m-d', strtotime("-$i days"));
-    $dailySales[$dateKey] = 0;
+    $dailySales[date('Y-m-d', strtotime("-$i days"))] = 0;
 }
-
 $profileSales = [];
 
 if (is_array($files)) {
+    usort($files, function($a, $b) {
+        return filemtime($b) - filemtime($a);
+    });
+
     foreach ($files as $file) {
         $dataTrans = readTransactionFile($file);
-        if ($dataTrans) {
-            $status = isset($dataTrans['status']) ? $dataTrans['status'] : 'pending';
+        if (!$dataTrans) continue;
+
+        $mtime = filemtime($file);
+        $order = isset($dataTrans['order_id']) ? $dataTrans['order_id'] : basename($file, (strpos($file, '.php') !== false ? '.php' : '.json'));
+        $status = isset($dataTrans['status']) ? $dataTrans['status'] : 'pending';
+        $dataTrans['order_id'] = $order;
+        $dataTrans['file_time'] = $mtime;
+
+        $paidAt = isset($dataTrans['paid_at']) ? (int)$dataTrans['paid_at'] : (isset($dataTrans['created_at']) ? (int)$dataTrans['created_at'] : $mtime);
+        if ($status === 'paid_pending_generate' || ($status === 'processing' && (time() - $paidAt) > 60)) {
+            $pendingTransactions[] = $dataTrans;
+        } elseif (count($historyTransactions) < 50) {
+            $historyTransactions[] = $dataTrans;
+        }
+
+        if ($status === 'settlement' || $status === 'capture') {
             $price = isset($dataTrans['price']) ? (float)$dataTrans['price'] : 0.0;
             $profile = isset($dataTrans['profile']) ? $dataTrans['profile'] : 'Unknown';
-            
-            // Use paid_at or file_time
-            $time = isset($dataTrans['paid_at']) ? $dataTrans['paid_at'] : (isset($dataTrans['created_at']) ? $dataTrans['created_at'] : filemtime($file));
-            
-            if ($status === 'settlement' || $status === 'capture') {
-                $totalRevenue += $price;
-                $successCount++;
-                
-                $dateStr = date('Y-m-d', $time);
-                if (isset($dailySales[$dateStr])) {
-                    $dailySales[$dateStr] += $price;
-                }
-                
-                if (!isset($profileSales[$profile])) {
-                    $profileSales[$profile] = [
-                        'revenue' => 0,
-                        'count' => 0
-                    ];
-                }
-                $profileSales[$profile]['revenue'] += $price;
-                $profileSales[$profile]['count']++;
+            $time = isset($dataTrans['paid_at']) ? $dataTrans['paid_at'] : (isset($dataTrans['created_at']) ? $dataTrans['created_at'] : $mtime);
+
+            $totalRevenue += $price;
+            $successCount++;
+
+            $dateStr = date('Y-m-d', $time);
+            if (isset($dailySales[$dateStr])) {
+                $dailySales[$dateStr] += $price;
             }
+
+            if (!isset($profileSales[$profile])) {
+                $profileSales[$profile] = ['revenue' => 0, 'count' => 0];
+            }
+            $profileSales[$profile]['revenue'] += $price;
+            $profileSales[$profile]['count']++;
         }
     }
 }
@@ -801,27 +718,27 @@ uasort($profileSales, function($a, $b) {
                 </div>
                 <div class="dash-welcome-time">
                     <i class="fa fa-credit-card"></i>
-                    <div class="time-date">v3.1</div>
+                    <div class="time-date">v<?= htmlspecialchars(defined('MIKHPAY_VERSION_SHORT') ? MIKHPAY_VERSION_SHORT : '3.2', ENT_QUOTES, 'UTF-8') ?></div>
                 </div>
             </div>
         </div>
 
         <?php if (!empty($success_msg)): ?>
             <div class="alert-box success">
-                <i class="fa fa-circle-check"></i>
+                <i class="fa fa-check-circle"></i>
                 <div><?= htmlspecialchars($success_msg) ?></div>
             </div>
         <?php endif; ?>
         
         <?php if (!empty($error_msg)): ?>
             <div class="alert-box error">
-                <i class="fa fa-circle-exclamation"></i>
+                <i class="fa fa-exclamation-circle"></i>
                 <div><?= htmlspecialchars($error_msg) ?></div>
             </div>
         <?php endif; ?>
 
         <div class="tab-container">
-            <div class="tab-headers" style="display: none;">
+            <div class="tab-headers">
                 <button class="tab-header-btn active" onclick="openTab('tab-pending', this)">
                     <i class="fa fa-clock-o"></i> <?= ($langid == 'id') ? 'Antrean Tertunda' : 'Pending Queue' ?> (<?= count($pendingTransactions) ?>)
                 </button>
@@ -847,7 +764,7 @@ uasort($profileSales, function($a, $b) {
                 <?php if (empty($pendingTransactions)): ?>
                     <div class="card">
                         <div class="card-body" style="text-align: center; padding: 40px 20px;">
-                            <i class="fa fa-circle-check" style="font-size: 48px; color: #10B981; margin-bottom: 12px; display: block;"></i>
+                            <i class="fa fa-check-circle" style="font-size: 48px; color: #10B981; margin-bottom: 12px; display: block;"></i>
                             <strong style="color: var(--text-main); font-size: 15px; display: block; margin-bottom: 4px;">
                                 <?= ($langid == 'id') ? 'Antrean Bersih' : 'Queue is Clean' ?>
                             </strong>
@@ -1718,8 +1635,8 @@ uasort($profileSales, function($a, $b) {
                                     <div class="form-group">
                                         <label>Warna Aksen</label>
                                         <div class="mt-color-row">
-                                            <input type="color" name="portal_accent_color" value="<?= htmlspecialchars($portal_accent_color) ?>"/>
-                                            <span><?= htmlspecialchars($portal_accent_color) ?></span>
+                                            <input type="color" name="portal_accent_color" value="<?= htmlspecialchars($portal_accent_color) ?>" oninput="this.nextElementSibling.textContent = this.value.toUpperCase()"/>
+                                            <span><?= htmlspecialchars(strtoupper($portal_accent_color)) ?></span>
                                         </div>
                                     </div>
 
@@ -1875,21 +1792,25 @@ uasort($profileSales, function($a, $b) {
                 
                 <script type="text/javascript">
                     function openSubTab(tabId, btn) {
-                        // Hide all subtab panels
                         var panels = document.querySelectorAll('.subtab-panel');
                         for (var i = 0; i < panels.length; i++) {
+                            panels[i].classList.remove('active');
                             panels[i].style.display = 'none';
                         }
-                        // Show target panel
-                        document.getElementById(tabId).style.display = 'block';
+                        var targetPanel = document.getElementById(tabId);
+                        if (targetPanel) {
+                            targetPanel.classList.add('active');
+                            targetPanel.style.display = 'block';
+                        }
 
-                        // Deactivate all button highlights
                         var buttons = document.querySelectorAll('.subtab-btn');
                         for (var i = 0; i < buttons.length; i++) {
                             buttons[i].classList.remove('active');
                         }
-                        // Highlight current button
-                        btn.classList.add('active');
+                        if (btn) {
+                            btn.classList.add('active');
+                        }
+                        localStorage.setItem('mikhtrans_active_subtab', tabId);
                     }
                 </script>
             </div>
@@ -2063,12 +1984,26 @@ function showFallback() {
     if (profileMsg) profileMsg.style.display = 'block';
 }
 
+function escapeAdminHtml(str) {
+    return String(str == null ? '' : str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 function openTab(panelId, btnEl) {
     document.querySelectorAll('.tab-panel').forEach(panel => panel.classList.remove('active'));
     document.querySelectorAll('.tab-header-btn').forEach(btn => btn.classList.remove('active'));
     
-    document.getElementById(panelId).classList.add('active');
-    btnEl.classList.add('active');
+    var panelEl = document.getElementById(panelId);
+    if (panelEl) panelEl.classList.add('active');
+    if (btnEl) btnEl.classList.add('active');
+
+    // Sync active highlight in sidebar dropdown menu
+    document.querySelectorAll('.dropdown-container a[href*="id=pending-transactions"]').forEach(function(link) {
+        if (link.getAttribute('href').indexOf('tab=' + panelId) !== -1) {
+            link.classList.add('active');
+        } else {
+            link.classList.remove('active');
+        }
+    });
     
     // Store active tab in localStorage
     localStorage.setItem('mikhtrans_active_tab', panelId);
@@ -2116,6 +2051,15 @@ document.addEventListener("DOMContentLoaded", function() {
         var defaultBtn = document.querySelector('.tab-header-btn');
         if (defaultBtn) {
             openTab('tab-pending', defaultBtn);
+        }
+    }
+
+    // Restore active settings subtab
+    var savedSubtab = localStorage.getItem('mikhtrans_active_subtab');
+    if (savedSubtab && document.getElementById(savedSubtab)) {
+        var subBtn = Array.from(document.querySelectorAll('.subtab-btn')).find(b => (b.getAttribute('onclick') || '').indexOf(savedSubtab) !== -1);
+        if (subBtn) {
+            openSubTab(savedSubtab, subBtn);
         }
     }
 
@@ -2257,10 +2201,10 @@ function appendLogToConsole(log) {
     line.className = "console-line";
     line.setAttribute("data-level", levelClass);
     line.innerHTML = `
-        <span class="log-time">[${log.time}]</span>
-        <span class="log-type ${levelClass}">${log.type}</span>
-        <span class="log-ip">[${log.ip}]</span>
-        <span class="log-msg">${log.message}</span>
+        <span class="log-time">[${escapeAdminHtml(log.time)}]</span>
+        <span class="log-type ${levelClass}">${escapeAdminHtml(log.type)}</span>
+        <span class="log-ip">[${escapeAdminHtml(log.ip)}]</span>
+        <span class="log-msg">${escapeAdminHtml(log.message)}</span>
     `;
     
     consoleEl.appendChild(line);
@@ -2388,7 +2332,7 @@ function initDashboardRealtimeFeatures() {
                 // Tampilkan notifikasi toast dan suara bel
                 showToastNotification(
                     "Pemasukan Baru!",
-                    `Paket <b>${data.profile}</b> seharga <b>Rp ${data.price.toLocaleString('id-ID')}</b> baru saja dibayar.`
+                    `Paket <b>${escapeAdminHtml(data.profile)}</b> seharga <b>Rp ${Number(data.price || 0).toLocaleString('id-ID')}</b> baru saja dibayar.`
                 );
                 
                 // Update dashboard statistics
@@ -2440,7 +2384,7 @@ function initDashboardRealtimeFeatures() {
                             data.new_payments.forEach(function(pay) {
                                 showToastNotification(
                                     "Pemasukan Baru!",
-                                    `Paket <b>${pay.profile}</b> seharga <b>Rp ${pay.price.toLocaleString('id-ID')}</b> baru saja dibayar.`
+                                    `Paket <b>${escapeAdminHtml(pay.profile)}</b> seharga <b>Rp ${Number(pay.price || 0).toLocaleString('id-ID')}</b> baru saja dibayar.`
                                 );
                             });
                             

@@ -222,6 +222,8 @@ class GoPayMerchantService {
                 $this->settings->set('gopay_phone', $phone);
                 $this->settings->set('gopay_auth_mode', 'otp');
                 $this->settings->set('gopay_sync_enabled', true);
+                $this->settings->set('gopay_token_status', 'active');
+                $this->settings->set('gopay_token_updated_at', time());
 
                 unset($_SESSION['gopay_temp_phone']);
                 unset($_SESSION['gopay_temp_otp_token']);
@@ -273,6 +275,12 @@ class GoPayMerchantService {
             return ['success' => false, 'message' => 'Format Token tidak valid. Masukkan Bearer token sesi GoPay Anda.'];
         }
 
+        // Verifikasi token ke API GoBiz sebelum menandai aktif
+        $mInfo = $this->getMerchantDetails($cleanToken, true);
+        if ($mInfo === false) {
+            return ['success' => false, 'message' => 'Token sesi GoPay tidak valid atau sudah kedaluwarsa (HTTP 401).'];
+        }
+
         // Simpan token ke database
         $this->settings->set('gopay_access_token', $cleanToken);
         if (!empty($phone)) {
@@ -284,9 +292,8 @@ class GoPayMerchantService {
         $this->settings->set('gopay_auth_mode', 'manual_token');
         $this->settings->set('gopay_sync_enabled', true);
         $this->settings->set('gopay_token_status', 'active');
+        $this->settings->set('gopay_token_updated_at', time());
 
-        // Auto-deteksi merchant jika belum diisi manual
-        $mInfo = $this->getMerchantDetails($cleanToken);
         $merchantMsg = '';
         if ($mInfo) {
             $merchantMsg = " Terhubung ke merchant: {$mInfo['name']} ({$mInfo['id']}).";
@@ -329,7 +336,7 @@ class GoPayMerchantService {
     /**
      * Deteksi atau ambil identitas Merchant GoBiz dari token aktif
      */
-    public function getMerchantDetails($token = '') {
+    public function getMerchantDetails($token = '', $forceRefresh = false) {
         if (empty($token)) {
             $token = $this->settings->get('gopay_access_token', '');
         }
@@ -337,7 +344,7 @@ class GoPayMerchantService {
 
         $cachedId = $this->settings->get('gopay_merchant_id', '');
         $cachedName = $this->settings->get('gopay_merchant_name', '');
-        if (!empty($cachedId)) {
+        if (!$forceRefresh && !empty($cachedId)) {
             return ['id' => $cachedId, 'name' => $cachedName];
         }
 
@@ -370,12 +377,13 @@ class GoPayMerchantService {
 
         if ($resp['code'] === 401 || (isset($resp['data']['code']) && $resp['data']['code'] == 401)) {
             static $retriedMerchant = false;
-            if (!$retriedMerchant && $this->tryRefreshAccessToken()) {
+            if (!$forceRefresh && !$retriedMerchant && $this->tryRefreshAccessToken()) {
                 $retriedMerchant = true;
                 $newToken = $this->settings->get('gopay_access_token', '');
                 return $this->getMerchantDetails($newToken);
             }
             $this->notifyTokenExpired();
+            return false;
         }
 
         return null;
@@ -391,17 +399,21 @@ class GoPayMerchantService {
         }
 
         $uniqueId = $this->getUniqueId();
-        $payload = [
+        $gobizPayload = [
             'client_id' => 'go-biz-web-dashboard',
             'grant_type' => 'refresh_token',
             'data' => [
-                'refresh_token' => $refreshToken
+                'refresh_token' => $refreshToken,
+                'user_type' => 'merchant'
             ]
         ];
 
-        $headers = [
+        $gobizHeaders = [
             'Content-Type: application/json',
-            'Accept: application/json',
+            'Accept: application/json, text/plain, */*',
+            'Authentication-Type: go-id',
+            'Origin: https://portal.gofoodmerchant.co.id',
+            'Referer: https://portal.gofoodmerchant.co.id/',
             'X-AppVersion: platform-v3.107.0-94ce5d57',
             'X-Platform: Web',
             'X-User-Type: merchant',
@@ -410,7 +422,23 @@ class GoPayMerchantService {
             'User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/149.0.0.0 Safari/537.36'
         ];
 
-        $resp = $this->makeHttpRequest('https://api.gojekapi.com/v3/auth/token', 'POST', $payload, $headers);
+        // 1. Endpoint resmi GoID untuk portal GoBiz Web Dashboard
+        $resp = $this->makeHttpRequest('https://api.gobiz.co.id/goid/token', 'POST', $gobizPayload, $gobizHeaders);
+
+        // 2. Fallback ke Gojek Consumer Auth jika sebelumnya login via mode OTP aplikasi
+        if (!$resp['success'] || empty($resp['data'])) {
+            $otpPayload = [
+                'client_id' => 'gojek:cons:android',
+                'client_secret' => '83415d06-ec4e-11e6-a41b-6c40088ab51e',
+                'grant_type' => 'refresh_token',
+                'refresh_token' => $refreshToken,
+                'data' => [
+                    'refresh_token' => $refreshToken
+                ]
+            ];
+            $resp = $this->makeHttpRequest('https://api.gojekapi.com/v3/auth/token', 'POST', $otpPayload, $gobizHeaders);
+        }
+
         if ($resp['success'] && !empty($resp['data'])) {
             $data = $resp['data'];
             $newAccess = '';
@@ -430,6 +458,8 @@ class GoPayMerchantService {
                     $this->settings->set('gopay_refresh_token', $newRefresh);
                 }
                 $this->settings->set('gopay_token_status', 'active');
+                $this->settings->set('gopay_token_updated_at', time());
+                $this->settings->set('gopay_token_alert_sent', 0);
                 if (function_exists('writeAppLog')) {
                     writeAppLog('GOPAY_AUTH', 'Silent Auto-Refresh Token GoPay sukses diperbarui di background.');
                 }
@@ -492,6 +522,14 @@ class GoPayMerchantService {
                 'message' => 'Akun GoPay Merchant belum terhubung.',
                 'transactions' => []
             ];
+        }
+
+        // Proactive refresh setiap 5 jam jika refresh_token tersedia agar sesi tidak sempat expired
+        $lastUpdated = (int)$this->settings->get('gopay_token_updated_at', 0);
+        if ($lastUpdated > 0 && (time() - $lastUpdated) >= 18000 && !empty($this->settings->get('gopay_refresh_token', ''))) {
+            if ($this->tryRefreshAccessToken()) {
+                $token = $this->settings->get('gopay_access_token', $token);
+            }
         }
 
         return $this->fetchTransactionsFromApi($token, $limit);
@@ -607,7 +645,9 @@ class GoPayMerchantService {
                 $orderId = isset($tx['order_id']) ? $tx['order_id'] : (isset($hit['reference_id']) ? $hit['reference_id'] : (string)$hit['version']);
                 $paymentType = isset($tx['payment_type']) ? strtoupper($tx['payment_type']) : 'QRIS';
                 $status = isset($tx['status']) ? strtoupper($tx['status']) : 'SETTLED';
-                $time = isset($hit['time']) ? date('Y-m-d H:i:s', strtotime($hit['time'])) : date('Y-m-d H:i:s');
+                $rawTime = isset($tx['transaction_time']) ? $tx['transaction_time'] : (isset($hit['time']) ? $hit['time'] : null);
+                $txTimestamp = $rawTime ? (int)strtotime($rawTime) : time();
+                $time = date('Y-m-d H:i:s', $txTimestamp);
 
                 $standardized[] = [
                     'id' => $orderId,
@@ -615,6 +655,7 @@ class GoPayMerchantService {
                     'type' => 'credit',
                     'status' => $status,
                     'time' => $time,
+                    'timestamp' => $txTimestamp,
                     'description' => "Pembayaran {$paymentType} GoPay Merchant"
                 ];
             }
@@ -650,120 +691,51 @@ class GoPayMerchantService {
     }
 
     /**
-     * Ekstrak daftar array transaksi dari berbagai kemungkinan struktur JSON Gojek
-     */
-    private function extractTransactionList($data) {
-        if (isset($data['data']['settlements']) && is_array($data['data']['settlements'])) {
-            return $data['data']['settlements'];
-        }
-        if (isset($data['data']['transactions']) && is_array($data['data']['transactions'])) {
-            return $data['data']['transactions'];
-        }
-        if (isset($data['data']['history']) && is_array($data['data']['history'])) {
-            return $data['data']['history'];
-        }
-        if (isset($data['data']['items']) && is_array($data['data']['items'])) {
-            return $data['data']['items'];
-        }
-        if (isset($data['data']) && is_array($data['data']) && !isset($data['data']['id'])) {
-            return $data['data'];
-        }
-        if (isset($data['transactions']) && is_array($data['transactions'])) {
-            return $data['transactions'];
-        }
-        if (isset($data['settlements']) && is_array($data['settlements'])) {
-            return $data['settlements'];
-        }
-        return [];
-    }
-
-    /**
-     * Standarisasi format transaksi menjadi format seragam
-     */
-    private function standardizeTransactionItem($item) {
-        if (!is_array($item)) return null;
-
-        // Ambil ID Transaksi
-        $id = '';
-        if (isset($item['transaction_id'])) $id = (string)$item['transaction_id'];
-        elseif (isset($item['id'])) $id = (string)$item['id'];
-        elseif (isset($item['order_id'])) $id = (string)$item['order_id'];
-        elseif (isset($item['reference_no'])) $id = (string)$item['reference_no'];
-        
-        if (empty($id)) return null;
-
-        // Ambil Nominal
-        $amount = 0;
-        if (isset($item['amount']['value'])) {
-            $amount = (int)preg_replace('/[^0-9]/', '', $item['amount']['value']);
-        } elseif (isset($item['amount'])) {
-            $amount = (int)preg_replace('/[^0-9]/', '', $item['amount']);
-        } elseif (isset($item['nominal'])) {
-            $amount = (int)preg_replace('/[^0-9]/', '', $item['nominal']);
-        }
-
-        // Ambil Tipe (Credit / Debit)
-        $type = 'credit';
-        if (isset($item['type'])) {
-            $rawType = strtolower($item['type']);
-            if (strpos($rawType, 'debit') !== false || strpos($rawType, 'out') !== false) {
-                $type = 'debit';
-            }
-        }
-
-        // Ambil Status
-        $status = 'SETTLED';
-        if (isset($item['status'])) {
-            $status = strtoupper($item['status']);
-        }
-
-        // Ambil Waktu
-        $time = date('Y-m-d H:i:s');
-        if (isset($item['created_at'])) $time = $item['created_at'];
-        elseif (isset($item['transaction_date'])) $time = $item['transaction_date'];
-        elseif (isset($item['date'])) $time = $item['date'];
-
-        // Ambil Deskripsi / Catatan Pembayar
-        $desc = 'QRIS GoPay Merchant';
-        if (isset($item['description'])) $desc = $item['description'];
-        elseif (isset($item['title'])) $desc = $item['title'];
-        elseif (isset($item['payer_name'])) $desc = 'Pembayaran dari ' . $item['payer_name'];
-
-        return [
-            'id' => $id,
-            'amount' => $amount,
-            'type' => $type,
-            'status' => $status,
-            'time' => $time,
-            'description' => $desc
-        ];
-    }
-
-    /**
      * Inti Sinkronisasi: Mencocokkan mutasi uang masuk GoPay dengan antrean pending MikhPay
      */
     public function syncPendingOrders() {
-        // Cek apakah ada order pending
+        // Cek apakah ada order pending aktif (<= 30 menit) atau order yang baru lunas via webhook
         $dir = dirname(__FILE__) . '/../../voucher/';
         $pendingFiles = [];
+        $recentSettled = [];
+        $now = time();
+        $orderTtl = 1800;
+
         if (is_dir($dir)) {
             $allFiles = array_merge(glob($dir . 'trans-*.json'), glob($dir . 'trans-*.php'));
             foreach ($allFiles as $file) {
                 $trans = readTransactionFile($file);
-                if ($trans && isset($trans['status']) && $trans['status'] === 'pending') {
-                    $pendingFiles[] = $trans;
+                if (!$trans || !isset($trans['status'])) continue;
+                $createdAt = isset($trans['created_at']) ? (int)$trans['created_at'] : 0;
+                if ($trans['status'] === 'pending') {
+                    if ($createdAt === 0 || ($now - $createdAt) <= $orderTtl) {
+                        $pendingFiles[] = $trans;
+                    }
+                } elseif (in_array($trans['status'], ['settlement', 'processing', 'paid_pending_generate'], true)) {
+                    $paidAt = isset($trans['paid_at']) ? (int)$trans['paid_at'] : $createdAt;
+                    if ($paidAt > 0 && ($now - $paidAt) <= $orderTtl) {
+                        $recentSettled[] = $trans;
+                    }
                 }
             }
         }
 
         if (empty($pendingFiles)) {
-            $this->settings->set('gopay_last_sync', time());
+            $this->settings->set('gopay_last_sync', $now);
             return [
                 'success' => true,
                 'matched' => 0,
                 'message' => 'Antrean bersih. Tidak ada transaksi pending di MikhPay.'
             ];
         }
+
+        // Urutkan pending order dari yang paling baru dibuat
+        usort($pendingFiles, function($a, $b) {
+            return ((int)($b['created_at'] ?? 0)) - ((int)($a['created_at'] ?? 0));
+        });
+
+        // Tandai waktu sync lebih awal agar request polling bersamaan tidak membanjiri API GoBiz
+        $this->settings->set('gopay_last_sync', $now);
 
         // Ambil mutasi transaksi dari GoPay
         $fetch = $this->getRecentTransactions(20);
@@ -793,33 +765,47 @@ class GoPayMerchantService {
 
         foreach ($fetch['transactions'] as $trans) {
             $transId = $trans['id'];
-            $amount = $trans['amount'];
+            $amount = (int)$trans['amount'];
             $type = strtolower($trans['type']);
             $status = strtoupper($trans['status']);
+            $txTimestamp = isset($trans['timestamp']) ? (int)$trans['timestamp'] : (isset($trans['time']) ? (int)strtotime($trans['time']) : 0);
 
             // Hanya proses uang masuk (credit) dengan status sukses / settled
             if ($type !== 'credit') continue;
             if (!in_array($status, ['SETTLEMENT', 'SETTLED', 'SUCCESS', 'COMPLETED', 'CAPTURE'])) continue;
 
             // Lewati jika transaksi GoPay ini sudah pernah diproses sebelumnya
-            if (in_array($transId, $processedIds)) {
+            if (in_array($transId, $processedIds, true)) {
                 continue;
             }
 
-            // Cari apakah ada pending order yang nominalnya persis sama
-            $matchedOrder = null;
-            foreach ($pendingFiles as $p) {
-                if (isset($p['price']) && (int)$p['price'] === $amount) {
-                    $matchedOrder = $p;
-                    break;
+            // Cari apakah ada pending order aktif yang nominal dan jendela waktunya cocok
+            $matchedIdx = null;
+            foreach ($pendingFiles as $idx => $p) {
+                if (!isset($p['price']) || (int)$p['price'] !== $amount) {
+                    continue;
                 }
+                $orderCreatedAt = isset($p['created_at']) ? (int)$p['created_at'] : 0;
+                if ($txTimestamp > 0 && $orderCreatedAt > 0) {
+                    // Pembayaran tidak boleh lebih lama dari 2 menit sebelum order dibuat atau > 30 menit setelahnya
+                    if ($txTimestamp < ($orderCreatedAt - 120) || ($txTimestamp - $orderCreatedAt) > $orderTtl) {
+                        continue;
+                    }
+                }
+                $matchedIdx = $idx;
+                break;
             }
 
-            if ($matchedOrder !== null) {
-                // Eksekusi verifikasi & pembuatan voucher
-                $result = processQrisSettlement($amount);
+            if ($matchedIdx !== null) {
+                // Eksekusi verifikasi & pembuatan voucher dengan metadata GoPay API
+                $result = processQrisSettlement($amount, [
+                    'source' => 'gopay_api',
+                    'ref_id' => $transId,
+                    'paid_time' => $txTimestamp
+                ]);
 
                 if ($result['status'] === 'success') {
+                    unset($pendingFiles[$matchedIdx]);
                     $matchedCount++;
                     $processedIds[] = $transId;
                     $matchedDetails[] = [
@@ -834,6 +820,16 @@ class GoPayMerchantService {
                             'GOPAY_AUTO_SYNC',
                             "Mutasi GoPay Rp " . number_format($amount, 0, ',', '.') . " (ID: {$transId}) berhasil mencocokkan Order ID: {$result['order_id']} via Auto-Sync API."
                         );
+                    }
+                }
+            } else {
+                // Jika order sudah lebih dulu dilunasi via Webhook Android beberapa detik lalu, tetap catat transId GoPay agar tidak dipakai ulang
+                foreach ($recentSettled as $settledOrder) {
+                    $sCreatedAt = isset($settledOrder['created_at']) ? (int)$settledOrder['created_at'] : 0;
+                    if (isset($settledOrder['price']) && (int)$settledOrder['price'] === $amount
+                        && ($txTimestamp === 0 || $sCreatedAt === 0 || ($txTimestamp >= ($sCreatedAt - 120) && ($txTimestamp - $sCreatedAt) <= $orderTtl))) {
+                        $processedIds[] = $transId;
+                        break;
                     }
                 }
             }
@@ -868,8 +864,8 @@ class GoPayMerchantService {
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_TIMEOUT, 12);
         curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 6);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         if (defined('CURL_IPRESOLVE_V4')) {
             curl_setopt($ch, CURLOPT_IPRESOLVE, CURL_IPRESOLVE_V4);

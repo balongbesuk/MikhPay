@@ -2,6 +2,27 @@
 
 Semua pembaruan penting pada modifikasi MikhPay ini akan dicatat di dokumen ini.
 
+### [MikhPay v3.2.0] - 2026-11-07
+
+### Ditambahkan
+- **Deteksi Versi Aplikasi Otomatis (`include/version.php` & Android `BuildConfig`)**: Versi aplikasi web MikhPay (Halaman Login, Dashboard Admin, Pengaturan Sesi, MikhPay Billing, dan halaman About) kini terdeteksi secara otomatis langsung dari rilis terbaru di `changelog.md` tanpa perlu mengubah banyak file secara manual, serta tersinkron dengan `BuildConfig.VERSION_NAME` pada aplikasi Android.
+- **Captive Portal / Walled Garden 100% Offline-Ready (`frontpage.php`, `css/frontpage.css`)**: Mengganti seluruh ketergantungan CDN eksternal (Google Fonts & Cloudflare FontAwesome 6) di halaman portal pelanggan dengan aset lokal (`css/font-awesome/css/font-awesome.min.css` + pemetaan ikon FA6 ke FA4) dan system font stack, sehingga portal voucher tampil instan dan utuh meskipun pengguna belum memiliki akses internet (pra-login hotspot).
+- **Navigasi Pintas "Lihat Portal Voucher" untuk Admin (`include/menu.php`, `index.php`, `frontpage.php`)**: Menambahkan tombol pintas di sidebar Admin dan mendukung parameter `?portal=1` di seluruh tautan portal agar admin yang sedang login dapat mengetes halaman pembelian voucher secara langsung tanpa ter-redirect kembali ke dashboard.
+- **Ekstraksi & Auto-Refresh `refresh_token` GoBiz Lebih Proaktif**:
+  - Aplikasi Android (`GobizTokenManager.kt`, `GobizLoginActivity.kt`) kini mengekstrak `refresh_token` bersamaan dengan `access_token` dari penyimpanan WebView/XHR GoBiz dan mempercepat interval pengecekan background dari 6 jam menjadi 45 menit.
+  - Server (`src/Services/GoPayMerchantService.php`) kini mendukung input JSON/pasangan token manual, otomatis me-refresh token sebelum kedaluwarsa (saat umur token $\ge 50$ menit), dan otomatis mengulang request mutasi ketika menerima respon HTTP 401/403.
+- **Penyimpanan Data Berpelindung PHP (`<?php exit; ?>`) & Atomic Write**: Memigrasikan penyimpanan database (`data/database.php`), log aktivitas (`voucher/activity_logs.php`), dan cache mutasi GoPay (`data/gopay_processed.php`) ke format berpelindung header PHP dengan penulisan atomik (`.tmp` + `rename()`) dan `flock()` eksklusif.
+- **Kustomisasi & Persistensi UI Admin (`settings/pending_transactions.php`, `css/modern-override.css`)**: Menambahkan live preview kode warna aksen portal, penyimpanan sub-tab pengaturan terakhir di `localStorage`, indikator salin kode (`Disalin!`), dan perataan tombol aksi yang seragam.
+
+### Diperbaiki & Ditingkatkan (Keamanan & Stabilitas)
+- **Pengamanan Kunci Rahasia & Kriptografi (`include/env_config.php`, `lib/mikhmon_crypto.php`)**: Menghapus fallback secret bawaan yang berisiko, menambahkan `MIKHMON_CRYPTO_KEY` terpisah berbasis `hash_hmac()`, dan menerapkan perbandingan konstan `hash_equals()` melalui `verifyQrisToken()` & `verifyApiKey()`.
+- **Pencegahan Race Condition & False-Positive Settlement QRIS (`include/qris_core.php`, `src/Services/GoPayMerchantService.php`)**:
+  - Menambahkan global lock (`data/settlement.lock`) di `processQrisSettlement()` agar webhook Android, poller GoPay, dan cron tidak pernah menerbitkan voucher ganda.
+  - Memperketat validasi mutasi GoPay (`isValidGoPayTransactionItem()`) dan filter notifikasi Android (`MikhPayListenerService.kt`) agar mengabaikan notifikasi ongoing/ringkasan, mutasi keluar/penarikan/refund, serta transaksi lama sebelum waktu order dibuat.
+  - Menolak nominal tes `12345` agar tidak pernah melunasi transaksi pelanggan asli di `qris_verify.php`.
+- **Perlindungan Endpoint Cron, Webhook & Admin (`process/cron_qris.php`, `process/cron_retry.php`, `voucher/print.php`, `settings/*`)**: Menambahkan wajib autentikasi/CSRF, mencegah penghapusan transaksi berstatus `paid_pending_generate` saat router sedang offline, menutup celah XSS dan path traversal pada manajemen logo/bahasa/tema/template voucher, serta mengamankan kredensial signing Gradle Android via variabel environment.
+- **Perbaikan Tampilan & Ikon Admin (`settings/sessions.php`, `settings/settings.php`, `include/login.php`)**: Memperbaiki tombol mata *show/hide password* yang tidak berfungsi, merapikan struktur kartu form Admin & Router Settings, memperbaiki ikon status FontAwesome 4 yang sempat tidak muncul, dan menghapus `@import` font eksternal yang memperlambat pemuatan halaman saat offline.
+
 ### [MikhPay v3.1.0] - 2026-09-19
 
 ### Ditambahkan

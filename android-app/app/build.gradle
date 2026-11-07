@@ -3,6 +3,30 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
+def detectChangelogVersion = {
+    def changelogFile = file("../../changelog.md")
+    if (changelogFile.exists()) {
+        def matcher = (changelogFile.getText("UTF-8") =~ /(?m)^###\s+\[MikhPay\s+v([0-9.]+)\]/)
+        if (matcher.find()) {
+            return matcher.group(1).replaceAll(/\.0$/, "")
+        }
+    }
+    return "3.2"
+}
+
+def detectChangelogVersionCode = {
+    def changelogFile = file("../../changelog.md")
+    if (changelogFile.exists()) {
+        def matcher = (changelogFile.getText("UTF-8") =~ /(?m)^###\s+\[MikhPay\s+v([0-9.]+)\]/)
+        def count = 0
+        while (matcher.find()) {
+            count++
+        }
+        if (count > 0) return count
+    }
+    return 3
+}
+
 android {
     namespace = 'com.mikhpay.forwarder'
     compileSdk 34
@@ -11,25 +35,31 @@ android {
         applicationId "com.mikhpay.forwarder"
         minSdk 23
         targetSdk 34
-        versionCode 2
-        versionName "3.1"
+        versionCode detectChangelogVersionCode()
+        versionName detectChangelogVersion()
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     signingConfigs {
         release {
-            storeFile file("../mikhpay.jks")
-            storePassword "mikhpay123"
-            keyAlias "mikhpay"
-            keyPassword "mikhpay123"
+            def ksPath = System.getenv("MIKHPAY_KEYSTORE_FILE") ?: "../mikhpay.jks"
+            storeFile file(ksPath)
+            storePassword System.getenv("MIKHPAY_KEYSTORE_PASSWORD") ?: ""
+            keyAlias System.getenv("MIKHPAY_KEY_ALIAS") ?: "mikhpay"
+            keyPassword System.getenv("MIKHPAY_KEY_PASSWORD") ?: ""
         }
     }
 
     buildTypes {
         release {
             minifyEnabled true
-            signingConfig = signingConfigs.release
+            def ksFile = signingConfigs.release.storeFile
+            if (ksFile != null && ksFile.exists() && !signingConfigs.release.storePassword.isEmpty()) {
+                signingConfig = signingConfigs.release
+            } else {
+                signingConfig = signingConfigs.debug
+            }
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }

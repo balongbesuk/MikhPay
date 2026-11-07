@@ -39,7 +39,7 @@ class GobizLoginActivity : AppCompatActivity() {
     private var isSyncing = false
     private var isTokenDetected = false
 
-    private val targetUrl = "https://portal.gofoodmerchant.co.id/"
+    private val targetUrl = GobizTokenManager.GOBIZ_PORTAL_URL
 
     // Periodic cookie checker for Single Page App (SPA) token changes
     private val cookieCheckRunnable = object : Runnable {
@@ -109,14 +109,17 @@ class GobizLoginActivity : AppCompatActivity() {
         settings.builtInZoomControls = true
         settings.displayZoomControls = false
         settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
-        // Use modern Chrome User-Agent
-        settings.userAgentString = "Mozilla/5.0 (Linux; Android 12; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36"
+        // Use shared User-Agent with GobizTokenManager so session cookies/storage remain consistent
+        settings.userAgentString = GobizTokenManager.GOBIZ_USER_AGENT
 
         val cookieManager = CookieManager.getInstance()
         cookieManager.setAcceptCookie(true)
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
             cookieManager.setAcceptThirdPartyCookies(webView, true)
         }
+        // Clear old access_token cookies so re-login does not immediately re-submit an expired token
+        cookieManager.setCookie(targetUrl, "access_token=; Max-Age=0; path=/")
+        cookieManager.setCookie("https://app.gobiz.co.id", "access_token=; Max-Age=0; path=/")
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onProgressChanged(view: WebView?, newProgress: Int) {
@@ -143,23 +146,21 @@ class GobizLoginActivity : AppCompatActivity() {
     }
 
     /**
-     * Inspect active cookies for GoBiz JWT access_token
+     * Inspect active cookies and WebStorage for GoBiz JWT access_token & refresh_token
      */
     private fun checkCookiesForToken() {
         if (isTokenDetected || isSyncing) return
 
         val cookieManager = CookieManager.getInstance()
-        val cookies = cookieManager.getCookie(targetUrl) ?: cookieManager.getCookie("https://app.gobiz.co.id") ?: ""
+        val oldToken = getSharedPreferences(GobizTokenManager.PREFS_NAME, Context.MODE_PRIVATE)
+            .getString(GobizTokenManager.KEY_LAST_ACCESS_TOKEN, "") ?: ""
 
-        if (cookies.contains("access_token=")) {
-            val matcher = Pattern.compile("access_token=([^;]+)").matcher(cookies)
-            if (matcher.find()) {
-                val token = matcher.group(1)?.trim()
-                if (!token.isNullOrEmpty() && token.length > 20) {
-                    isTokenDetected = true
-                    runOnUiThread {
-                        onTokenFound(token, cookies)
-                    }
+        GobizTokenManager.extractTokensFromWebView(webView, cookieManager) { token, refreshToken ->
+            if (!isTokenDetected && !isSyncing && token.length > 20 && token != oldToken) {
+                isTokenDetected = true
+                cookieManager.flush()
+                runOnUiThread {
+                    onTokenFound(token, refreshToken)
                 }
             }
         }
@@ -168,7 +169,7 @@ class GobizLoginActivity : AppCompatActivity() {
     /**
      * Triggered when token is successfully detected from GoBiz session
      */
-    private fun onTokenFound(token: String, cookies: String) {
+    private fun onTokenFound(token: String, refreshToken: String) {
         isSyncing = true
         syncOverlay.visibility = View.VISIBLE
         syncStatusText.text = "Token terdeteksi! Mengirim ke server MikhPay..."
@@ -184,14 +185,8 @@ class GobizLoginActivity : AppCompatActivity() {
             return
         }
 
-        var refreshToken = ""
-        val refreshMatcher = Pattern.compile("refresh_token=([^;]+)").matcher(cookies)
-        if (refreshMatcher.find()) {
-            refreshToken = refreshMatcher.group(1)?.trim() ?: ""
-        }
-
         // Derive api.php URL from webhook_url
-        val apiUrl = resolveApiUrl(webhookUrl)
+        val apiUrl = GobizTokenManager.resolveApiUrl(webhookUrl)
 
         val client = OkHttpClient.Builder().build()
         val formBody = FormBody.Builder()
@@ -222,7 +217,7 @@ class GobizLoginActivity : AppCompatActivity() {
                         .setTitle("Gagal Sinkronisasi")
                         .setMessage("Tidak dapat menghubungi server MikhPay: ${e.message}")
                         .setPositiveButton("Coba Lagi") { _, _ ->
-                            onTokenFound(token, cookies)
+                            onTokenFound(token, refreshToken)
                         }
                         .setNegativeButton("Tutup", null)
                         .show()
@@ -247,6 +242,7 @@ class GobizLoginActivity : AppCompatActivity() {
                                     putLong(GobizTokenManager.KEY_LAST_REFRESH_TIME, System.currentTimeMillis())
                                     putBoolean(GobizTokenManager.KEY_GOBIZ_SESSION_ACTIVE, true)
                                     putString(GobizTokenManager.KEY_LAST_REFRESH_STATUS, "Login manual sukses")
+                                    putString(GobizTokenManager.KEY_LAST_ACCESS_TOKEN, token)
                                     apply()
                                 }
 
@@ -275,26 +271,6 @@ class GobizLoginActivity : AppCompatActivity() {
                 }
             }
         })
-    }
-
-    /**
-     * Resolve target api.php URL from configured webhook URL
-     */
-    private fun resolveApiUrl(webhookUrl: String): String {
-        val trimmed = webhookUrl.trim()
-        val base = when {
-            trimmed.contains("qris_verify.php") -> trimmed.replace("qris_verify.php", "api.php")
-            trimmed.endsWith("/") -> "${trimmed}api.php"
-            else -> {
-                val lastSlash = trimmed.lastIndexOf('/')
-                if (lastSlash != -1 && trimmed.substring(lastSlash).contains(".php")) {
-                    "${trimmed.substring(0, lastSlash)}/api.php"
-                } else {
-                    "$trimmed/api.php"
-                }
-            }
-        }
-        return if (base.contains("?")) "$base&action=update_gopay_token" else "$base?action=update_gopay_token"
     }
 
     /**

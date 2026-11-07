@@ -88,6 +88,7 @@ include_once('./include/autoload.php');
 // PRG: Intercept save_settings POST before any HTML output
 // so accent color changes take effect immediately on redirect
 if ($id == 'pending-transactions' && isset($_POST['action']) && $_POST['action'] === 'save_settings' && isset($_SESSION['mikhmon'])) {
+    csrf_verify();
     $earlySettings = new \App\Models\AppSettings();
     $earlySettings->set('telegram_bot_token', isset($_POST['telegram_bot_token']) ? trim($_POST['telegram_bot_token']) : '');
     $earlySettings->set('telegram_chat_id', isset($_POST['telegram_chat_id']) ? trim($_POST['telegram_chat_id']) : '');
@@ -177,11 +178,7 @@ include_once('./lib/formatbytesbites.php');
 if ($id == "login" || substr($url, -1) == "p") {
 
   // Brute-force rate limiting check
-  $ipAddress = isset($_SERVER['HTTP_CLIENT_IP']) 
-      ? $_SERVER['HTTP_CLIENT_IP'] 
-      : (isset($_SERVER['HTTP_X_FORWARDED_FOR']) 
-          ? explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0] 
-          : $_SERVER['REMOTE_ADDR']);
+  $ipAddress = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0';
   
   $loginLimitFile = __DIR__ . '/data/login_rate_limit.json';
   $loginMaxAttempts = 5;
@@ -361,10 +358,12 @@ if ($id == "login" || substr($url, -1) == "p") {
   </script>";
 } elseif ($id == "remove-logo" && $logo != ""  && !empty($session)) {
   include_once('./include/menu.php');
-  $logopath = "./img/";
-  $remlogo = $logopath . $logo;
-  unlink("$remlogo");
-  echo "<script>window.location='./admin.php?id=uplogo&session=" . $session . "'</script>";
+  $safeLogo = basename($logo);
+  $remlogo = "./img/" . $safeLogo;
+  if (preg_match('/^logo-.*\.(png|jpg|jpeg|gif)$/i', $safeLogo) && is_file($remlogo)) {
+    @unlink($remlogo);
+  }
+  echo "<script>window.location='./admin.php?id=uplogo&session=" . urlencode($session) . "'</script>";
 } elseif ($id == "editor"  && !empty($session)) {
   include_once('./include/menu.php');
   include_once('./settings/vouchereditor.php');
@@ -374,8 +373,8 @@ if ($id == "login" || substr($url, -1) == "p") {
 	echo "<script>window.location='./admin.php?id=sessions'</script>";
 }
 ?>
-<script src="js/mikhmon-ui.<?= $theme; ?>.min.js?t=<?= time(); ?>"></script>
-<script src="js/mikhmon.js?t=<?= str_replace(" ","_",date("Y-m-d H:i:s")); ?>"></script>
+<script src="js/mikhmon-ui.<?= $theme; ?>.min.js?v=<?= @filemtime(__DIR__ . '/js/mikhmon-ui.' . $theme . '.min.js') ?: 1 ?>"></script>
+<script src="js/mikhmon.js?v=<?= @filemtime(__DIR__ . '/js/mikhmon.js') ?: 1 ?>"></script>
 <?php include('./include/info.php'); ?>
 </body>
 </html>

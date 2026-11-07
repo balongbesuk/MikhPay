@@ -42,7 +42,7 @@ header("X-XSS-Protection: 1; mode=block");
 if (!file_exists(__DIR__ . '/voucher')) {
     mkdir(__DIR__ . '/voucher', 0755, true);
 }
-$htaccess_content = "<Files \"*.json\">\n    Order Deny,Allow\n    Deny from all\n</Files>\n";
+$htaccess_content = "Options -Indexes\n<FilesMatch \"^(\\.htaccess|trans-.*\\.(json|php)|.*\\.json)$\">\n    Order Deny,Allow\n    Deny from all\n</FilesMatch>\n";
 if (!file_exists(__DIR__ . '/voucher/.htaccess') || file_get_contents(__DIR__ . '/voucher/.htaccess') !== $htaccess_content) {
     file_put_contents(__DIR__ . '/voucher/.htaccess', $htaccess_content);
 }
@@ -55,6 +55,9 @@ include_once(__DIR__ . '/include/config.php');
 include_once(__DIR__ . '/include/env_config.php');
 include_once(__DIR__ . '/include/autoload.php');
 include_once(__DIR__ . '/include/csrf.php');
+if (!isset($dbSettings) || !($dbSettings instanceof \App\Models\AppSettings)) {
+    $dbSettings = new \App\Models\AppSettings();
+}
 
 // Handle AJAX contact form submission
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'submit_contact') {
@@ -104,16 +107,21 @@ if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST' &
 if (rand(1, 100) <= 5) {
     $dir = __DIR__ . '/voucher/';
     if (is_dir($dir)) {
-        $retention_days = isset($dbSettings) ? (int)$dbSettings->get('log_retention_days', 2) : 2;
-        $retention_seconds = $retention_days * 86400;
+        $retention_days = isset($dbSettings) ? max(1, (int)$dbSettings->get('log_retention_days', 2)) : 2;
+        $pending_ttl = $retention_days * 86400;
+        $settled_ttl = max(30, $retention_days) * 86400;
         $files = array_merge(
             glob($dir . 'trans-*.json'),
             glob($dir . 'trans-*.php')
         );
         foreach ($files as $file) {
-            if (time() - filemtime($file) > $retention_seconds) {
-                @unlink($file);
-            }
+            $age = time() - filemtime($file);
+            if ($age <= $pending_ttl) continue;
+            $tData = readTransactionFile($file);
+            $st = isset($tData['status']) ? $tData['status'] : 'pending';
+            if ($st === 'paid_pending_generate' || $st === 'processing') continue;
+            if (($st === 'settlement' || $st === 'capture') && $age <= $settled_ttl) continue;
+            @unlink($file);
         }
     }
 }
@@ -180,9 +188,18 @@ if (isset($_GET['check_order'])) {
     
     if (file_exists($filepath)) {
         $trans = readTransactionFile($filepath);
+        $isOwner = empty($trans['session_id'])
+            || $trans['session_id'] === session_id()
+            || (!empty($client_mac) && !empty($trans['client_mac']) && $trans['client_mac'] === $client_mac)
+            || isset($_SESSION['mikhmon']);
+        if (!$isOwner) {
+            echo json_encode(['status' => 'pending']);
+            exit;
+        }
 
-        // Jika status masih pending dan integrasi GoPay aktif, picu pengecekan langsung ke GoBiz (cooldown 5 detik)
-        if (isset($trans['status']) && $trans['status'] === 'pending') {
+        // Jika status masih pending (dan belum kedaluwarsa) serta integrasi GoPay aktif, picu pengecekan langsung ke GoBiz (cooldown 5 detik)
+        $orderCreated = isset($trans['created_at']) ? (int)$trans['created_at'] : 0;
+        if (isset($trans['status']) && $trans['status'] === 'pending' && ($orderCreated === 0 || (time() - $orderCreated) <= 1800)) {
             try {
                 $gopaySettings = new \App\Models\AppSettings();
                 if ($gopaySettings->get('gopay_sync_enabled', false) && !empty($gopaySettings->get('gopay_access_token', ''))) {
@@ -257,7 +274,11 @@ if (isset($_GET['show_voucher']) && !empty($show_voucher_id)) {
     }
     if (file_exists($filepath)) {
         $trans = readTransactionFile($filepath);
-        if (isset($trans['status']) && $trans['status'] === 'settlement' && !empty($trans['username'])) {
+        $isOwner = empty($trans['session_id'])
+            || $trans['session_id'] === session_id()
+            || (!empty($client_mac) && !empty($trans['client_mac']) && $trans['client_mac'] === $client_mac)
+            || isset($_SESSION['mikhmon']);
+        if ($isOwner && isset($trans['status']) && $trans['status'] === 'settlement' && !empty($trans['username'])) {
             $success_voucher = [
                 'username' => $trans['username'],
                 'password' => $trans['password'],
@@ -266,7 +287,7 @@ if (isset($_GET['show_voucher']) && !empty($show_voucher_id)) {
                 'validity' => $trans['validity']
             ];
             $currency = isset($data[$selected_session]) ? explode('&', $data[$selected_session][6])[1] : 'Rp';
-        } elseif (isset($trans['status']) && ($trans['status'] === 'paid_pending_generate' || ($trans['status'] === 'settlement' && empty($trans['username'])))) {
+        } elseif ($isOwner && isset($trans['status']) && ($trans['status'] === 'paid_pending_generate' || ($trans['status'] === 'settlement' && empty($trans['username'])))) {
             $pending_voucher = [
                 'order_id' => $show_voucher_id,
                 'profile' => isset($trans['profile']) ? $trans['profile'] : '',
@@ -468,16 +489,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                         $price = isset($exploded[2]) ? (float)$exploded[2] : 0;
                         $validity = isset($exploded[3]) ? $exploded[3] : '';
 
-                        // Generate Order ID unik
-                        $snap_order_id = "MK-" . preg_replace('/[^a-zA-Z0-9]/', '', $selected_session) . "-" . preg_replace('/[^a-zA-Z0-9]/', '', $profile_to_buy) . "-" . time();
+                        // Generate Order ID unik dengan suffix acak agar tidak bisa ditebak
+                        $rand_suffix = strtoupper(bin2hex(random_bytes(3)));
+                        $snap_order_id = "MK-" . preg_replace('/[^a-zA-Z0-9]/', '', $selected_session) . "-" . preg_replace('/[^a-zA-Z0-9]/', '', $profile_to_buy) . "-" . time() . "-" . $rand_suffix;
                         
                         if ($qris_mode && !empty($qris_static_string)) {
                             // MODE QRIS MANDIRI
                             include_once(__DIR__ . '/lib/qris.php');
-                            
-                            // Cari kode unik (1 - 99) yang tidak sedang aktif (pending) di folder voucher
+
+                            // Kunci settlement.lock saat mengalokasikan kode unik agar 2 pembeli bersamaan tidak mendapat nominal kembar
+                            $lockFile = __DIR__ . '/data/settlement.lock';
+                            $lockFp = @fopen($lockFile, 'c+');
+                            if ($lockFp) {
+                                flock($lockFp, LOCK_EX);
+                            }
+
+                            // Cari kode unik (1 - 99) pada harga paket yang sama yang sedang aktif (pending <= 15m) atau baru lunas (cooldown <= 10m)
                             $active_codes = [];
                             $dir = __DIR__ . '/voucher/';
+                            $now = time();
                             if (is_dir($dir)) {
                                 $files = array_merge(
                                     glob($dir . 'trans-*.json'),
@@ -485,51 +515,66 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
                                 );
                                 foreach ($files as $file) {
                                     $tData = readTransactionFile($file);
-                                    if ($tData && isset($tData['status']) && $tData['status'] === 'pending' && isset($tData['price']) && isset($tData['base_price'])) {
-                                        $diff = (int)$tData['price'] - (int)$tData['base_price'];
-                                        if ($diff >= 1 && $diff <= 99) {
-                                            $active_codes[] = $diff;
-                                        }
+                                    if (!$tData || !isset($tData['status']) || !isset($tData['price'])) {
+                                        continue;
+                                    }
+                                    $diff = (int)$tData['price'] - (int)$price;
+                                    if ($diff < 1 || $diff > 99) {
+                                        continue;
+                                    }
+                                    $st = $tData['status'];
+                                    $createdAt = isset($tData['created_at']) ? (int)$tData['created_at'] : 0;
+                                    $paidAt = isset($tData['paid_at']) ? (int)$tData['paid_at'] : $createdAt;
+                                    if ($st === 'pending' && ($createdAt === 0 || ($now - $createdAt) <= 900)) {
+                                        $active_codes[] = $diff;
+                                    } elseif (in_array($st, ['processing', 'settlement', 'paid_pending_generate'], true) && $paidAt > 0 && ($now - $paidAt) <= 600) {
+                                        $active_codes[] = $diff;
                                     }
                                 }
                             }
-                            // Dapatkan angka 1-99 yang tidak ada di $active_codes
+                            // Dapatkan angka 1-99 yang tidak sedang dipakai di paket harga ini
                             $available_codes = array_diff(range(1, 99), $active_codes);
                             if (empty($available_codes)) {
-                                // Fallback jika semua slot 99 kode unik penuh (sangat jarang terjadi)
-                                $unique_code = rand(1, 99);
+                                if ($lockFp) {
+                                    flock($lockFp, LOCK_UN);
+                                    fclose($lockFp);
+                                }
+                                $snap_order_id = "";
+                                $error_msg = "Antrean pembayaran untuk paket ini sedang penuh. Silakan coba lagi dalam 1 menit.";
                             } else {
-                                // Ambil satu secara acak dari kode yang masih kosong
                                 $unique_code = $available_codes[array_rand($available_codes)];
+                                $total_price = $price + $unique_code;
+
+                                $qrisGen = new QrisGenerator($qris_static_string);
+                                $dynamic_qris_string = $qrisGen->generateDynamic($total_price);
+
+                                $snap_token = $dynamic_qris_string;
+
+                                // Simpan data pending transaksi
+                                $transData = [
+                                    'status' => 'pending',
+                                    'order_id' => $snap_order_id,
+                                    'session' => $selected_session,
+                                    'profile' => $profile_to_buy,
+                                    'price' => $total_price,
+                                    'base_price' => $price,
+                                    'validity' => $validity,
+                                    'created_at' => $now,
+                                    'client_ip' => isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '',
+                                    'client_mac' => $client_mac,
+                                    'session_id' => session_id(),
+                                    'qris_string' => $dynamic_qris_string
+                                ];
+
+                                if (!file_exists(__DIR__ . '/voucher')) {
+                                    mkdir(__DIR__ . '/voucher', 0755, true);
+                                }
+                                writeTransactionFile(__DIR__ . "/voucher/trans-" . $snap_order_id . ".php", $transData);
+                                if ($lockFp) {
+                                    flock($lockFp, LOCK_UN);
+                                    fclose($lockFp);
+                                }
                             }
-                            
-                            $total_price = $price + $unique_code;
-                            
-                            $qrisGen = new QrisGenerator($qris_static_string);
-                            $dynamic_qris_string = $qrisGen->generateDynamic($total_price);
-                            
-                            $snap_token = $dynamic_qris_string; // Kita pinjam variabel snap_token untuk menyimpan string qris
-                            
-                            // Simpan data pending transaksi
-                            $transData = [
-                                'status' => 'pending',
-                                'order_id' => $snap_order_id,
-                                'session' => $selected_session,
-                                'profile' => $profile_to_buy,
-                                'price' => $total_price, // Harga sudah termasuk kode unik
-                                'base_price' => $price,
-                                'validity' => $validity,
-                                'created_at' => time(),
-                                'client_ip' => isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '',
-                                'client_mac' => $client_mac,
-                                'session_id' => session_id(),
-                                'qris_string' => $dynamic_qris_string
-                            ];
-                            
-                            if (!file_exists(__DIR__ . '/voucher')) {
-                                mkdir(__DIR__ . '/voucher', 0755, true);
-                            }
-                            writeTransactionFile(__DIR__ . "/voucher/trans-" . $snap_order_id . ".php", $transData);
                         } else {
                             $error_msg = "Sistem QRIS Mandiri belum dikonfigurasi.";
                             writeAppLog("QRIS_ERROR", "Gagal membuat qris untuk Order ID: " . $snap_order_id . ". QRIS Mode mati atau string kosong.");
@@ -552,6 +597,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['buy_profile'])) {
 $portal_title = isset($dbSettings) ? $dbSettings->get('portal_title', 'GalaxyNet') : 'GalaxyNet';
 $portal_logo_url = isset($dbSettings) ? $dbSettings->get('portal_logo_url', '') : '';
 $portal_accent_color = isset($dbSettings) ? $dbSettings->get('portal_accent_color', '#008BC9') : '#008BC9';
+if (!preg_match('/^#[0-9a-fA-F]{3,8}$/', (string)$portal_accent_color)) {
+    $portal_accent_color = '#008BC9';
+}
 $portal_support_wa = isset($dbSettings) ? $dbSettings->get('portal_support_wa', '') : '';
 $portal_support_telegram = isset($dbSettings) ? $dbSettings->get('portal_support_telegram', '') : '';
 $portal_support_email = isset($dbSettings) ? $dbSettings->get('portal_support_email', '') : '';
@@ -571,13 +619,9 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
     <meta name="description" content="Layanan internet hotspot instan berkecepatan tinggi dengan sistem voucher otomatis via QRIS dan E-Wallet. Cepat, stabil, dan tanpa kontrak bulanan.">
     <meta name="keywords" content="hotspot, voucher hotspot, internet murah, qris hotspot, mikhmon qris">
     
-    <!-- Modern Typography & Icons -->
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    
-    <!-- QR Code Script is loaded dynamically when needed -->
-
-    <link rel="stylesheet" href="css/frontpage.css">
+    <!-- Modern Typography & Icons (Local Offline-First for Captive Portal / Walled Garden) -->
+    <link rel="stylesheet" href="css/font-awesome/css/font-awesome.min.css">
+    <link rel="stylesheet" href="css/frontpage.css?v=<?= @filemtime(__DIR__ . '/css/frontpage.css') ?: 1 ?>">
     <style>
         :root {
             --primary: <?= $portal_accent_color ?>;
@@ -608,7 +652,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 <a href="#syarat">Syarat & Kebijakan</a>
                 <a href="#kontak">Kontak</a>
             </nav>
-            <a href="admin.php?id=login" class="btn-admin">
+            <a href="<?= isset($_SESSION['mikhmon']) ? 'admin.php?id=sessions' : 'admin.php?id=login' ?>" class="btn-admin" title="Admin Portal">
                 <i class="fa fa-user-shield"></i>
             </a>
         </div>
@@ -634,6 +678,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 <div class="session-switcher">
                     <span><i class="fa fa-map-marker-alt"></i> Lokasi Hotspot:</span>
                     <form method="GET" id="sessionForm">
+                        <input type="hidden" name="portal" value="1">
                         <select name="session" onchange="document.getElementById('sessionForm').submit()">
                             <?php foreach ($available_sessions as $sess): ?>
                                 <option value="<?= htmlspecialchars($sess) ?>" <?= ($selected_session === $sess) ? 'selected' : '' ?>>
@@ -719,33 +764,31 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 <div class="receipt-subtitle">Voucher internet Anda telah berhasil diterbitkan</div>
 
                 <div class="voucher-box" style="text-align: left; padding: 20px; border-radius: 16px; background: rgba(99, 102, 241, 0.02); border: 1px dashed rgba(99, 102, 241, 0.2);">
-                    <!-- Login via Username & Password -->
-                    <div style="margin-bottom: 16px; border-bottom: 1px dashed var(--border-color); padding-bottom: 16px;">
-                        <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
-                            <i class="fa fa-user-lock" style="color: var(--primary);"></i> METODE 1: LOGIN VIA USERNAME & PASSWORD
-                        </div>
-                        <div style="display: flex; gap: 24px; flex-wrap: wrap;">
-                            <div>
-                                <div class="voucher-code-label" style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Username</div>
-                                <div class="voucher-code" id="voucherCode" style="margin-bottom: 0; font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: 1px;"><?= htmlspecialchars($success_voucher['username']) ?></div>
-                            </div>
-                            <div style="border-left: 1px solid var(--border-color); padding-left: 20px;">
-                                <div class="voucher-code-label" style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Password</div>
-                                <div class="voucher-code" id="voucherPassword" style="margin-bottom: 0; font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: 1px;"><?= htmlspecialchars($success_voucher['password']) ?></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Login via Voucher -->
-                    <div style="margin-bottom: 4px;">
-                        <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
-                            <i class="fa fa-ticket" style="color: var(--accent);"></i> METODE 2: LOGIN VIA KODE VOUCHER
-                        </div>
+                    <?php if ($success_voucher['username'] === $success_voucher['password']): ?>
                         <div>
-                            <div class="voucher-code-label" style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Kode Voucher</div>
-                            <div class="voucher-code" style="margin-bottom: 0; font-size: 24px; font-weight: 800; color: var(--accent); letter-spacing: 1px;"><?= htmlspecialchars($success_voucher['username']) ?></div>
+                            <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <i class="fa fa-ticket" style="color: var(--primary);"></i> KODE VOUCHER / LOGIN HOTSPOT
+                            </div>
+                            <div class="voucher-code" id="voucherCode" style="margin-bottom: 4px; font-size: 28px; font-weight: 800; color: var(--primary); letter-spacing: 1.5px;"><?= htmlspecialchars($success_voucher['username']) ?></div>
+                            <div style="font-size: 11px; color: var(--text-muted);">Gunakan kode di atas sebagai <b>Kode Voucher</b> (atau isi pada kolom <b>Username &amp; Password</b>).</div>
                         </div>
-                    </div>
+                    <?php else: ?>
+                        <div>
+                            <div style="font-size: 11px; font-weight: 800; color: var(--text-muted); margin-bottom: 8px; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px;">
+                                <i class="fa fa-user-lock" style="color: var(--primary);"></i> LOGIN VIA USERNAME &amp; PASSWORD
+                            </div>
+                            <div style="display: flex; gap: 24px; flex-wrap: wrap;">
+                                <div>
+                                    <div class="voucher-code-label" style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Username</div>
+                                    <div class="voucher-code" id="voucherCode" style="margin-bottom: 0; font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: 1px;"><?= htmlspecialchars($success_voucher['username']) ?></div>
+                                </div>
+                                <div style="border-left: 1px solid var(--border-color); padding-left: 20px;">
+                                    <div class="voucher-code-label" style="font-size: 10px; text-transform: uppercase; color: var(--text-muted); font-weight: 600; margin-bottom: 2px;">Password</div>
+                                    <div class="voucher-code" id="voucherPassword" style="margin-bottom: 0; font-size: 24px; font-weight: 800; color: var(--primary); letter-spacing: 1px;"><?= htmlspecialchars($success_voucher['password']) ?></div>
+                                </div>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
 
                 <!-- Peringatan Wifi (PENTING) -->
@@ -802,7 +845,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                     <?php endif; ?>
                     <div style="display: flex; gap: 12px; width: 100%;">
                         <button class="btn-copy" onclick="copyVoucherCode()">Salin Kode</button>
-                        <a href="index.php?session=<?= urlencode($selected_session) ?>" class="btn-done">Selesai</a>
+                        <a href="index.php?portal=1&session=<?= urlencode($selected_session) ?>" class="btn-done">Selesai</a>
                     </div>
                     <?php
                     $wa_success_url = "";
@@ -898,24 +941,6 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                     value: <?= json_encode($login_url ?: $success_voucher['username']) ?>,
                     size: 250
                 });
-
-                function copyVoucherCode() {
-                    var u = document.getElementById("voucherCode").innerText.trim();
-                    var pEl = document.getElementById("voucherPassword");
-                    var p = pEl ? pEl.innerText.trim() : u;
-                    var codeText = (u === p) ? u : "Username: " + u + "\nPassword: " + p;
-                    copyTextToClipboard(codeText, function() {
-                        var toast = document.getElementById("copyToast");
-                        if (toast) {
-                            toast.classList.add("show");
-                            setTimeout(function() {
-                                toast.classList.remove("show");
-                            }, 3000);
-                        }
-                    }, function() {
-                        alert("Username: " + u + "\nPassword: " + p + "\n(Silakan salin secara manual)");
-                    });
-                }
             </script>
         <?php elseif ($pending_voucher): ?>
             <?php
@@ -985,7 +1010,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                     <?php endif; ?>
                     <div style="display: flex; gap: 12px; width: 100%;">
                         <button class="btn-copy" onclick="copyPendingOrderId()" style="flex: 1;">Salin Order ID</button>
-                        <a href="index.php?session=<?= urlencode($selected_session) ?>" class="btn-done" style="flex: 1;">Selesai</a>
+                        <a href="index.php?portal=1&session=<?= urlencode($selected_session) ?>" class="btn-done" style="flex: 1;">Selesai</a>
                     </div>
                 </div>
             </div>
@@ -1000,21 +1025,6 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 // Bersihkan data transaksi aktif dari localStorage
                 localStorage.removeItem('active_order_id');
                 localStorage.removeItem('active_snap_token');
-
-                function copyPendingOrderId() {
-                    var orderId = document.getElementById("pendingOrderId").innerText.replace(/\s+/g, '').trim();
-                    copyTextToClipboard(orderId, function() {
-                        var toast = document.getElementById("copyToastPending");
-                        if (toast) {
-                            toast.classList.add("show");
-                            setTimeout(function() {
-                                toast.classList.remove("show");
-                            }, 3000);
-                        }
-                    }, function() {
-                        alert("Order ID: " + orderId + "\n(Silakan salin secara manual)");
-                    });
-                }
             </script>
         <?php else: ?>
             <!-- Layout Switcher Buttons -->
@@ -1140,8 +1150,8 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
         </div>
 
         <div class="tabs-header">
-            <button class="tab-btn active" onclick="switchTab('syarat-ketentuan')">Syarat & Ketentuan</button>
-            <button class="tab-btn" onclick="switchTab('kebijakan-pengembalian')">Kebijakan Pengembalian Dana</button>
+            <button class="tab-btn active" onclick="switchTab('syarat-ketentuan', this)">Syarat & Ketentuan</button>
+            <button class="tab-btn" onclick="switchTab('kebijakan-pengembalian', this)">Kebijakan Pengembalian Dana</button>
         </div>
 
         <!-- Syarat & Ketentuan Content -->
@@ -1261,7 +1271,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 <a href="#paket">Beli Voucher</a>
                 <a href="#syarat">Syarat & Ketentuan</a>
                 <a href="#kontak">Hubungi Kami</a>
-                <a href="admin.php?id=login">Admin Portal</a>
+                <a href="<?= isset($_SESSION['mikhmon']) ? 'admin.php?id=sessions' : 'admin.php?id=login' ?>">Admin Portal</a>
             </div>
             <p>&copy; <?= date("Y") ?> <?= htmlspecialchars($portal_title) ?> Hotspot. All Rights Reserved. Seluruh transaksi diproses dalam Rupiah (IDR).</p>
             <p style="font-size: 11px; color: var(--text-muted); padding-bottom: 60px;">Diintegrasikan dengan sistem billing otomatis MikhPay.</p>
@@ -1291,6 +1301,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
     <!-- QRIS Transaction Overlay -->
     <?php if (!empty($snap_token)): ?>
         <style>
+            body { overflow: hidden !important; }
             .loading-overlay {
                 background: rgba(15, 23, 42, 0.7) !important;
                 backdrop-filter: blur(12px) !important;
@@ -1488,7 +1499,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                     Order ID: <?= htmlspecialchars($snap_order_id) ?>
                 </div>
                 
-                <button type="button" onclick="window.location.href='frontpage.php?cancel_order=<?= urlencode($snap_order_id) ?>&session=<?= urlencode($selected_session) ?>'" class="btn-cancel-qris-new">Batalkan Pesanan</button>
+                <button type="button" onclick="window.location.href='index.php?cancel_order=<?= urlencode($snap_order_id) ?>&session=<?= urlencode($selected_session) ?>'" class="btn-cancel-qris-new">Batalkan Pesanan</button>
             </div>
         </div>
 
@@ -1549,7 +1560,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                         clearInterval(timerInterval);
                         countdownEl.innerHTML = "Kedaluwarsa!";
                         alert("Waktu batas pembayaran Anda telah habis. Silakan buat pesanan paket baru.");
-                        window.location.href = 'index.php?session=<?= urlencode($selected_session) ?>';
+                        window.location.href = 'index.php?portal=1&session=<?= urlencode($selected_session) ?>';
                         return;
                     }
                     var minutes = Math.floor(remainingSeconds / 60);
@@ -1636,7 +1647,7 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
     <?php endif; ?>
 
     <script src="js/jquery.min.js"></script>
-    <script src="js/frontpage.js"></script>
+    <script src="js/frontpage.js?v=<?= @filemtime(__DIR__ . '/js/frontpage.js') ?: 1 ?>"></script>
     <!-- View Switcher Controller -->
     <script>
         document.addEventListener("DOMContentLoaded", function() {
@@ -1772,9 +1783,10 @@ $qris_mode = isset($qris_mode) ? filter_var($qris_mode, FILTER_VALIDATE_BOOLEAN)
                 iconClass = 'fa-circle-info app-toast-icon info';
             }
             
+            var safeMessage = String(message).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/\n/g, '<br>');
             toast.innerHTML = `
                 <i class="fa-solid ${iconClass}"></i>
-                <div class="app-toast-message">${message.replace(/\n/g, '<br>')}</div>
+                <div class="app-toast-message">${safeMessage}</div>
                 <button type="button" class="app-toast-close" onclick="closeAppToast(this.parentElement)">
                     <i class="fa-solid fa-xmark"></i>
                 </button>

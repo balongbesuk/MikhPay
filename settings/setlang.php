@@ -27,31 +27,35 @@ $getlang = $_GET['setlang'];
 if (empty($getlang)) {
 
 } else {
-    if (!empty($isocodelang[$getlang])) {
+    $safe_url2 = json_encode($url2);
+    $safe_lang = htmlspecialchars($getlang, ENT_QUOTES, 'UTF-8');
+    if (!empty($isocodelang[$getlang]) && preg_match('/^[a-zA-Z0-9_-]+$/', $getlang)) {
         $is_ajax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         if (!$is_ajax) {
             include_once('./include/headhtml.php');
         }
-        $gen = '<?php $langid="' . $getlang . '";?>';
-        $slang = './include/lang.php';
-        $handle = @fopen($slang, 'w');
-        if ($handle) {
-            fwrite($handle, $gen);
-            fclose($handle);
+        if (isset($_SESSION["mikhmon"])) {
+            $gen = '<?php $langid="' . $getlang . '";?>';
+            $slang = './include/lang.php';
+            $handle = @fopen($slang, 'w');
+            if ($handle) {
+                fwrite($handle, $gen);
+                fclose($handle);
+            }
         }
         $_SESSION['lang'] = $getlang;
         if (!$is_ajax) {
-            echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>Load '.$getlang.' lang...</h3></center>';
+            echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>Load '.$safe_lang.' lang...</h3></center>';
         }
-        echo "<script>window.location='" . $url2 . "'</script>";
+        echo "<script>window.location=" . $safe_url2 . "</script>";
         exit;
     } else {
         $is_ajax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         if (!$is_ajax) {
             include_once('./include/headhtml.php');
-            echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>'.$getlang.' lang not found...</h3></center>';
+            echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>'.$safe_lang.' lang not found...</h3></center>';
         }
-        echo "<script>window.location='" . $url2 . "'</script>";
+        echo "<script>window.location=" . $safe_url2 . "</script>";
         exit;
     }
 }

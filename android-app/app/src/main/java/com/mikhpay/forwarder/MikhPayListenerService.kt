@@ -91,7 +91,8 @@ class MikhPayListenerService : NotificationListenerService() {
         Log.i(TAG, "Successfully parsed amount: $amount from $packageName. Forwarding...")
 
         // Construct Payload & Send Webhook
-        forwardWebhook(webhookUrl, apiKey, amount, packageName, title, text, timestamp)
+        val eventId = "${sbn.key}_${sbn.postTime}_${amount}"
+        forwardWebhook(webhookUrl, apiKey, amount, packageName, title, text, timestamp, eventId)
     }
 
     override fun onNotificationRemoved(sbn: StatusBarNotification) {
@@ -143,7 +144,8 @@ class MikhPayListenerService : NotificationListenerService() {
         sender: String,
         title: String,
         body: String,
-        timestamp: Long
+        timestamp: Long,
+        eventId: String
     ) {
         val json = JSONObject()
         json.put("amount", amount)
@@ -151,6 +153,7 @@ class MikhPayListenerService : NotificationListenerService() {
         json.put("title", title)
         json.put("body", body)
         json.put("timestamp", timestamp)
+        json.put("event_id", eventId)
         json.put("api_key", apiKey)
 
         val requestBody = json.toString().toRequestBody("application/json; charset=utf-8".toMediaTypeOrNull())

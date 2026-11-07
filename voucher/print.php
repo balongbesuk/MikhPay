@@ -157,7 +157,14 @@ table.voucher {
 	</head>
 	<body onload="window.print()">
 
-<?php for ($i = 0; $i < $TotalReg; $i++) {;
+<?php
+include_once('../src/Database.php');
+include_once('../src/Models/AppSettings.php');
+$settingsModel = new \App\Models\AppSettings();
+$template_type = ($userp != "") ? 'template_thermal' : (($small == "yes") ? 'template_small' : 'template_default');
+$custom_template = $settingsModel->get($template_type);
+
+for ($i = 0; $i < $TotalReg; $i++) {
   $regtable = $getuser[$i];
   $uid = str_replace("=","",base64_encode($regtable['.id']));
   $idqr = str_replace("=","",base64_encode(($regtable['.id']."qr")));
@@ -189,39 +196,18 @@ table.voucher {
 	";
  
   $num = $i + 1;
-  ?>
-<?php
-include_once('../src/Database.php');
-include_once('../src/Models/AppSettings.php');
-$settingsModel = new \App\Models\AppSettings();
 
-$template_type = '';
-if ($userp != "") {
-  $template_type = 'template_thermal';
-} else {
-  if ($small == "yes") {
-    $template_type = 'template_small';
+  if (!empty($custom_template)) {
+    eval("?>" . $custom_template);
   } else {
-    $template_type = 'template_default';
+    if ($template_type === 'template_thermal') {
+      include('./template-thermal.php');
+    } elseif ($template_type === 'template_small') {
+      include('./template-small.php');
+    } else {
+      include('./template.php');
+    }
   }
-}
-
-$custom_template = $settingsModel->get($template_type);
-
-if (!empty($custom_template)) {
-  eval("?>" . $custom_template);
-} else {
-  // Fallback to physical file
-  if ($template_type === 'template_thermal') {
-    include('./template-thermal.php');
-  } elseif ($template_type === 'template_small') {
-    include('./template-small.php');
-  } else {
-    include('./template.php');
-  }
-}
-?>
-<?php 
 } ?>
 
 	

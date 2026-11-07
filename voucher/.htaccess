@@ -1,4 +1,5 @@
-<Files "*.json">
+Options -Indexes
+<FilesMatch "^(\.htaccess|trans-.*\.(json|php)|.*\.json)$">
     Order Deny,Allow
     Deny from all
-</Files>
+</FilesMatch>

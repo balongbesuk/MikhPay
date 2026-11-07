@@ -26,6 +26,8 @@ if (!isset($_SESSION["mikhmon"])) {
   $color = array('1' => 'bg-blue', 'bg-indigo', 'bg-purple', 'bg-pink', 'bg-red', 'bg-yellow', 'bg-green', 'bg-teal', 'bg-cyan', 'bg-grey', 'bg-light-blue');
 
   if (isset($_POST['save'])) {
+    include_once(__DIR__ . '/../include/csrf.php');
+    csrf_verify();
 
     $suseradm = ($_POST['useradm']);
     $spassadm = ($_POST['passadm']);
@@ -47,13 +49,26 @@ if (!isset($_SESSION["mikhmon"])) {
 }
 ?>
 <script>
+  function togglePass() {
+    var x = document.getElementById('passadm');
+    var icon = document.getElementById('pass-icon');
+    if (!x) return;
+    if (x.type === 'password') {
+      x.type = 'text';
+      if (icon) icon.className = 'fa fa-eye-slash';
+    } else {
+      x.type = 'password';
+      if (icon) icon.className = 'fa fa-eye';
+    }
+  }
   function Pass(id){
     var x = document.getElementById(id);
-    if (x.type === 'password') {
-    x.type = 'text';
-    } else {
-    x.type = 'password';
-    }}
+    if (x && x.type === 'password') {
+      x.type = 'text';
+    } else if (x) {
+      x.type = 'password';
+    }
+  }
 </script>
 
 <div class="row">
@@ -253,8 +268,10 @@ if (!isset($_SESSION["mikhmon"])) {
               $sessionsList = $dbSessions->getAll();
               foreach ($sessionsList as $sessionData) {
                 $value = $sessionData['session_name'];
+                $s_val = htmlspecialchars($value, ENT_QUOTES, 'UTF-8');
+                $u_val = urlencode($value);
                 ?>
-                <div class="session-card-modern session-card" data-session="<?= $value; ?>">
+                <div class="session-card-modern session-card" data-session="<?= $s_val; ?>">
                   <div class="session-card-header">
                     <div class="session-card-meta">
                       <div class="session-icon-avatar">
@@ -262,7 +279,7 @@ if (!isset($_SESSION["mikhmon"])) {
                       </div>
                       <div class="session-title-details">
                         <h4><?= htmlspecialchars($sessionData['hotspot_name'] ?: $value); ?></h4>
-                        <span class="session-name-tag">Sesi: <strong><?= htmlspecialchars($value); ?></strong></span>
+                        <span class="session-name-tag">Sesi: <strong><?= $s_val; ?></strong></span>
                       </div>
                     </div>
                     <div class="session-status-badge">
@@ -300,9 +317,9 @@ if (!isset($_SESSION["mikhmon"])) {
                   </div>
                   
                   <div class="session-card-footer">
-                    <span class="connect pointer action-btn btn-open" id="<?= $value; ?>"><i class="fa fa-external-link"></i> <?= $_open ?></span>
-                    <a class="action-btn btn-edit" href="./admin.php?id=settings&session=<?= $value; ?>"><i class="fa fa-edit"></i> <?= $_edit ?></a>
-                    <a class="action-btn btn-delete" href="javascript:void(0)" onclick="if(confirm('Are you sure to delete data <?= $value; ?>?')){loadpage('./admin.php?id=remove-session&session=<?= $value; ?>')}"><i class="fa fa-remove"></i> <?= $_delete ?></a>
+                    <span class="connect pointer action-btn btn-open" id="<?= $s_val; ?>"><i class="fa fa-external-link"></i> <?= $_open ?></span>
+                    <a class="action-btn btn-edit" href="./admin.php?id=settings&session=<?= $u_val; ?>"><i class="fa fa-edit"></i> <?= $_edit ?></a>
+                    <a class="action-btn btn-delete" href="javascript:void(0)" onclick="if(confirm('Are you sure to delete data <?= $s_val; ?>?')){loadpage('./admin.php?id=remove-session&session=<?= $u_val; ?>')}"><i class="fa fa-remove"></i> <?= $_delete ?></a>
                   </div>
                 </div>
               <?php
@@ -310,10 +327,11 @@ if (!isset($_SESSION["mikhmon"])) {
               ?>
             </div>
             </div>
+            </div>
           </div>
-        </div>
-        <div class="settings-col-flex">
+          <div class="settings-col-flex">
           <form autocomplete="off" method="post" action="" style="display: flex; flex-direction: column; flex: 1;">
+            <?= function_exists('csrf_field') ? csrf_field() : '' ?>
             <div class="card" style="box-shadow: var(--shadow-card); border-radius: var(--radius); border: 1px solid var(--border-color); margin: 0 !important; height: 100%; display: flex; flex-direction: column;">
               <div class="card-header" style="padding: 14px 20px !important;">
                 <h3 class="card-title"><i class="fa fa-user-circle"></i> <?= $_admin ?></h3>
@@ -542,7 +560,7 @@ if (!isset($_SESSION["mikhmon"])) {
               
               <div class="form-field-group">
                 <label for="useradm"><?= $_user_name ?></label>
-                <input class="form-control" id="useradm" type="text" name="useradm" placeholder="Username Admin" value="<?= $useradm; ?>" required="1"/>
+                <input class="form-control" id="useradm" type="text" name="useradm" placeholder="Username Admin" value="<?= htmlspecialchars($useradm, ENT_QUOTES, 'UTF-8'); ?>" required="1"/>
               </div>
               
               <div class="form-field-group">
@@ -558,14 +576,13 @@ if (!isset($_SESSION["mikhmon"])) {
               <div class="form-field-group">
                 <label for="qrbt"><?= $_quick_print ?> QR</label>
                 <select class="form-control" name="qrbt" id="qrbt">
-                  <option value="<?= $qrbt ?>"><?= $qrbt ?></option>
-                  <option value="enable">enable</option>
-                  <option value="disable">disable</option>
+                  <option value="enable" <?= ($qrbt === 'enable') ? 'selected' : '' ?>>enable</option>
+                  <option value="disable" <?= ($qrbt === 'disable') ? 'selected' : '' ?>>disable</option>
                 </select>
               </div>
 
               <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 24px;">
-                <div id="loadV" style="font-size: 12px; color: var(--text-muted);">v<?= $_SESSION['v']; ?> </div>
+                <div id="loadV" style="font-size: 12px; color: var(--text-muted);">v<?= htmlspecialchars($_SESSION['v'] ?? '', ENT_QUOTES, 'UTF-8'); ?> </div>
                 <div style="display: flex; gap: 8px;">
                   <button type="submit" name="save" class="btn-modern-action btn-save"><?= $_save ?></button>
                   <div class="btn-modern-action btn-reload pointer" onclick="location.reload();" title="Reload Data"><i class="fa fa-refresh"></i></div>
@@ -573,14 +590,14 @@ if (!isset($_SESSION["mikhmon"])) {
               </div>
               <div><b id="newVer" class="text-green"></b></div>
             </div>
+            </div>
+            </div>
+          </form>
           </div>
+        </div>
+      </div>
     </div>
-    </form>
   </div>
-</div>
-</div>
-</div>
-</div>
 </div>
 
 <script>

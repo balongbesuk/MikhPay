@@ -47,33 +47,37 @@ $getthemecolor = $theme_color[$themenum];
 if (empty($gettheme)) {  
 
 } else {
-    if (in_array($gettheme, $mtheme)) {
+    $safe_url2 = json_encode($url2);
+    $safe_theme = htmlspecialchars($gettheme, ENT_QUOTES, 'UTF-8');
+    if (in_array($gettheme, $mtheme, true)) {
         $is_ajax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         if (!$is_ajax) {
             include_once('./include/headhtml.php');
         }
-        $gen = '<?php $theme="' . $gettheme . '"; $themecolor="'.$getthemecolor.'";?>';
-        $stheme = './include/theme.php';
-        $handle = @fopen($stheme, 'w');
-        if ($handle) {
-            fwrite($handle, $gen);
-            fclose($handle);
+        if (isset($_SESSION["mikhmon"])) {
+            $gen = '<?php $theme="' . $gettheme . '"; $themecolor="'.$getthemecolor.'";?>';
+            $stheme = './include/theme.php';
+            $handle = @fopen($stheme, 'w');
+            if ($handle) {
+                fwrite($handle, $gen);
+                fclose($handle);
+            }
         }
         $_SESSION['theme'] = $gettheme;
         $_SESSION['themecolor'] = $getthemecolor;
         if (!$is_ajax) {
-            echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>Load '.$gettheme.' theme...</h3></center>';
+            echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>Load '.$safe_theme.' theme...</h3></center>';
         }
-        echo "<script>window.location='" . $url2 . "'</script>";
+        echo "<script>window.location=" . $safe_url2 . "</script>";
         exit;
         
     } else {
         $is_ajax = isset($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
         if (!$is_ajax) {
             include_once('./include/headhtml.php');
-            echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>'.$gettheme.' theme not found...</h3></center>';
+            echo '<center><div style="padding-top:10%;"><i class="fa fa-circle-o-notch fa-spin" style="font-size:40px"></i></div><h3>'.$safe_theme.' theme not found...</h3></center>';
         }
-        echo "<script>window.location='" . $url2 . "'</script>";
+        echo "<script>window.location=" . $safe_url2 . "</script>";
         exit;
     }
 }

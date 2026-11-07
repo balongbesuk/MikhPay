@@ -12,11 +12,7 @@ error_reporting(0);
 ini_set('display_errors', 0);
 
 // Rate Limiting (Maksimum 30 request per menit per IP)
-$ipAddress = isset($_SERVER['HTTP_CLIENT_IP']) 
-    ? $_SERVER['HTTP_CLIENT_IP'] 
-    : (isset($_SERVER['HTTP_X_FORWARDED_FOR']) 
-        ? explode(',', $_SERVER['HTTP_X_FORWARDED_FOR'])[0] 
-        : $_SERVER['REMOTE_ADDR']);
+$ipAddress = isset($_SERVER['REMOTE_ADDR']) ? $_SERVER['REMOTE_ADDR'] : '0.0.0.0';
 
 $rateLimitFile = __DIR__ . '/data/rate_limit.json';
 $limit = 30; // request
@@ -132,6 +128,8 @@ if ($action === 'gopay_status') {
     
     echo json_encode([
         'status' => 'success',
+        'version' => defined('MIKHPAY_VERSION_SHORT') ? MIKHPAY_VERSION_SHORT : '3.2',
+        'version_full' => defined('MIKHPAY_VERSION') ? MIKHPAY_VERSION : '3.2.0',
         'is_connected' => $status['is_connected'],
         'token_status' => isset($status['token_status']) ? $status['token_status'] : 'active',
         'merchant_name' => $status['merchant_name'],
@@ -144,26 +142,25 @@ if ($action === 'gopay_status') {
 if ($action === 'update_gopay_token') {
     include_once(__DIR__ . '/include/autoload.php');
     
-    $inputBody = json_decode(file_get_contents('php://input'), true);
     $token = isset($_POST['token']) 
         ? trim($_POST['token']) 
-        : (isset($inputBody['token']) 
-            ? trim($inputBody['token']) 
+        : (isset($inputBodyJson['token']) 
+            ? trim($inputBodyJson['token']) 
             : (isset($_GET['token']) ? trim($_GET['token']) : ''));
             
     $refreshToken = isset($_POST['refresh_token']) 
         ? trim($_POST['refresh_token']) 
-        : (isset($inputBody['refresh_token']) 
-            ? trim($inputBody['refresh_token']) 
+        : (isset($inputBodyJson['refresh_token']) 
+            ? trim($inputBodyJson['refresh_token']) 
             : (isset($_GET['refresh_token']) ? trim($_GET['refresh_token']) : ''));
 
     $phone = isset($_POST['phone']) 
         ? trim($_POST['phone']) 
-        : (isset($inputBody['phone']) ? trim($inputBody['phone']) : '');
+        : (isset($inputBodyJson['phone']) ? trim($inputBodyJson['phone']) : '');
         
     $merchantId = isset($_POST['merchant_id']) 
         ? trim($_POST['merchant_id']) 
-        : (isset($inputBody['merchant_id']) ? trim($inputBody['merchant_id']) : '');
+        : (isset($inputBodyJson['merchant_id']) ? trim($inputBodyJson['merchant_id']) : '');
         
     if (empty($token)) {
         http_response_code(400);
@@ -175,7 +172,7 @@ if ($action === 'update_gopay_token') {
     $res = $gopaySvc->saveManualToken($token, $phone, $merchantId);
     
     $settings = new \App\Models\AppSettings();
-    if (!empty($refreshToken)) {
+    if ($res['success'] && !empty($refreshToken)) {
         $settings->set('gopay_refresh_token', $refreshToken);
     }
     
@@ -354,7 +351,10 @@ switch ($action) {
             }
 
             // Daftarkan ke MikroTik
-            $API->comm("/ip/hotspot/user/add", $addParams);
+            $addRes = $API->comm("/ip/hotspot/user/add", $addParams);
+            if (is_array($addRes) && isset($addRes['!trap'])) {
+                continue;
+            }
 
             $generatedVouchers[] = [
                 'username' => $username,
