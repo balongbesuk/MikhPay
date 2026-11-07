@@ -13,50 +13,65 @@ Aplikasi ini dikembangkan dan dimodifikasi dari kode sumber asli [Mikhmon v3 ole
 ## 🚀 Fitur Utama & Modifikasi Baru
 
 1. **Portal Pembelian Mandiri (`frontpage.php`)**
-   - **Tampilan Modern**: Desain premium berorientasi *mobile-first* (Light Theme, Glassmorphism, dan Bottom Nav).
-   - **Sistem QRIS Mandiri**: Membuat QR Code QRIS dinamis (berisi nominal unik tambahan) secara lokal (offline) langsung dari *string* QRIS Statis Anda tanpa pihak ketiga.
-   - **Real-time Updates**: Status pembayaran dapat terpantau menggunakan HTTP Polling.
+   - **Tampilan Modern & 100% Offline-Ready**: Desain premium berorientasi *mobile-first* yang menggunakan aset ikon dan font lokal sepenuhnya, sehingga tampil utuh di jaringan *Captive Portal* (pra-login hotspot tanpa internet).
+   - **Sistem QRIS Mandiri**: Membuat QR Code QRIS dinamis (berisi nominal unik tambahan) secara lokal langsung dari *string* QRIS Statis Anda tanpa pihak ketiga.
+   - **Real-time Updates**: Status pembayaran terpantau otomatis via *Smart On-Demand Polling* dan/atau WebSocket.
 
 2. **REST API Endpoint (`api.php`)**
-   - **Keamanan**: Otentikasi aman menggunakan parameter `api_key` atau header `X-API-Key`.
-   - **Informasi Paket**: Endpoint cepat untuk melihat profil hotspot dan detail harga.
-   - **Generate Voucher**: Pembuatan kode voucher secara otomatis dan programatis untuk diintegrasikan dengan aplikasi pihak ketiga.
+   - **Keamanan**: Otentikasi aman (`hash_equals`) menggunakan parameter `api_key` atau header `X-API-Key`.
+   - **Informasi Paket & Generate Voucher**: Endpoint cepat untuk melihat profil hotspot dan membuat voucher secara programatis, serta sinkronisasi token GoPay Merchant.
 
-3. **Verifikasi Pembayaran Otomatis (`qris_verify.php`)**
-   - **Dukungan MacroDroid/Tasker**: Endpoint verifikasi ringan untuk disambungkan dengan aplikasi automasi HP (pembaca notifikasi E-Wallet/Mutasi Bank) menggunakan `QRIS_SECRET_TOKEN`.
-   - **Auto-Cleanup**: Terdapat *cronjob* pembersih transaksi (`cron_qris.php`) untuk membatalkan tagihan kedaluwarsa setelah 15 menit agar kode unik terbebas.
+3. **Verifikasi Pembayaran Otomatis Hybrid (`qris_verify.php` & `GoPayMerchantService.php`)**
+   - **Dukungan GoPay Direct API & Android Forwarder / MacroDroid**: Mendukung pembacaan mutasi GoBiz langsung dari server maupun via webhook notifikasi HP, dilengkapi kunci transaksi global (`data/settlement.lock`) agar bebas duplikasi voucher.
+   - **Auto-Cleanup & Retry**: Dilengkapi *cronjob* pembersih transaksi kedaluwarsa (`cron_qris.php`) dan *worker retry* otomatis (`cron_retry.php`) untuk transaksi yang sudah lunas saat router sempat offline.
 
-4. **Penguatan Keamanan Sistem (Security Hardening - v1.7 & v1.8)**
-   - **Brute-Force Protection**: Membatasi kegagalan percobaan login administrator maksimal **5 kali**. IP yang melanggar diblokir otomatis selama **10 menit** (`data/login_rate_limit.json`).
-   - **Session Fixation Protection**: Meregenerasi ID sesi peramban secara otomatis (`session_regenerate_id(true)`) sesaat setelah login administrator sukses.
-   - **Session Cookie Hardening**: Mengamankan parameter `session_start()` di semua entry point dengan parameter cookie ketat (`HttpOnly`, `SameSite=Lax`, `use_only_cookies`, dan `Secure` dinamis yang menyesuaikan protokol HTTPS/HTTP).
-   - **Konfigurasi Aman `.env.php`**: Mengisolasi semua kunci API ke dalam berkas `.env.php` terproteksi eksekusi PHP (`exit;`), mencegah kebocoran informasi teks polos jika diakses publik di server non-Apache (Nginx, IIS, Caddy).
-   - **Rate Limiting Webhook**: Membatasi laju request verifikasi webhook hingga maksimal 60 request per menit per alamat IP untuk menangkal serangan Denial of Service (DoS).
-   - **Pembersihan Cache Logout**: Menghapus total `localStorage` & `sessionStorage` peramban saat administrator logout.
+4. **Penguatan Keamanan Sistem (Security Hardening - v3.2)**
+   - **Brute-Force & CSRF Protection**: Membatasi kegagalan login maksimal **5 kali** (cooldown **10 menit**) serta wajib verifikasi token CSRF pada aksi sensitif admin.
+   - **Penyimpanan Berpelindung PHP & Atomic Write**: Database (`data/database.php`), mutasi (`data/gopay_processed.php`), dan log (`voucher/activity_logs.php`) dilindungi header `<?php exit; ?>` dengan penulisan atomik.
+   - **Konfigurasi Aman `.env.php`**: Mengisolasi semua kunci API dan `MIKHMON_CRYPTO_KEY` ke dalam berkas `.env.php` terproteksi eksekusi PHP.
 
 ---
 
-## 🛠️ Panduan Konfigurasi & Instalasi
+## 📦 Persyaratan Sistem (System Requirements)
 
-> [!IMPORTANT]
-> **PENTING UNTUK INSTALASI DI VPS/LINUX (aaPanel, cPanel, dll.)**:
-> Setelah Anda melakukan `git clone` atau mengunggah berkas ke VPS, folder-folder berikut wajib memiliki pemilik (**Owner**) **`www`** (atau user web server Anda) dan izin menulis (**Write Permission / 755 / 775**):
-> - **`data/`** (Penyimpanan database JSON & konfigurasi)
-> - **`voucher/`** (Penyimpanan data transaksi pembelian voucher pelanggan)
-> - **`logs/`** (Penyimpanan catatan error log sistem)
-> - **`include/`** (Penyimpanan file konfigurasi dinamis)
->
-> Jika folder di atas masih dimiliki oleh **`root`** (biasanya karena proses upload/clone via root), Anda akan mengalami masalah: **gagal menyimpan tambah router**, **mengubah password loading berputar terus-menerus**, serta **status beli voucher error saat bayar QRIS** karena file transaksi gagal terbuat.
->
-> **Solusi Cepat via Terminal SSH (sebagai root):**
-> ```bash
-> chown -R www:www data voucher logs include
-> chmod -R 755 data voucher logs include
-> ```
-> *(Ubah `www:www` sesuai user web server di panel Anda jika berbeda, misalnya `www-data`)*.
+- **PHP**: Versi **7.4** hingga **8.3** (Ekstensi wajib: `curl`, `json`, `mbstring`, `openssl`, `gd`).
+- **Web Server**: Apache, Nginx (aaPanel / cPanel), LiteSpeed, atau **Mikhmon Server Windows** portable.
+- **RouterOS MikroTik**: Versi **v6.x** atau **v7.x** dengan service **API** (`IP > Services > api`, port `8728`) aktif.
 
-### 1. Buat Berkas Lingkungan Terproteksi (`.env.php`)
-Buat berkas baru bernama `.env.php` di root direktori MikhPay Anda (sejajar dengan `index.php`). Salin dan sesuaikan konfigurasi berikut:
+---
+
+## 🛠️ Panduan Instalasi dari Awal (Step-by-Step)
+
+### Opsi A: Instalasi di VPS / Hosting Linux (aaPanel, cPanel, Ubuntu/Debian)
+
+1. **Clone atau Upload Kode Sumber ke Web Root**:
+   Masuk ke terminal SSH menuju folder website Anda (misal `/www/wwwroot/domainanda.com` di aaPanel atau `public_html` di cPanel), lalu jalankan:
+   ```bash
+   git clone https://github.com/balongbesuk/MikhPay.git .
+   ```
+   *(Atau unduh file `.zip` dari GitHub lalu ekstrak ke dalam folder website Anda).*
+
+2. **Atur Hak Akses (Permission) Folder Penyimpanan (Wajib di Linux/VPS)**:
+   Agar aplikasi dapat menyimpan database sesi router, log, dan file transaksi QRIS, berikan hak milik (*owner*) ke user web server (`www` di aaPanel atau `www-data` di Ubuntu/Debian):
+   ```bash
+   chown -R www:www data voucher logs include img
+   chmod -R 755 data voucher logs include img
+   ```
+   > [!IMPORTANT]
+   > Jika folder `data/`, `voucher/`, dan `logs/` masih dimiliki oleh `root`, Anda akan mengalami kendala **gagal menyimpan router**, **gagal ganti password**, atau **error saat membuat QRIS**.
+
+### Opsi B: Instalasi di Windows (Mikhmon Server Portable / XAMPP / Laragon)
+
+1. **Menggunakan Mikhmon Server Windows**:
+   - Ekstrak atau lakukan `git clone https://github.com/balongbesuk/MikhPay.git` ke dalam folder `Mikhmon Server/mikhmon/` (menggantikan isi folder `mikhmon` lama).
+   - Jalankan `Mikhmon Server.exe` lalu klik tombol **Start** hingga indikator Apache & PHP berwarna hijau.
+2. **Menggunakan XAMPP / Laragon**:
+   - Salin folder proyek ke `C:\xampp\htdocs\mikhpay` atau `C:\laragon\www\mikhpay`, lalu nyalakan Apache.
+
+---
+
+### Langkah 3: Buat Berkas Lingkungan Terproteksi (`.env.php`)
+Buat berkas baru bernama **`.env.php`** di root direktori MikhPay Anda (sejajar dengan `index.php` — bisa menyalin dari `.env.example`). Isi dan sesuaikan konfigurasi berikut:
 
 ```php
 <?php header('HTTP/1.0 403 Forbidden'); exit; ?>
@@ -64,43 +79,51 @@ Buat berkas baru bernama `.env.php` di root direktori MikhPay Anda (sejajar deng
 # BERKAS KONFIGURASI LINGKUNGAN (.env.php)
 # ==============================================================================
 
-# API Key untuk mengamankan REST API (api.php / cron_retry.php)
-MIKHMON_API_KEY="mikhmon_api_key_12345"
+# API Key untuk mengamankan REST API (api.php / cron_retry.php / cron_qris.php)
+MIKHMON_API_KEY="ganti_dengan_api_key_rahasia_anda"
 
 # Kredensial QRIS Mandiri (Ganti dengan string hasil scan QR statis Anda)
 QRIS_MODE=true
 QRIS_STATIC_STRING="00020101021126670016COM.GO-JEK.WWW0118...YOUR_QRIS_STRING..."
-QRIS_SECRET_TOKEN="ganti_dengan_token_rahasia_anda_123"
+QRIS_SECRET_TOKEN="ganti_dengan_token_webhook_rahasia_anda"
+
+# Kunci enkripsi password router di database lokal
+ENCRYPTION_KEY="ganti_dengan_kunci_enkripsi_unik_anda"
 
 # WebSocket (Pusher / Soketi) - Opsional
-WS_APP_ID="YOUR_PUSHER_APP_ID"
-WS_APP_KEY="YOUR_PUSHER_KEY"
-WS_APP_SECRET="YOUR_PUSHER_SECRET"
+WS_APP_ID=""
+WS_APP_KEY=""
+WS_APP_SECRET=""
 WS_CLUSTER="ap1"
-
-# Konfigurasi Tambahan Soketi (Hanya jika menggunakan server WebSocket mandiri)
-# WS_HOST="your-soketi-host.com"
-# WS_PORT="6001"
-# WS_SCHEME="https"
 ```
 
-### 2. Pengaturan Sesi & MikroTik
-Kredensial MikroTik, nama sesi, IP, user, password, dan dnsname diatur secara otomatis melalui **Web Admin Panel** MikhPay pada menu **Admin Settings > Add Router / Edit Settings**.
+### Langkah 4: Login Pertama & Ganti Password Admin
+1. Buka **Web Admin Panel** di browser: `http://domainanda.com/admin.php` (atau `http://127.0.0.1:8080/admin.php` di Windows).
+2. Masuk menggunakan akun bawaan pertama kali:
+   - **Username**: `mikhmon`
+   - **Password**: `1234`
+3. Di halaman **Admin Settings** (sebelah kanan), segera ubah **Username** dan **Password Admin** Anda lalu klik **Save** (password otomatis dienkripsi dengan `bcrypt`).
+
+### Langkah 5: Hubungkan Sesi Router MikroTik & Paket Voucher
+1. Pastikan port API MikroTik aktif di Winbox (**IP > Services > api**, port `8728`).
+2. Di halaman **Session List** MikhPay, klik **Add Router**:
+   - Isi **Session Name** (tanpa spasi, contoh: `Hotspot`), **IP MikroTik**, **Username**, **Password**, **Hotspot Name**, dan **DNS Name** (contoh: `wifi.net`), lalu klik **Save** dan **Connect**.
+3. Buat profil paket voucher di menu **Hotspot > User Profiles > Add Profile** (pastikan kolom **Price** dan **Selling Price** diisi agar paket tampil di halaman pembelian pelanggan `frontpage.php`).
 
 > [!IMPORTANT]
-> Berkas `include/config.php` bawaan repositori sudah dikonfigurasi secara dinamis untuk memuat sesi dari database (`data/database.php`). Anda **TIDAK PERLU** menyalin atau mengubah nama `config.php.example` menjadi `config.php`. Biarkan `include/config.php` bawaan apa adanya agar pengaturan sesi tetap tersimpan otomatis ke database.
+> Berkas `include/config.php` bawaan repositori sudah dikonfigurasi secara dinamis untuk memuat sesi dari database (`data/database.php`). Anda **TIDAK PERLU** menyalin atau mengubah nama `config.php.example` menjadi `config.php`.
 
-### 3. URL Halaman Utama
-*   **Web Admin Panel**: `http://localhost/admin.php`
-*   **Portal Mandiri Pelanggan**: `http://localhost/` (Otomatis diarahkan ke `frontpage.php`)
-*   **REST API**: `http://localhost/api.php`
-*   **Notification Webhook**: `http://localhost/notification.php`
+### 6. Daftar URL Halaman Utama
+*   **Web Admin Panel**: `http://domainanda.com/admin.php` (atau klik tombol **Lihat Portal Voucher** di sidebar Admin untuk pratinjau portal)
+*   **Portal Mandiri Pelanggan**: `http://domainanda.com/` (Otomatis memuat `frontpage.php`)
+*   **REST API**: `http://domainanda.com/api.php`
+*   **Webhook Verifikasi QRIS**: `http://domainanda.com/qris_verify.php`
 
 ---
 
 ## 💳 Sistem Verifikasi Pembayaran QRIS (2 Opsi Fleksibel & Hybrid)
 
-MikhPay v3.1 memperkenalkan arsitektur verifikasi pembayaran ganda yang fleksibel. Anda bebas memilih metode verifikasi yang paling sesuai dengan kebutuhan infrastruktur hotspot Anda:
+MikhPay v3.2 mendukung arsitektur verifikasi pembayaran ganda yang fleksibel. Anda bebas memilih metode verifikasi yang paling sesuai dengan kebutuhan infrastruktur hotspot Anda:
 
 | Fitur / Perbandingan | Opsi 1: Notif Forwarder (Android) | Opsi 2: GoPay Merchant Direct API |
 | :--- | :--- | :--- |
@@ -176,7 +199,7 @@ Sistem akan otomatis menghubungi server GoBiz, memvalidasi sesi, mendeteksi nama
      - Argument: `"D:\mikhmonv3ws\Mikhmon Server\mikhmon\process\gopay_sync.php"`
 
 > [!NOTE]
-> **Privasi & Keamanan Git**: Token sesi, kredensial router, nomor HP, dan log mutasi GoPay Anda disimpan di dalam berkas lokal `data/database.php` dan `data/gopay_processed.json` yang telah dimasukkan ke dalam `.gitignore`. Data sensitif Anda aman dan **TIDAK AKAN PERNAH** terunggah ke repositori Git publik.
+> **Privasi & Keamanan Git**: Token sesi, kredensial router, nomor HP, dan log mutasi GoPay Anda disimpan di dalam berkas lokal `data/database.php`, `data/gopay_processed.php`, dan `voucher/activity_logs.php` yang telah dimasukkan ke dalam `.gitignore`. Data sensitif Anda aman dan **TIDAK AKAN PERNAH** terunggah ke repositori Git publik.
 
 ---
 
@@ -185,8 +208,8 @@ Sistem akan otomatis menghubungi server GoBiz, memvalidasi sesi, mendeteksi nama
 Sebagai alternatif pengganti MacroDroid yang lebih mudah dikonfigurasi, andal, dan ramah baterai, Anda dapat menggunakan aplikasi Android bawaan **MikhPay-Forwarder** yang berada di dalam repositori ini pada folder [android-app/](android-app/).
 
 ### Fitur Aplikasi Android:
-- **1-Click Login GoBiz & Auto-Sync Token**: Terintegrasi langsung dengan portal web resmi GoBiz via WebView di dalam aplikasi. Cukup login akun GoBiz di aplikasi, token sesi `access_token` otomatis tertangkap dan langsung tersinkronkan ke server MikhPay Anda tanpa perlu DevTools/F12 di PC!
-- **Silent Auto-Refresh Token GoBiz (Anti-Expired 24 Jam)**: Aplikasi secara cerdas memperbarui token GoBiz di latar belakang (*headless WebView*) setiap 6–8 jam sekali dan langsung mengunggah token baru ke server MikhPay tanpa perlu menginput OTP atau login ulang setiap hari!
+- **1-Click Login GoBiz & Auto-Sync Token**: Terintegrasi langsung dengan portal web resmi GoBiz via WebView di dalam aplikasi. Cukup login akun GoBiz di aplikasi, pasangan `access_token` dan `refresh_token` otomatis tertangkap dan langsung tersinkronkan ke server MikhPay Anda tanpa perlu DevTools/F12 di PC!
+- **Silent Auto-Refresh Token GoBiz Proaktif**: Aplikasi secara cerdas memeriksa dan memperbarui token GoBiz di latar belakang (*headless WebView*) setiap 45 menit (serta auto-refresh mandiri di sisi server saat umur token $\ge 50$ menit) tanpa perlu menginput OTP atau login ulang setiap hari!
 - **Konfigurasi Instan**: Hanya perlu mengisi URL Webhook (`https://yourdomain.com/qris_verify.php`) dan Token API Anda.
 - **Sistem Latar Belakang Tangguh**: Menggunakan *NotificationListenerService* bawaan Android yang berjalan 24/7 di latar belakang dengan konsumsi daya sangat rendah.
 - **Mulai Otomatis (Auto-Start on Boot)**: Otomatis aktif kembali di latar belakang saat HP dinyalakan ulang (restart) tanpa intervensi manual.
@@ -262,16 +285,11 @@ Jalankan perintah berikut di **New Terminal** Winbox MikroTik Anda:
 /ip hotspot walled-garden add dst-host=*.gopayapi.com action=allow
 /ip hotspot walled-garden add dst-host=*.shopeepay.co.id action=allow
 
-# Izinkan WebSocket Pusher untuk deteksi real-time
+# Izinkan WebSocket Pusher untuk deteksi real-time (Opsional jika memakai Pusher)
 /ip hotspot walled-garden add dst-host=*.pusher.com action=allow
 /ip hotspot walled-garden add dst-host=*.pusherapp.com action=allow
-
-# Izinkan font dan aset web CDN
-/ip hotspot walled-garden add dst-host=fonts.googleapis.com action=allow
-/ip hotspot walled-garden add dst-host=fonts.gstatic.com action=allow
-/ip hotspot walled-garden add dst-host=cdnjs.cloudflare.com action=allow
 ```
-*Ganti `[ip-atau-domain-mikhpay]` pada baris pertama dengan IP/Domain publik hosting portal MikhPay Anda.*
+*Ganti `[ip-atau-domain-mikhpay]` pada baris pertama dengan IP/Domain publik atau lokal tempat Anda meng-host MikhPay. Mulai v3.2, seluruh font dan ikon portal disajikan secara lokal dari server MikhPay sehingga tidak lagi membutuhkan Walled Garden untuk CDN font/ikon eksternal.*
 
 ### 3. Login Otomatis (Auto-Login)
 Setelah pembayaran lunas, portal MikhPay akan memunculkan tombol **"Hubungkan Sekarang"**. Tombol ini otomatis mengirimkan parameter login langsung ke MikroTik (`http://[dnsname]/login?username=[voucher]&password=[voucher]`) sehingga pengguna langsung terhubung ke internet tanpa perlu mengetik kode voucher secara manual.
